@@ -2,7 +2,7 @@ pub mod stream_reader;
 use crate::utils::messages::{message_builder, mumble};
 use tokio::sync::broadcast::Sender;
 
-pub async fn init_connection(username: &str, channel: &Sender<Vec<u8>>) {
+pub async fn init_connection(username: &str, channel: Sender<Vec<u8>>) {
     let version = mumble::proto::Version {
         version_v1: Some((2 << 16) | (0 << 8)),
         os: Some("Rust".to_string()),

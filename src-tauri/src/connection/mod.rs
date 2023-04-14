@@ -2,19 +2,28 @@ use crate::protocol::init_connection;
 use crate::protocol::stream_reader::StreamReader;
 use crate::utils::messages::{message_builder, mumble};
 use std::error::Error;
+use std::sync::{Arc, RwLock};
 use std::time::{Duration, SystemTime};
 use tokio::io::AsyncWriteExt;
 use tokio::io::{AsyncReadExt, BufReader};
 use tokio::net::TcpStream;
 use tokio::select;
 use tokio::sync::broadcast::{self, Receiver, Sender};
+use tokio::task::JoinHandle;
 use tokio::time;
 use tokio_native_tls::native_tls::TlsConnector;
-use tokio_native_tls::TlsStream;
 
 const QUEUE_SIZE: usize = 256;
-const PING_INTERVAL: Duration = Duration::from_millis(15000);
+const PING_INTERVAL: Duration = Duration::from_millis(5000);
+const DEADMAN_INTERVAL: Duration = Duration::from_millis(2000);
 const BUFFER_SIZE: usize = 1024;
+
+struct ThreadReferenceHolder {
+    ping_thread: Option<JoinHandle<()>>,
+    message_thread: Option<JoinHandle<()>>,
+    output_thread: Option<JoinHandle<()>>,
+    main_thread: Option<JoinHandle<()>>,
+}
 
 pub struct Connection {
     username: String,
@@ -23,15 +32,19 @@ pub struct Connection {
 
     tx_in: Sender<Vec<u8>>,
     tx_out: Sender<Vec<u8>>,
-    rx_out: Receiver<Vec<u8>>,
 
-    stream: Option<TlsStream<TcpStream>>,
+    tx_message_channel: Sender<String>,
+
+    running: Arc<RwLock<bool>>,
+    threads: ThreadReferenceHolder,
 }
 
 impl Connection {
     pub fn new(server_host: &str, server_port: u16, username: &str) -> Connection {
         let (tx_in, _): (Sender<Vec<u8>>, Receiver<Vec<u8>>) = broadcast::channel(QUEUE_SIZE);
-        let (tx_out, rx_out): (Sender<Vec<u8>>, Receiver<Vec<u8>>) = broadcast::channel(QUEUE_SIZE);
+        let (tx_out, _): (Sender<Vec<u8>>, Receiver<Vec<u8>>) = broadcast::channel(QUEUE_SIZE);
+        let (tx_message_channel, _): (Sender<String>, Receiver<String>) =
+            broadcast::channel(QUEUE_SIZE);
 
         Connection {
             username: username.to_string(),
@@ -39,34 +52,45 @@ impl Connection {
             server_port,
             tx_in,
             tx_out,
-            rx_out,
-            stream: None,
+            tx_message_channel,
+            running: Arc::new(RwLock::new(false)),
+            threads: ThreadReferenceHolder {
+                ping_thread: None,
+                message_thread: None,
+                output_thread: None,
+                main_thread: None,
+            },
         }
     }
 
     fn spawn_message_thread(&mut self) {
         let mut rx_in = self.tx_in.subscribe();
+        let running_clone = self.running.clone();
 
-        tokio::spawn(async move {
+        self.threads.message_thread = Some(tokio::spawn(async move {
+            let mut interval = time::interval(DEADMAN_INTERVAL);
             let mut reader = StreamReader::new();
 
-            loop {
-                let result = rx_in.recv().await;
-                match result {
-                    Ok(mut data) => reader.read(&mut data),
-                    Err(_) => { print!("Corrupted stream!"); break; },
+            while *running_clone.read().unwrap() {
+                select! {
+                    Ok(mut result) = rx_in.recv() => {
+                        reader.read(&mut result);
+                    }
+
+                    _ = interval.tick() => {}
                 }
             }
-        });
+        }));
     }
 
-    fn spawn_ping_thread(&self) {
+    fn spawn_ping_thread(&mut self) {
         let tx_a = self.tx_out.clone();
+        let running_clone = self.running.clone();
 
         // timer thread
-        tokio::spawn(async move {
+        self.threads.ping_thread = Some(tokio::spawn(async move {
             let mut interval = time::interval(PING_INTERVAL);
-            loop {
+            while *running_clone.read().unwrap() {
                 let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH);
                 if now.is_err() {
                     println!("Unable to send Ping!");
@@ -93,61 +117,77 @@ impl Connection {
                 let buffer = message_builder(ping);
                 _ = tx_a.send(buffer);
             }
-        });
+        }));
     }
 
-    fn spawn_output_thread(&self) {
+    fn spawn_output_thread(&mut self) {
         let tx_b = self.tx_out.clone();
-        tokio::spawn(async move {
-            loop {
-                let mut input = String::new();
-                match std::io::stdin().read_line(&mut input) {
-                    Ok(_) => {
+        let running_clone = self.running.clone();
+        let mut rx_message_channel = self.tx_message_channel.subscribe();
+
+        self.threads.output_thread = Some(tokio::spawn(async move {
+            let mut interval = time::interval(DEADMAN_INTERVAL);
+
+            while *running_clone.read().unwrap() {
+                select! {
+                    Ok(result) = rx_message_channel.recv() => {
                         let message = mumble::proto::TextMessage {
                             actor: None,
                             session: Vec::new(),
                             channel_id: vec![60u32],
                             tree_id: Vec::new(),
-                            message: input.clone(),
+                            message: result,
                         };
                         let buffer = message_builder(message);
                         _ = tx_b.send(buffer);
                     }
-                    Err(_) => {}
-                };
+
+                    _ = interval.tick() => {}
+                }
             }
-        });
+        }));
     }
 
-    async fn init_main_thread(&mut self) -> Result<(), Box<dyn Error>> {
-        assert!(self.stream.is_some());
-
+    async fn init_main_thread(
+        &mut self,
+        stream: Option<tokio_native_tls::TlsStream<TcpStream>>,
+    ) -> Result<(), Box<dyn Error>> {
         let mut buffer = [0; BUFFER_SIZE];
-        let (reader, mut writer) = tokio::io::split(self.stream.as_mut().unwrap());
+        let (reader, mut writer) = tokio::io::split(stream.unwrap());
         let mut reader = BufReader::new(reader);
 
-        loop {
-            select! {
-                result = reader.read(&mut buffer) => {
-                    let size = result?;
-                    if size == 0 {
-                        return Err("We didn't get any data from our stream".into());
-                    }
+        let tx_in = self.tx_in.clone();
+        let mut rx_out = self.tx_out.subscribe();
+        let running_clone = self.running.clone();
 
-                    match self.tx_in.send((&buffer[0..size]).to_vec()) {
-                        Ok(_) => {},
-                        Err(e) => println!("Error while channeling incomming data: {e:?}"),
+        self.threads.main_thread = Some(tokio::spawn(async move {
+            while *running_clone.read().unwrap() {
+                select! {
+                    Ok(size) = reader.read(&mut buffer) => {
+                        if size == 0 {
+                            return;
+                        }
+
+                        match tx_in.send((&buffer[0..size]).to_vec()) {
+                            Ok(_) => {},
+                            Err(e) => println!("Error while channeling incomming data: {e:?}"),
+                        }
                     }
-                }
-                result = self.rx_out.recv() => {
-                    // println!("Sending to server: {msg:?}");
-                    writer.write(&result?).await?;
+                    Ok(result) = rx_out.recv() => {
+                        println!("Sending to server: {result:?}");
+
+                        _ = writer.write(&result).await;
+                    }
                 }
             }
-        }
+        }));
+
+        Ok(())
     }
 
-    async fn setup_connection(&mut self) -> Result<(), Box<dyn Error>> {
+    async fn setup_connection(
+        &mut self,
+    ) -> Result<Option<tokio_native_tls::TlsStream<TcpStream>>, Box<dyn Error>> {
         let server_uri = format!("{}:{}", self.server_host, self.server_port);
         let socket = TcpStream::connect(server_uri).await?;
         let cx = TlsConnector::builder()
@@ -155,19 +195,49 @@ impl Connection {
             .build()?;
         let cx = tokio_native_tls::TlsConnector::from(cx);
 
-        self.stream = Some(cx.connect(&self.server_host, socket).await?);
-        Ok(())
+        Ok(Some(cx.connect(&self.server_host, socket).await?))
     }
 
     pub async fn connect(&mut self) -> Result<(), Box<dyn Error>> {
-        self.setup_connection().await?;
-
-        init_connection(&self.username, &self.tx_out).await;
+        {
+            if let Ok(mut running) = self.running.write() {
+                *running = true;
+            }
+        }
+        let stream = self.setup_connection().await?;
 
         self.spawn_ping_thread();
         self.spawn_message_thread();
         self.spawn_output_thread();
 
-        self.init_main_thread().await
+        self.init_main_thread(stream).await?;
+        init_connection(&self.username, self.tx_out.clone()).await;
+
+        Ok(())
+    }
+
+    pub async fn shutdown(&mut self) -> Result<(), Box<dyn Error>> {
+        println!("Sending Shutdown Request");
+        if let Ok(mut running) = self.running.write() {
+            *running = false;
+        }
+        println!("Joining Threads");
+
+        self.threads.main_thread.as_mut().unwrap().await?;
+        println!("Joined main_thread");
+        self.threads.message_thread.as_mut().unwrap().await?;
+        println!("Joined message_thread");
+        self.threads.output_thread.as_mut().unwrap().await?;
+        println!("Joined output_thread");
+        self.threads.ping_thread.as_mut().unwrap().await?;
+        println!("Joined ping_thread");
+
+        Ok(())
+    }
+
+    pub async fn send_message(&self, message: &str) -> Result<(), Box<dyn Error>> {
+        self.tx_message_channel.send(message.to_string())?;
+
+        Ok(())
     }
 }

@@ -6,8 +6,8 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "rust-mumble",
-    "version": "0.1.0"
+    "productName": "Fancy Mumble",
+    "version": "2.0.0"
   },
   "tauri": {
     "allowlist": {
@@ -57,7 +57,7 @@
         "fullscreen": false,
         "height": 600,
         "resizable": true,
-        "title": "Rust Mumble",
+        "title": "Fancy Mumble",
         "width": 800
       }
     ]
