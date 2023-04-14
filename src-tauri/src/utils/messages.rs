@@ -1,5 +1,6 @@
 use byteorder::{BigEndian, ByteOrder};
 use prost::{DecodeError, Message};
+use std::any::Any;
 
 pub mod mumble {
     pub mod proto {
@@ -19,7 +20,7 @@ macro_rules! message_builder {
             }
         })*
 
-        pub fn get_message(id: u16, buf: &[u8]) -> Result<Box<dyn Message>, DecodeError> {
+        pub fn get_message(id: u16, buf: &[u8]) -> Result<Box<dyn Any>, DecodeError> {
             match id {
                 $( $value => {
                     let value = <$proto>::decode(buf);

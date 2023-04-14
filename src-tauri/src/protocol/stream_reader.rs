@@ -1,28 +1,35 @@
 use byteorder::{BigEndian, ReadBytesExt};
 use prost::Message;
+use std::any::Any;
 use std::io::Cursor;
+use tokio::sync::broadcast::Sender;
 
 use crate::utils::messages::get_message;
 
+use super::message_handler::MessageHandler;
+
 pub struct StreamReader {
     stream_buffer: Vec<u8>,
+
+    message_handler: MessageHandler,
 }
 
 impl StreamReader {
-    pub fn new() -> StreamReader {
+    pub fn new(sender: Sender<String>) -> StreamReader {
         StreamReader {
             stream_buffer: Vec::<u8>::new(),
+            message_handler: MessageHandler::new(sender),
         }
     }
 
     pub fn read(&mut self, data: &mut Vec<u8>) {
         self.stream_buffer.append(data);
         while let Some(result) = self.try_read() {
-            println!("{result:?}");
+            self.message_handler.recv_message(result);
         }
     }
 
-    fn try_read(&mut self) -> Option<Box<dyn Message>> {
+    fn try_read(&mut self) -> Option<Box<dyn Any>> {
         if self.stream_buffer.len() < 6 {
             return None;
         }

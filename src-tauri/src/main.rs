@@ -8,12 +8,13 @@ mod protocol;
 mod utils;
 use tokio::sync::Mutex;
 
-use tauri::State;
+use tauri::{Manager, State};
 
-use crate::connection::Connection;
+use crate::{connection::Connection, protocol::message_transmitter::MessageTransmitter};
 
 struct ConnectionState {
     connection: Mutex<Option<Connection>>,
+    window: Mutex<tauri::Window>,
 }
 
 #[tauri::command]
@@ -38,6 +39,10 @@ async fn connect_to_server(
         return Err(format!("{e:?}"));
     }
 
+    let window = state.window.lock().await;
+    let transmitter = MessageTransmitter::new(connection.get_message_channel(), window.clone());
+    transmitter.message_transmit_handler().await;
+
     Ok(())
 }
 
@@ -58,8 +63,13 @@ async fn send_message(
 
 fn main() {
     tauri::Builder::default()
-        .manage(ConnectionState {
-            connection: Mutex::new(None),
+        .setup(|app| {
+            app.manage(ConnectionState {
+                connection: Mutex::new(None),
+                window: Mutex::new(app.get_window("main").unwrap()),
+            });
+
+            Ok(())
         })
         .invoke_handler(tauri::generate_handler![connect_to_server, send_message])
         .run(tauri::generate_context!())

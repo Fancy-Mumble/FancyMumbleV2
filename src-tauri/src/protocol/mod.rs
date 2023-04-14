@@ -1,4 +1,8 @@
 pub mod stream_reader;
+pub mod message_handler;
+pub mod message_transmitter;
+pub mod serialize;
+
 use crate::utils::messages::{message_builder, mumble};
 use tokio::sync::broadcast::Sender;
 

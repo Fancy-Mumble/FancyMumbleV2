@@ -25,6 +25,10 @@ struct ThreadReferenceHolder {
     main_thread: Option<JoinHandle<()>>,
 }
 
+struct MessageChannels {
+    message_channel: Sender<String>,
+}
+
 pub struct Connection {
     username: String,
     server_host: String,
@@ -37,6 +41,7 @@ pub struct Connection {
 
     running: Arc<RwLock<bool>>,
     threads: ThreadReferenceHolder,
+    message_channels: MessageChannels,
 }
 
 impl Connection {
@@ -44,6 +49,8 @@ impl Connection {
         let (tx_in, _): (Sender<Vec<u8>>, Receiver<Vec<u8>>) = broadcast::channel(QUEUE_SIZE);
         let (tx_out, _): (Sender<Vec<u8>>, Receiver<Vec<u8>>) = broadcast::channel(QUEUE_SIZE);
         let (tx_message_channel, _): (Sender<String>, Receiver<String>) =
+            broadcast::channel(QUEUE_SIZE);
+        let (message_channel, _): (Sender<String>, Receiver<String>) =
             broadcast::channel(QUEUE_SIZE);
 
         Connection {
@@ -60,16 +67,20 @@ impl Connection {
                 output_thread: None,
                 main_thread: None,
             },
+            message_channels: MessageChannels {
+                message_channel: message_channel,
+            },
         }
     }
 
     fn spawn_message_thread(&mut self) {
         let mut rx_in = self.tx_in.subscribe();
         let running_clone = self.running.clone();
+        let message_sender_channel = self.message_channels.message_channel.clone();
 
         self.threads.message_thread = Some(tokio::spawn(async move {
             let mut interval = time::interval(DEADMAN_INTERVAL);
-            let mut reader = StreamReader::new();
+            let mut reader = StreamReader::new(message_sender_channel);
 
             while *running_clone.read().unwrap() {
                 select! {
@@ -239,5 +250,9 @@ impl Connection {
         self.tx_message_channel.send(message.to_string())?;
 
         Ok(())
+    }
+
+    pub fn get_message_channel(&self) -> Receiver<String> {
+        self.message_channels.message_channel.subscribe()
     }
 }
