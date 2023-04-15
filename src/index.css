@@ -8,6 +8,10 @@
   background-color: #242424;
 }
 
+html {
+  height: 100%;
+}
+
 body {
   margin: 0;
   display: flex;
@@ -16,6 +20,7 @@ body {
   min-height: 100vh;
   align-items: center;
   justify-content: center;
+  height: 100%;
 }
 
 h1 {

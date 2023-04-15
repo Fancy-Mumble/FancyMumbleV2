@@ -30,7 +30,7 @@ function Login() {
     let errorBox = errorInfo.show ? (<Box mb={3}><Alert severity="error">{errorInfo.text}</Alert></Box>) : (<div></div>);
 
     return (
-        <Container>
+        <Container className='Login'>
             <Typography align='center' variant='h2' gutterBottom>Fancy Mumble</Typography >
             {errorBox}
             <Container>
