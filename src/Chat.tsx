@@ -10,6 +10,16 @@ import GifIcon from '@mui/icons-material/Gif';
 import GifSearch from './components/GifSearch';
 import React from 'react';
 
+enum MessageTypes {
+    Ping = "Ping",
+    TextMessage = "TextMessage"
+}
+
+interface BackendMessage {
+    message_type: MessageTypes,
+    data: any
+}
+
 function Chat() {
     const [chatMessage, setChatMessage] = useState("");
     const [messageLog, setMessageLog] = useState<TextMessage[]>([]);
@@ -19,9 +29,20 @@ function Chat() {
     useEffect(() => {
         //listen to a event
         const unlisten = listen("text_message", (e) => {
-            let message: TextMessage = JSON.parse(e.payload as any);
-            message.timestamp = Date.now();
-            setMessageLog(messageLog => [...messageLog, message]);
+            let message: BackendMessage = JSON.parse(e.payload as any);
+            console.log(message);
+
+            switch (message.message_type) {
+                case MessageTypes.TextMessage: {
+                    message.data.timestamp = Date.now();
+                    setMessageLog(messageLog => [...messageLog, message.data]);
+                    break;
+                }
+                case MessageTypes.Ping: {
+                    console.log("Got Ping");
+                    break;
+                }
+            }
         });
 
         return () => {

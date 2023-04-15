@@ -1,6 +1,8 @@
 use byteorder::{BigEndian, ByteOrder};
 use prost::{DecodeError, Message};
+use serde::Serialize;
 use std::any::Any;
+use tokio::sync::broadcast::Sender;
 
 pub mod mumble {
     pub mod proto {
@@ -8,24 +10,64 @@ pub mod mumble {
     }
 }
 
+#[derive(Debug)]
+pub struct MessageInfo {
+    pub message_type: MessageTypes,
+    pub message_data: Box<dyn Any>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct MessageSendData<T>
+where
+    T: Clone
+{
+    message_type: MessageTypes,
+    data: T,
+}
+
 pub trait NetworkMessage {
     fn message_type(&self) -> u16;
 }
 
 macro_rules! message_builder {
-    ($($value:expr => $proto:ty),*) => {
-        $(impl NetworkMessage for $proto {
+    ($($value:expr => $proto:ident),*) => {
+        $(impl NetworkMessage for mumble::proto::$proto {
             fn message_type(&self) -> u16 {
                 $value
             }
         })*
 
-        pub fn get_message(id: u16, buf: &[u8]) -> Result<Box<dyn Any>, DecodeError> {
+        #[derive(Debug, Clone, Serialize)]
+        pub enum MessageTypes {
+            $( $proto ),*
+        }
+
+        pub fn downcast_message(data: Box<dyn Any>, message_type: MessageTypes, send_to: Sender<String>) {
+                match message_type {
+                    $( MessageTypes::$proto => {
+                        match data.downcast::<mumble::proto::$proto>() {
+                            Ok(b) => {
+                                let data = MessageSendData{message_type, data: b.as_ref() };
+                                if let Ok(v) = serde_json::to_string(&data) {
+                                    _ = send_to.send(v);
+                                }
+                            }
+                            Err(e) => {
+                                println!("Type not yet implemented: {:?}", message_type);
+                            }
+                        };
+                    }
+                ),*
+                //message.message_data.downcast::<TextMessage>()
+                }
+        }
+
+        pub fn get_message(id: u16, buf: &[u8]) -> Result<MessageInfo, DecodeError> {
             match id {
                 $( $value => {
-                    let value = <$proto>::decode(buf);
+                    let value = <mumble::proto::$proto>::decode(buf);
                     match value {
-                        Ok(v) => Ok(Box::new(v)),
+                        Ok(v) => Ok(MessageInfo{ message_type: MessageTypes::$proto, message_data: Box::new(v)} ),
                         Err(e) => Err(e)
                     }
                 } ),*
@@ -36,32 +78,32 @@ macro_rules! message_builder {
 }
 
 message_builder! {
-    0 => mumble::proto::Version,
-    1 => mumble::proto::UdpTunnel,
-    2 => mumble::proto::Authenticate,
-    3 => mumble::proto::Ping,
-    4 => mumble::proto::Reject,
-    5 => mumble::proto::ServerSync,
-    6 => mumble::proto::ChannelRemove,
-    7 => mumble::proto::ChannelState,
-    8 => mumble::proto::UserRemove,
-    9 => mumble::proto::UserState,
-    10 => mumble::proto::BanList,
-    11 => mumble::proto::TextMessage,
-    12 => mumble::proto::PermissionDenied,
-    13 => mumble::proto::Acl,
-    14 => mumble::proto::QueryUsers,
-    15 => mumble::proto::CryptSetup,
-    16 => mumble::proto::ContextActionModify,
-    17 => mumble::proto::ContextAction,
-    18 => mumble::proto::UserList,
-    19 => mumble::proto::VoiceTarget,
-    20 => mumble::proto::PermissionQuery,
-    21 => mumble::proto::CodecVersion,
-    22 => mumble::proto::UserStats,
-    23 => mumble::proto::RequestBlob,
-    24 => mumble::proto::ServerConfig,
-    25 => mumble::proto::SuggestConfig
+    0 => Version,
+    1 => UdpTunnel,
+    2 => Authenticate,
+    3 => Ping,
+    4 => Reject,
+    5 => ServerSync,
+    6 => ChannelRemove,
+    7 => ChannelState,
+    8 => UserRemove,
+    9 => UserState,
+    10 => BanList,
+    11 => TextMessage,
+    12 => PermissionDenied,
+    13 => Acl,
+    14 => QueryUsers,
+    15 => CryptSetup,
+    16 => ContextActionModify,
+    17 => ContextAction,
+    18 => UserList,
+    19 => VoiceTarget,
+    20 => PermissionQuery,
+    21 => CodecVersion,
+    22 => UserStats,
+    23 => RequestBlob,
+    24 => ServerConfig,
+    25 => SuggestConfig
 }
 
 pub fn message_builder<T>(message: T) -> Vec<u8>

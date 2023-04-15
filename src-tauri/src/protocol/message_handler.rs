@@ -1,28 +1,20 @@
-use std::any::Any;
-use tokio::sync::broadcast::Sender;
-
-use crate::utils::messages::mumble::proto::{TextMessage};
+use crate::{
+    connection::MessageChannels,
+    utils::messages::{mumble::proto::TextMessage, MessageInfo, downcast_message},
+};
 
 pub struct MessageHandler {
-    sender: Sender<String>,
+    sender: MessageChannels,
 }
 
 impl MessageHandler {
-    pub fn new(sender: Sender<String>) -> MessageHandler {
+    pub fn new(sender: MessageChannels) -> MessageHandler {
         MessageHandler { sender }
     }
 
-    pub fn recv_message(&self, message: Box<dyn Any>) {
-        println!("Incomming: {message:?}");
-        match message.downcast::<TextMessage>() {
-            Ok(mut b) => {
-                if let Ok(v) = serde_json::to_string(b.as_mut()) {
-                    _ = self.sender.send(v);
-                }
-            }
-            Err(e) => {
-                println!("Type not yet implemented: {e:?}");
-            }
-        };
+    pub fn recv_message(&self, message: MessageInfo) {
+        //println!("Incomming: {message:?}");
+
+        downcast_message(message.message_data, message.message_type, self.sender.message_channel.clone())
     }
 }

@@ -27,8 +27,9 @@ struct ThreadReferenceHolder {
     main_thread: Option<JoinHandle<()>>,
 }
 
-struct MessageChannels {
-    message_channel: Sender<String>,
+#[derive(Debug, Clone)]
+pub struct MessageChannels {
+    pub message_channel: Sender<String>,
 }
 
 pub struct Connection {
@@ -78,11 +79,11 @@ impl Connection {
     fn spawn_message_thread(&mut self) {
         let mut rx_in = self.tx_in.subscribe();
         let running_clone = self.running.clone();
-        let message_sender_channel = self.message_channels.message_channel.clone();
+        let message_channels = self.message_channels.clone();
 
         self.threads.message_thread = Some(tokio::spawn(async move {
             let mut interval = time::interval(DEADMAN_INTERVAL);
-            let mut reader = StreamReader::new(message_sender_channel);
+            let mut reader = StreamReader::new(message_channels);
 
             while *running_clone.read().unwrap() {
                 select! {

@@ -33,8 +33,8 @@ interface ChatMessageState {
 }
 
 class ChatMessage extends React.Component<ChatMessageProps, ChatMessageState> {
-    parseMessage(message: string) {
-        if (message.includes('<')) {
+    parseMessage(message: string | undefined) {
+        if (message && message.includes('<')) {
             let cleanMessage = DOMPurify.sanitize(message);
             const parser = new DOMParser();
             const doc = parser.parseFromString(cleanMessage, "text/html");

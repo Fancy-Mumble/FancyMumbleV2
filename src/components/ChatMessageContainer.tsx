@@ -21,16 +21,16 @@ class ChatMessageContainer extends React.Component<ChatMessageContainerProps, Ch
 	}
 
 	getSnapshotBeforeUpdate(prevProps: ChatMessageContainerProps, prevState: ChatMessageContainerState) {
-		if (!this.chatContainer.current) {
-			return;
+		if (this.chatContainer.current) {
+			let el = this.chatContainer.current;
+			if (el.scrollTop < el.scrollHeight - el.clientHeight) {
+				this.userScrolled = true;
+			} else {
+				this.userScrolled = false;
+			}
 		}
 
-		let el = this.chatContainer.current;
-		if (el.scrollTop < el.scrollHeight - el.clientHeight) {
-			this.userScrolled = true;
-		} else {
-			this.userScrolled = false;
-		}
+		return null;
 	}
 
 	componentDidUpdate(prevProps: ChatMessageContainerProps) {

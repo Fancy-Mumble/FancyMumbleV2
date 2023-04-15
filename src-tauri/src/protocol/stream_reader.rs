@@ -1,9 +1,8 @@
 use byteorder::{BigEndian, ReadBytesExt};
-use std::any::Any;
 use std::io::Cursor;
-use tokio::sync::broadcast::Sender;
 
-use crate::utils::messages::get_message;
+use crate::connection::MessageChannels;
+use crate::utils::messages::{get_message, MessageInfo};
 
 use super::message_handler::MessageHandler;
 
@@ -14,7 +13,7 @@ pub struct StreamReader {
 }
 
 impl StreamReader {
-    pub fn new(sender: Sender<String>) -> StreamReader {
+    pub fn new(sender: MessageChannels) -> StreamReader {
         StreamReader {
             stream_buffer: Vec::<u8>::new(),
             message_handler: MessageHandler::new(sender),
@@ -28,7 +27,7 @@ impl StreamReader {
         }
     }
 
-    fn try_read(&mut self) -> Option<Box<dyn Any>> {
+    fn try_read(&mut self) -> Option<MessageInfo> {
         if self.stream_buffer.len() < 6 {
             return None;
         }
