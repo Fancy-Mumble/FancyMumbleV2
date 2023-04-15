@@ -1,5 +1,4 @@
 use byteorder::{BigEndian, ReadBytesExt};
-use prost::Message;
 use std::any::Any;
 use std::io::Cursor;
 use tokio::sync::broadcast::Sender;

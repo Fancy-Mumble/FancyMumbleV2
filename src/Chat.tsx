@@ -14,7 +14,7 @@ function Chat() {
     const [chatMessage, setChatMessage] = useState("");
     const [messageLog, setMessageLog] = useState<TextMessage[]>([]);
     const [showGifSearch, setShowGifSearch] = useState(false);
-    const [gifSearchAnchor, setGifSearchAnchor] = useState({});
+    const [gifSearchAnchor, setGifSearchAnchor] = useState<HTMLElement>();
 
     useEffect(() => {
         //listen to a event
@@ -29,10 +29,16 @@ function Chat() {
         }
     });
 
-    function sendChatMessage(e: any) {
-        invoke('send_message', { chatMessage: chatMessage });
+    function customChatMessage(data: string) {
+        invoke('send_message', { chatMessage: data });
         setChatMessage("");
     }
+
+    function sendChatMessage(e: any) {
+        customChatMessage(chatMessage)
+    }
+
+
 
     function keyDownHandler(e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) {
         if (e && e.key === 'Enter') {
@@ -49,6 +55,22 @@ function Chat() {
         setGifSearchAnchor(e.currentTarget)
     }
 
+    function pasteEvent(event: any) {
+        let items = event.clipboardData.items;
+        for (const item of items) {
+            if (item.type.indexOf('image') !== -1) {
+                const file = item.getAsFile();
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = function () {
+                    let img = '<img src="' + reader.result + '" />';
+                    customChatMessage(img);
+                };
+            }
+        }
+
+    }
+
     return (
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'row' }}>
             <Box>
@@ -59,9 +81,7 @@ function Chat() {
             </Box>
             <Box sx={{ flex: 1, overflowY: 'auto' }}>
                 <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                    <Box sx={{ flex: 1, overflowY: 'auto' }}>
-                        <ChatMessageContainer messages={messageLog}></ChatMessageContainer>
-                    </Box>
+                    <ChatMessageContainer messages={messageLog}></ChatMessageContainer>
                     <Box m={2} sx={{ display: 'flex' }}>
                         <Paper
                             component="form"
@@ -77,6 +97,7 @@ function Chat() {
                                 onChange={e => setChatMessage(e.target.value)}
                                 onKeyDown={keyDownHandler}
                                 value={chatMessage}
+                                onPaste={pasteEvent}
                             />
                             <IconButton onClick={showGifPreview}>
                                 <GifIcon />

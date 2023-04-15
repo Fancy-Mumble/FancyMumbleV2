@@ -1,6 +1,7 @@
 use crate::protocol::init_connection;
 use crate::protocol::stream_reader::StreamReader;
 use crate::utils::messages::{message_builder, mumble};
+use std::cmp;
 use std::error::Error;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, SystemTime};
@@ -17,6 +18,7 @@ const QUEUE_SIZE: usize = 256;
 const PING_INTERVAL: Duration = Duration::from_millis(5000);
 const DEADMAN_INTERVAL: Duration = Duration::from_millis(2000);
 const BUFFER_SIZE: usize = 1024;
+const MAX_SEND_SIZE: usize = 1024;
 
 struct ThreadReferenceHolder {
     ping_thread: Option<JoinHandle<()>>,
@@ -185,9 +187,14 @@ impl Connection {
                         }
                     }
                     Ok(result) = rx_out.recv() => {
-                        println!("Sending to server: {result:?}");
+                        if result.len() < MAX_SEND_SIZE {
+                            println!("Sending to server: {result:?}");
+                        }
 
-                        _ = writer.write(&result).await;
+                        let chunks = result.chunks(cmp::max(1, result.len() / MAX_SEND_SIZE));
+                        for chunk in chunks {
+                            _ = writer.write(&chunk).await;
+                        }
                     }
                 }
             }

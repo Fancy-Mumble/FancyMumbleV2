@@ -1,5 +1,4 @@
-use prost::Message;
-use serde::ser::{Serialize, SerializeStruct, Serializer};
+use serde::ser::{Serialize, SerializeStruct};
 
 use crate::utils::messages::mumble::proto::TextMessage;
 

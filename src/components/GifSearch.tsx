@@ -4,7 +4,7 @@ import SearchIcon from '@mui/icons-material/Search';
 
 interface GifSearchProps {
   open: boolean
-  anchor: HTMLElement
+  anchor: HTMLElement | undefined
 }
 
 function GifSearch(props: GifSearchProps) {

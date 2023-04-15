@@ -41,13 +41,11 @@ class ChatMessage extends React.Component<ChatMessageProps, ChatMessageState> {
 
             const images = Array.from(doc.querySelectorAll('img')).map(img => img.src);
 
-            return (<ImageList cols={Math.min(images.length, 3)} rowHeight={164}>
+            return (<div>
                 {images.map(e =>
-                    <ImageListItem key={e}>
-                        <img src={e} />
-                    </ImageListItem>
+                    <img key={e} src={e} />
                 )}
-            </ImageList>);
+            </div>);
         }
 
         return message;

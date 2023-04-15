@@ -1,4 +1,3 @@
-use prost::Message;
 use std::any::Any;
 use tokio::sync::broadcast::Sender;
 
