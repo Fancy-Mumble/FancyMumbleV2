@@ -9,6 +9,7 @@ import { TextMessage } from './components/ChatMessage';
 import GifIcon from '@mui/icons-material/Gif';
 import GifSearch from './components/GifSearch';
 import React from 'react';
+import Sidebar from './Sidebar';
 
 enum MessageTypes {
     Ping = "Ping",
@@ -94,12 +95,7 @@ function Chat() {
 
     return (
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'row' }}>
-            <Box>
-                <Skeleton animation={false} variant="rectangular" width={100} height={60} />
-                <Skeleton animation={false} width={100} />
-                <Skeleton animation={false} width={100} />
-                <Skeleton animation={false} width={100} />
-            </Box>
+            <Sidebar />
             <Box sx={{ flex: 1, overflowY: 'auto' }}>
                 <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <ChatMessageContainer messages={messageLog}></ChatMessageContainer>

@@ -14,6 +14,11 @@ impl MessageTransmitter {
         }
     }
 
+    pub async fn shutdown() {
+        todo!();
+    }
+
+    //TODO: This is missing a shutdown for this channel and will cause a crash on shutdown!
     pub async fn message_transmit_handler(&self) {
         let mut channel = self.recv_channel.resubscribe();
         let window_clone = self.window.clone();
@@ -22,7 +27,6 @@ impl MessageTransmitter {
             loop {
                 select! {
                     Ok(result) = channel.recv() => {
-                        println!("Sending text_message");
                         _ = window_clone.emit_all("text_message", result);
                     }
                 }

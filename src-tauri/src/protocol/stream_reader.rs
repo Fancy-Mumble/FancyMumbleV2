@@ -20,7 +20,7 @@ impl StreamReader {
         }
     }
 
-    pub fn read(&mut self, data: &mut Vec<u8>) {
+    pub fn read_next(&mut self, data: &mut Vec<u8>) {
         self.stream_buffer.append(data);
         while let Some(result) = self.try_read() {
             self.message_handler.recv_message(result);

@@ -1,6 +1,6 @@
 use crate::{
     connection::MessageChannels,
-    utils::messages::{mumble::proto::TextMessage, MessageInfo, downcast_message},
+    utils::messages::{MessageInfo, downcast_message},
 };
 
 pub struct MessageHandler {
@@ -13,8 +13,6 @@ impl MessageHandler {
     }
 
     pub fn recv_message(&self, message: MessageInfo) {
-        //println!("Incomming: {message:?}");
-
         downcast_message(message.message_data, message.message_type, self.sender.message_channel.clone())
     }
 }

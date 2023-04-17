@@ -20,7 +20,7 @@ pub async fn init_connection(username: &str, channel: Sender<Vec<u8>>) {
 
     let auth = mumble::proto::Authenticate {
         opus: Some(true),
-        celt_versions: vec![-2147483637, -2147483632],
+        celt_versions: vec![-2147483632, -2147483637],
         password: None,
         tokens: vec![],
         username: Some(username.to_string()),

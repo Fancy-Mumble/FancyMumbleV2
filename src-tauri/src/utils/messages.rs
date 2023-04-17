@@ -58,7 +58,6 @@ macro_rules! message_builder {
                         };
                     }
                 ),*
-                //message.message_data.downcast::<TextMessage>()
                 }
         }
 

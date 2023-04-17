@@ -1,3 +1,4 @@
+use crate::main;
 use crate::protocol::init_connection;
 use crate::protocol::stream_reader::StreamReader;
 use crate::utils::messages::{message_builder, mumble};
@@ -88,7 +89,7 @@ impl Connection {
             while *running_clone.read().unwrap() {
                 select! {
                     Ok(mut result) = rx_in.recv() => {
-                        reader.read(&mut result);
+                        reader.read_next(&mut result);
                     }
 
                     _ = interval.tick() => {}
@@ -127,7 +128,6 @@ impl Connection {
                 };
 
                 interval.tick().await;
-                println!("Writing Ping");
                 let buffer = message_builder(ping);
                 _ = tx_a.send(buffer);
             }
@@ -242,14 +242,30 @@ impl Connection {
         }
         println!("Joining Threads");
 
-        self.threads.main_thread.as_mut().unwrap().await?;
-        println!("Joined main_thread");
-        self.threads.message_thread.as_mut().unwrap().await?;
-        println!("Joined message_thread");
-        self.threads.output_thread.as_mut().unwrap().await?;
-        println!("Joined output_thread");
-        self.threads.ping_thread.as_mut().unwrap().await?;
-        println!("Joined ping_thread");
+        if let Some(main_thread) = self.threads.main_thread.as_mut() {
+            main_thread.await?;
+            println!("Joined main_thread");
+        }
+
+        if let Some(message_thread) = self.threads.message_thread.as_mut() {
+            message_thread.await?;
+            println!("Joined message_thread");
+        }
+
+        if let Some(output_thread) = self.threads.output_thread.as_mut() {
+            output_thread.await?;
+            println!("Joined output_thread");
+        }
+
+        if let Some(ping_thread) = self.threads.ping_thread.as_mut() {
+            ping_thread.await?;
+            println!("Joined ping_thread");
+        }
+
+        self.threads.main_thread = None;
+        self.threads.message_thread = None;
+        self.threads.output_thread = None;
+        self.threads.ping_thread = None;
 
         Ok(())
     }
