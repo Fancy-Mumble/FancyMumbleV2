@@ -1,11 +1,13 @@
-use crate::main;
+pub mod connection_traits;
 use crate::protocol::init_connection;
 use crate::protocol::stream_reader::StreamReader;
-use crate::utils::messages::{message_builder, mumble};
+use crate::utils::messages::{message_builder, mumble, MessageTypes};
+use crate::connection::connection_traits::Shutdown;
 use std::cmp;
 use std::error::Error;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, SystemTime};
+use async_trait::async_trait;
 use tokio::io::AsyncWriteExt;
 use tokio::io::{AsyncReadExt, BufReader};
 use tokio::net::TcpStream;
@@ -14,6 +16,8 @@ use tokio::sync::broadcast::{self, Receiver, Sender};
 use tokio::task::JoinHandle;
 use tokio::time;
 use tokio_native_tls::native_tls::TlsConnector;
+
+use self::connection_traits::HandleMessage;
 
 const QUEUE_SIZE: usize = 256;
 const PING_INTERVAL: Duration = Duration::from_millis(5000);
@@ -234,8 +238,25 @@ impl Connection {
 
         Ok(())
     }
+    pub async fn send_message(&self, message: &str) -> Result<(), Box<dyn Error>> {
+        self.tx_message_channel.send(message.to_string())?;
 
-    pub async fn shutdown(&mut self) -> Result<(), Box<dyn Error>> {
+        Ok(())
+    }
+
+    pub fn get_message_channel(&self) -> Receiver<String> {
+        self.message_channels.message_channel.subscribe()
+    }
+
+    pub fn addListener(&self, message_type: MessageTypes, message: Box<dyn HandleMessage>) {
+
+    }
+}
+
+
+#[async_trait]
+impl Shutdown for Connection {
+    async fn shutdown(&mut self) -> Result<(), Box<dyn Error>> {
         println!("Sending Shutdown Request");
         if let Ok(mut running) = self.running.write() {
             *running = false;
@@ -268,15 +289,5 @@ impl Connection {
         self.threads.ping_thread = None;
 
         Ok(())
-    }
-
-    pub async fn send_message(&self, message: &str) -> Result<(), Box<dyn Error>> {
-        self.tx_message_channel.send(message.to_string())?;
-
-        Ok(())
-    }
-
-    pub fn get_message_channel(&self) -> Receiver<String> {
-        self.message_channels.message_channel.subscribe()
     }
 }
