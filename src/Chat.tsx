@@ -36,7 +36,7 @@ function Chat() {
             switch (message.message_type) {
                 case MessageTypes.TextMessage: {
                     message.data.timestamp = Date.now();
-                    setMessageLog(messageLog => [...messageLog, message.data]);
+                    addChatMessage(message.data);
                     break;
                 }
                 case MessageTypes.Ping: {
@@ -51,8 +51,13 @@ function Chat() {
         }
     });
 
+    function addChatMessage(message: TextMessage) {
+        setMessageLog(messageLog => [...messageLog, message]);
+    }
+
     function customChatMessage(data: string) {
         invoke('send_message', { chatMessage: data });
+        addChatMessage({actor: 0, channel_id: [0], message: data, session: [0], timestamp: Date.now(), tree_id: [0]})
         setChatMessage("");
     }
 
@@ -64,6 +69,7 @@ function Chat() {
 
     function keyDownHandler(e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) {
         if (e && e.key === 'Enter') {
+            e.preventDefault();
             sendChatMessage({});
         }
     }
