@@ -1,4 +1,4 @@
-use crate::{connection::{Connection, connection_traits::Shutdown}, protocol::message_transmitter::MessageTransmitter, utils::messages::MessageTypes};
+use crate::{connection::{Connection, connection_traits::Shutdown}, protocol::message_transmitter::MessageTransmitter};
 use tauri::State;
 use tokio::sync::Mutex;
 
@@ -30,10 +30,8 @@ pub async fn connect_to_server(
     }
 
     let window = state.window.lock().await;
-    let textMessageListener = Box::new(MessageTransmitter::new(window.clone()));
-    connection.addListener(MessageTypes::TextMessage, textMessageListener);
-
-    // transmitter.message_transmit_handler().await;
+    let mut transmitter = MessageTransmitter::new(connection.get_message_channel(), window.clone());
+    transmitter.start_message_transmit_handler().await;
 
     Ok(())
 }

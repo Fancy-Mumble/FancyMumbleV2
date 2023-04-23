@@ -1,14 +1,11 @@
 use byteorder::{BigEndian, ReadBytesExt};
 use std::io::Cursor;
-
-use crate::connection::MessageChannels;
-use crate::utils::messages::{get_message, MessageInfo};
-
 use super::message_handler::MessageHandler;
+
+use crate::{utils::messages::{get_message, MessageInfo}, connection::MessageChannels};
 
 pub struct StreamReader {
     stream_buffer: Vec<u8>,
-
     message_handler: MessageHandler,
 }
 

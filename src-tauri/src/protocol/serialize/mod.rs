@@ -23,7 +23,7 @@ impl Serialize for Version {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("Version", 0)?;
+        let s = serializer.serialize_struct("Version", 0)?;
         s.end()
     }
 }
@@ -32,7 +32,7 @@ impl Serialize for UdpTunnel {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("UdpTunnel", 0)?;
+        let s = serializer.serialize_struct("UdpTunnel", 0)?;
         s.end()
     }
 }
@@ -41,7 +41,7 @@ impl Serialize for Authenticate {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("Authenticate", 0)?;
+        let s = serializer.serialize_struct("Authenticate", 0)?;
         s.end()
     }
 }
@@ -50,7 +50,7 @@ impl Serialize for Ping {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("Ping", 0)?;
+        let s = serializer.serialize_struct("Ping", 0)?;
         s.end()
     }
 }
@@ -59,7 +59,7 @@ impl Serialize for Reject {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("Reject", 0)?;
+        let s = serializer.serialize_struct("Reject", 0)?;
         s.end()
     }
 }
@@ -68,7 +68,7 @@ impl Serialize for ServerSync {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("ServerSync", 0)?;
+        let s = serializer.serialize_struct("ServerSync", 0)?;
         s.end()
     }
 }
@@ -77,7 +77,7 @@ impl Serialize for ChannelRemove {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("ChannelRemove", 0)?;
+        let s = serializer.serialize_struct("ChannelRemove", 0)?;
         s.end()
     }
 }
@@ -86,7 +86,7 @@ impl Serialize for ChannelState {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("ChannelState", 0)?;
+        let s = serializer.serialize_struct("ChannelState", 0)?;
         s.end()
     }
 }
@@ -95,7 +95,7 @@ impl Serialize for UserRemove {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("UserRemove", 0)?;
+        let s = serializer.serialize_struct("UserRemove", 0)?;
         s.end()
     }
 }
@@ -104,7 +104,7 @@ impl Serialize for UserState {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("UserState", 0)?;
+        let s = serializer.serialize_struct("UserState", 0)?;
         s.end()
     }
 }
@@ -113,7 +113,7 @@ impl Serialize for BanList {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("BanList", 0)?;
+        let s = serializer.serialize_struct("BanList", 0)?;
         s.end()
     }
 }
@@ -123,7 +123,7 @@ impl Serialize for PermissionDenied {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("PermissionDenied", 0)?;
+        let s = serializer.serialize_struct("PermissionDenied", 0)?;
         s.end()
     }
 }
@@ -132,7 +132,7 @@ impl Serialize for Acl {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("Acl", 0)?;
+        let s = serializer.serialize_struct("Acl", 0)?;
         s.end()
     }
 }
@@ -141,7 +141,7 @@ impl Serialize for QueryUsers {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("QueryUsers", 0)?;
+        let s = serializer.serialize_struct("QueryUsers", 0)?;
         s.end()
     }
 }
@@ -150,7 +150,7 @@ impl Serialize for CryptSetup {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("CryptSetup", 0)?;
+        let s = serializer.serialize_struct("CryptSetup", 0)?;
         s.end()
     }
 }
@@ -159,7 +159,7 @@ impl Serialize for ContextActionModify {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("ContextActionModify", 0)?;
+        let s = serializer.serialize_struct("ContextActionModify", 0)?;
         s.end()
     }
 }
@@ -168,7 +168,7 @@ impl Serialize for ContextAction {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("ContextAction", 0)?;
+        let s = serializer.serialize_struct("ContextAction", 0)?;
         s.end()
     }
 }
@@ -177,7 +177,7 @@ impl Serialize for UserList {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("UserList", 0)?;
+        let s = serializer.serialize_struct("UserList", 0)?;
         s.end()
     }
 }
@@ -186,7 +186,7 @@ impl Serialize for VoiceTarget {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("VoiceTarget", 0)?;
+        let s = serializer.serialize_struct("VoiceTarget", 0)?;
         s.end()
     }
 }
@@ -195,7 +195,7 @@ impl Serialize for PermissionQuery {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("PermissionQuery", 0)?;
+        let s = serializer.serialize_struct("PermissionQuery", 0)?;
         s.end()
     }
 }
@@ -204,7 +204,7 @@ impl Serialize for CodecVersion {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("CodecVersion", 0)?;
+        let s = serializer.serialize_struct("CodecVersion", 0)?;
         s.end()
     }
 }
@@ -213,7 +213,7 @@ impl Serialize for UserStats {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("UserStats", 0)?;
+        let s = serializer.serialize_struct("UserStats", 0)?;
         s.end()
     }
 }
@@ -222,7 +222,7 @@ impl Serialize for RequestBlob {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("RequestBlob", 0)?;
+        let s = serializer.serialize_struct("RequestBlob", 0)?;
         s.end()
     }
 }
@@ -231,7 +231,7 @@ impl Serialize for ServerConfig {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("ServerConfig", 0)?;
+        let s = serializer.serialize_struct("ServerConfig", 0)?;
         s.end()
     }
 }
@@ -240,7 +240,7 @@ impl Serialize for SuggestConfig {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("SuggestConfig", 0)?;
+        let s = serializer.serialize_struct("SuggestConfig", 0)?;
         s.end()
     }
 }

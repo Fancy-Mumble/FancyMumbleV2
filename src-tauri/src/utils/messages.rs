@@ -53,7 +53,7 @@ macro_rules! message_builder {
                                 }
                             }
                             Err(e) => {
-                                println!("Type not yet implemented: {:?}", message_type);
+                                println!("Type not yet implemented: {:?}, {e:?}", message_type);
                             }
                         };
                     }
