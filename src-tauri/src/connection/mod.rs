@@ -4,6 +4,7 @@ use crate::connection::connection_traits::Shutdown;
 use crate::protocol::init_connection;
 use async_trait::async_trait;
 use connection_threads::{InputThread, MainThread, OutputThread, PingThread};
+use std::collections::HashMap;
 use std::error::Error;
 use std::sync::{Arc, RwLock};
 use tokio::net::TcpStream;
@@ -11,15 +12,10 @@ use tokio::sync::broadcast::{self, Receiver, Sender};
 use tokio::task::JoinHandle;
 use tokio_native_tls::native_tls::TlsConnector;
 
+use self::connection_threads::ConnectionThread;
+
 const QUEUE_SIZE: usize = 256;
 const BUFFER_SIZE: usize = 1024;
-
-struct ThreadReferenceHolder {
-    ping_thread: Option<JoinHandle<()>>,
-    message_thread: Option<JoinHandle<()>>,
-    output_thread: Option<JoinHandle<()>>,
-    main_thread: Option<JoinHandle<()>>,
-}
 
 struct ServerData {
     username: String,
@@ -40,7 +36,7 @@ pub struct Connection {
     tx_message_channel: Sender<String>,
 
     running: Arc<RwLock<bool>>,
-    threads: ThreadReferenceHolder,
+    threads: HashMap<ConnectionThread, JoinHandle<()>>,
     message_channels: MessageChannels,
 }
 
@@ -63,12 +59,7 @@ impl Connection {
             tx_out,
             tx_message_channel,
             running: Arc::new(RwLock::new(false)),
-            threads: ThreadReferenceHolder {
-                ping_thread: None,
-                message_thread: None,
-                output_thread: None,
-                main_thread: None,
-            },
+            threads: HashMap::new(),
             message_channels: MessageChannels {
                 message_channel: message_channel,
             },
@@ -131,30 +122,12 @@ impl Shutdown for Connection {
         }
         println!("Joining Threads");
 
-        if let Some(main_thread) = self.threads.main_thread.as_mut() {
-            main_thread.await?;
-            println!("Joined main_thread");
+        for (name, thread) in self.threads.iter_mut() {
+            thread.await?;
+            println!("Joined {}", name.to_string());
         }
 
-        if let Some(message_thread) = self.threads.message_thread.as_mut() {
-            message_thread.await?;
-            println!("Joined message_thread");
-        }
-
-        if let Some(output_thread) = self.threads.output_thread.as_mut() {
-            output_thread.await?;
-            println!("Joined output_thread");
-        }
-
-        if let Some(ping_thread) = self.threads.ping_thread.as_mut() {
-            ping_thread.await?;
-            println!("Joined ping_thread");
-        }
-
-        self.threads.main_thread = None;
-        self.threads.message_thread = None;
-        self.threads.output_thread = None;
-        self.threads.ping_thread = None;
+        self.threads.clear();
 
         Ok(())
     }

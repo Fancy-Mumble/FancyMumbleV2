@@ -9,6 +9,26 @@ use tokio::net::TcpStream;
 
 const DEADMAN_INTERVAL: Duration = Duration::from_millis(2000);
 
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+pub enum ConnectionThread {
+    PingThread,
+    OutputThread,
+    InputThread,
+    MainThread,
+}
+
+impl ToString for ConnectionThread {
+    fn to_string(&self) -> String {
+        match self {
+            ConnectionThread::PingThread => "PingThread".to_string(),
+            ConnectionThread::OutputThread => "OutputThread".to_string(),
+            ConnectionThread::InputThread => "InputThread".to_string(),
+            ConnectionThread::MainThread => "MainThread".to_string(),
+        }
+    }
+}
+
+
 pub trait PingThread {
     fn spawn_ping_thread(&mut self);
 }

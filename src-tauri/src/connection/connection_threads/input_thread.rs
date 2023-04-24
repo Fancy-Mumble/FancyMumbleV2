@@ -3,7 +3,7 @@ use crate::protocol::stream_reader::StreamReader;
 use tokio::select;
 use tokio::time;
 
-use super::{InputThread, DEADMAN_INTERVAL};
+use super::{InputThread, DEADMAN_INTERVAL, ConnectionThread};
 
 impl InputThread for Connection {
     fn spawn_input_thread(&mut self) {
@@ -11,7 +11,7 @@ impl InputThread for Connection {
         let running_clone = self.running.clone();
         let message_channels = self.message_channels.clone();
 
-        self.threads.message_thread = Some(tokio::spawn(async move {
+        self.threads.insert(ConnectionThread::InputThread, tokio::spawn(async move {
             let mut interval = time::interval(DEADMAN_INTERVAL);
             let mut reader = StreamReader::new(message_channels);
 
