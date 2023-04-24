@@ -9,7 +9,7 @@ use std::error::Error;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader};
 use tokio::net::TcpStream;
 use tokio::select;
-use tracing::{error, info};
+use tracing::{error, trace};
 
 const MAX_SEND_SIZE: usize = 1024;
 
@@ -47,7 +47,7 @@ impl MainThread for Connection {
                         }
                         Ok(result) = rx_out.recv() => {
                             if result.len() < MAX_SEND_SIZE {
-                                info!("Sending to server: {result:?}");
+                                trace!("Sending to server: {result:?}");
                             }
 
                             let chunks = result.chunks(cmp::max(1, result.len() / MAX_SEND_SIZE));

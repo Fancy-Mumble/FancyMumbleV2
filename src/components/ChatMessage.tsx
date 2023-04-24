@@ -43,7 +43,7 @@ class ChatMessage extends React.Component<ChatMessageProps, ChatMessageState> {
 
             return (<div>
                 {images.map(e =>
-                    <img key={e} src={e} />
+                    <img key={e} src={e} style={{maxWidth: '100%'}} />
                 )}
             </div>);
         }

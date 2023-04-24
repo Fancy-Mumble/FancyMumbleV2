@@ -1,6 +1,11 @@
 use serde::ser::{Serialize, SerializeStruct};
 
-use crate::utils::messages::mumble::proto::{TextMessage, Version, UdpTunnel, Authenticate, Ping, Reject, ServerSync, ChannelRemove, ChannelState, UserRemove, UserState, BanList, PermissionDenied, Acl, QueryUsers, CryptSetup, ContextActionModify, ContextAction, UserList, VoiceTarget, PermissionQuery, CodecVersion, UserStats, RequestBlob, ServerConfig, SuggestConfig};
+use crate::utils::messages::mumble::proto::{
+    Acl, Authenticate, BanList, ChannelRemove, ChannelState, CodecVersion, ContextAction,
+    ContextActionModify, CryptSetup, PermissionDenied, PermissionQuery, Ping, QueryUsers, Reject,
+    RequestBlob, ServerConfig, ServerSync, SuggestConfig, TextMessage, UdpTunnel, UserList,
+    UserRemove, UserState, UserStats, Version, VoiceTarget, user_state,
+};
 
 impl Serialize for TextMessage {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -27,6 +32,7 @@ impl Serialize for Version {
         s.end()
     }
 }
+
 impl Serialize for UdpTunnel {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -36,6 +42,7 @@ impl Serialize for UdpTunnel {
         s.end()
     }
 }
+
 impl Serialize for Authenticate {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -45,15 +52,28 @@ impl Serialize for Authenticate {
         s.end()
     }
 }
+
 impl Serialize for Ping {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
-        let s = serializer.serialize_struct("Ping", 0)?;
+        let mut s = serializer.serialize_struct("Ping", 11)?;
+        s.serialize_field("timestamp", &self.timestamp)?;
+        s.serialize_field("good", &self.good)?;
+        s.serialize_field("late", &self.late)?;
+        s.serialize_field("lost", &self.lost)?;
+        s.serialize_field("resync", &self.resync)?;
+        s.serialize_field("udp_packets", &self.udp_packets)?;
+        s.serialize_field("tcp_packets", &self.tcp_packets)?;
+        s.serialize_field("udp_ping_avg", &self.udp_ping_avg)?;
+        s.serialize_field("udp_ping_var", &self.udp_ping_var)?;
+        s.serialize_field("tcp_ping_avg", &self.tcp_ping_avg)?;
+        s.serialize_field("tcp_ping_var", &self.tcp_ping_var)?;
         s.end()
     }
 }
+
 impl Serialize for Reject {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -63,6 +83,7 @@ impl Serialize for Reject {
         s.end()
     }
 }
+
 impl Serialize for ServerSync {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -72,6 +93,7 @@ impl Serialize for ServerSync {
         s.end()
     }
 }
+
 impl Serialize for ChannelRemove {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -81,15 +103,30 @@ impl Serialize for ChannelRemove {
         s.end()
     }
 }
+
 impl Serialize for ChannelState {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
-        let s = serializer.serialize_struct("ChannelState", 0)?;
+        let mut s = serializer.serialize_struct("ChannelState", 12)?;
+        s.serialize_field("channel_id", &self.channel_id)?;
+        s.serialize_field("parent", &self.parent)?;
+        s.serialize_field("name", &self.name)?;
+        s.serialize_field("links", &self.links)?;
+        s.serialize_field("description", &self.description)?;
+        s.serialize_field("links_add", &self.links_add)?;
+        s.serialize_field("links_remove", &self.links_remove)?;
+        s.serialize_field("temporary", &self.temporary)?;
+        s.serialize_field("position", &self.position)?;
+        s.serialize_field("description_hash", &self.description_hash)?;
+        s.serialize_field("max_users", &self.max_users)?;
+        s.serialize_field("is_enter_restricted", &self.is_enter_restricted)?;
+        s.serialize_field("can_enter", &self.can_enter)?;
         s.end()
     }
 }
+
 impl Serialize for UserRemove {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -99,15 +136,55 @@ impl Serialize for UserRemove {
         s.end()
     }
 }
+
 impl Serialize for UserState {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
-        let s = serializer.serialize_struct("UserState", 0)?;
+        let mut s = serializer.serialize_struct("UserState", 22)?;
+        s.serialize_field("session", &self.session)?;
+        s.serialize_field("actor", &self.actor)?;
+        s.serialize_field("name", &self.name)?;
+        s.serialize_field("user_id", &self.user_id)?;
+        s.serialize_field("channel_id", &self.channel_id)?;
+        s.serialize_field("mute", &self.mute)?;
+        s.serialize_field("deaf", &self.deaf)?;
+        s.serialize_field("suppress", &self.suppress)?;
+        s.serialize_field("self_mute", &self.self_mute)?;
+        s.serialize_field("self_deaf", &self.self_deaf)?;
+        s.serialize_field("texture", &self.texture)?;
+        s.serialize_field("plugin_context", &self.plugin_context)?;
+        s.serialize_field("plugin_identity", &self.plugin_identity)?;
+        s.serialize_field("comment", &self.comment)?;
+        s.serialize_field("hash", &self.hash)?;
+        s.serialize_field("comment_hash", &self.comment_hash)?;
+        s.serialize_field("texture_hash", &self.texture_hash)?;
+        s.serialize_field("priority_speaker", &self.priority_speaker)?;
+        s.serialize_field("recording", &self.recording)?;
+        s.serialize_field("temporary_access_tokens", &self.temporary_access_tokens)?;
+        s.serialize_field("listening_channel_add", &self.listening_channel_add)?;
+        s.serialize_field("listening_channel_remove", &self.listening_channel_remove)?;
+        s.serialize_field(
+            "listening_volume_adjustment",
+            &self.listening_volume_adjustment,
+        )?;
         s.end()
     }
 }
+
+impl Serialize for user_state::VolumeAdjustment {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut s = serializer.serialize_struct("VolumeAdjustment", 2)?;
+        s.serialize_field("listening_channel", &self.listening_channel)?;
+        s.serialize_field("volume_adjustment", &self.volume_adjustment)?;
+        s.end()
+    }
+}
+
 impl Serialize for BanList {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -127,6 +204,7 @@ impl Serialize for PermissionDenied {
         s.end()
     }
 }
+
 impl Serialize for Acl {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -136,6 +214,7 @@ impl Serialize for Acl {
         s.end()
     }
 }
+
 impl Serialize for QueryUsers {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -145,6 +224,7 @@ impl Serialize for QueryUsers {
         s.end()
     }
 }
+
 impl Serialize for CryptSetup {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -154,6 +234,7 @@ impl Serialize for CryptSetup {
         s.end()
     }
 }
+
 impl Serialize for ContextActionModify {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -163,6 +244,7 @@ impl Serialize for ContextActionModify {
         s.end()
     }
 }
+
 impl Serialize for ContextAction {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -172,6 +254,7 @@ impl Serialize for ContextAction {
         s.end()
     }
 }
+
 impl Serialize for UserList {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -181,6 +264,7 @@ impl Serialize for UserList {
         s.end()
     }
 }
+
 impl Serialize for VoiceTarget {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -190,6 +274,7 @@ impl Serialize for VoiceTarget {
         s.end()
     }
 }
+
 impl Serialize for PermissionQuery {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -199,6 +284,7 @@ impl Serialize for PermissionQuery {
         s.end()
     }
 }
+
 impl Serialize for CodecVersion {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -208,6 +294,7 @@ impl Serialize for CodecVersion {
         s.end()
     }
 }
+
 impl Serialize for UserStats {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -217,6 +304,7 @@ impl Serialize for UserStats {
         s.end()
     }
 }
+
 impl Serialize for RequestBlob {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -226,6 +314,7 @@ impl Serialize for RequestBlob {
         s.end()
     }
 }
+
 impl Serialize for ServerConfig {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -235,6 +324,7 @@ impl Serialize for ServerConfig {
         s.end()
     }
 }
+
 impl Serialize for SuggestConfig {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where

@@ -6,7 +6,7 @@ use crate::{
 };
 use tauri::State;
 use tokio::sync::Mutex;
-use tracing::{error, info};
+use tracing::{error, info, trace};
 
 pub struct ConnectionState {
     pub connection: Mutex<Option<Connection>>,
@@ -45,9 +45,9 @@ pub async fn connect_to_server(
     }
 
     let window = state.window.lock().await;
+
     let mut transmitter = MessageTransmitter::new(connection.get_message_channel(), window.clone());
     transmitter.start_message_transmit_handler().await;
-
     add_message_handler(&state, "transmitter".to_string(), Box::new(transmitter)).await;
 
     Ok(())
@@ -81,7 +81,7 @@ pub async fn logout(state: State<'_, ConnectionState>) -> Result<(), String> {
         if let Err(e) = thread.shutdown().await {
             error!("Failed to shutdown thread {}: {}", name, e);
         }
-        info!("Joined {}", name.to_string());
+        trace!("Joined {}", name.to_string());
     }
 
     if let Err(e) = connection.as_mut().unwrap().shutdown().await {

@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use tauri::Manager;
 use tokio::task::JoinHandle;
 use tokio::{select, sync::broadcast::Receiver};
-use tracing::{debug, info};
+use tracing::{debug, trace};
 
 pub struct MessageTransmitter {
     recv_channel: Receiver<String>,
@@ -43,6 +43,7 @@ impl MessageTransmitter {
             while *running_clone.read().unwrap() {
                 select! {
                     Ok(result) = channel.recv() => {
+                        trace!("text_message: {result}");
                         _ = window_clone.emit_all("text_message", result);
                     }
                 }
@@ -54,14 +55,14 @@ impl MessageTransmitter {
 #[async_trait]
 impl Shutdown for MessageTransmitter {
     async fn shutdown(&mut self) -> Result<(), Box<dyn Error>> {
-        info!("Sending Shutdown Request");
+        trace!("Sending Shutdown Request");
         if let Ok(mut running) = self.running.write() {
             *running = false;
         }
 
         if let Some(transmitter_thread) = self.transmitter_thread.as_mut() {
             transmitter_thread.await?;
-            info!("Joined transmitter_thread");
+            trace!("Joined transmitter_thread");
         }
 
         Ok(())

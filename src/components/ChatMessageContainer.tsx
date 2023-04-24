@@ -43,7 +43,7 @@ class ChatMessageContainer extends React.Component<ChatMessageContainerProps, Ch
 	render() {
 		return (
 			<Box sx={{ flex: 1, overflowY: 'auto' }} ref={this.chatContainer}>
-				<List sx={{ width: '100%', maxWidth: 360 }}>
+				<List sx={{ width: '100%', maxWidth: '100%' }}>
 					{this.props.messages.map((el, index) => (<ChatMessage key={el.timestamp} message={el} />))}
 				</List>
 			</Box>

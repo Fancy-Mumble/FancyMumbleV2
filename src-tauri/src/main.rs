@@ -15,6 +15,7 @@ use commands::ConnectionState;
 use tokio::sync::Mutex;
 
 use tauri::Manager;
+use tracing::Level;
 use tracing_subscriber;
 use tracing_subscriber::fmt;
 
@@ -28,7 +29,10 @@ fn init_logging() {
         .with_thread_names(false)
         .compact(); // use the `Compact` formatting style.
 
-    tracing_subscriber::fmt().event_format(format).init();
+    tracing_subscriber::fmt()
+        .with_max_level(Level::TRACE)
+        .event_format(format)
+        .init();
 }
 
 fn main() {
