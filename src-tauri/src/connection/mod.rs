@@ -4,6 +4,7 @@ use crate::connection::connection_traits::Shutdown;
 use crate::protocol::init_connection;
 use async_trait::async_trait;
 use connection_threads::{InputThread, MainThread, OutputThread, PingThread};
+use tracing::{trace, info};
 use std::collections::HashMap;
 use std::error::Error;
 use std::sync::{Arc, RwLock};
@@ -116,15 +117,15 @@ impl Connection {
 #[async_trait]
 impl Shutdown for Connection {
     async fn shutdown(&mut self) -> Result<(), Box<dyn Error>> {
-        println!("Sending Shutdown Request");
+        info!("Sending Shutdown Request");
         if let Ok(mut running) = self.running.write() {
             *running = false;
         }
-        println!("Joining Threads");
+        trace!("Joining Threads");
 
         for (name, thread) in self.threads.iter_mut() {
             thread.await?;
-            println!("Joined {}", name.to_string());
+            trace!("Joined {}", name.to_string());
         }
 
         self.threads.clear();

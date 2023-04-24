@@ -9,6 +9,8 @@ mod errors;
 mod protocol;
 mod utils;
 
+use std::collections::HashMap;
+
 use commands::ConnectionState;
 use tokio::sync::Mutex;
 
@@ -37,6 +39,7 @@ fn main() {
             app.manage(ConnectionState {
                 connection: Mutex::new(None),
                 window: Mutex::new(app.get_window("main").unwrap()),
+                message_handler: Mutex::new(HashMap::new()),
             });
 
             Ok(())

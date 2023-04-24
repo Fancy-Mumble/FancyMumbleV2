@@ -6,6 +6,7 @@ use async_trait::async_trait;
 use tauri::Manager;
 use tokio::task::JoinHandle;
 use tokio::{select, sync::broadcast::Receiver};
+use tracing::{debug, info};
 
 pub struct MessageTransmitter {
     recv_channel: Receiver<String>,
@@ -26,6 +27,8 @@ impl MessageTransmitter {
 
     //TODO: This is missing a shutdown for this channel and will cause a crash on shutdown!
     pub async fn start_message_transmit_handler(&mut self) {
+        debug!("Starting MessageTransmitter");
+
         {
             if let Ok(mut running) = self.running.write() {
                 *running = true;
@@ -51,14 +54,14 @@ impl MessageTransmitter {
 #[async_trait]
 impl Shutdown for MessageTransmitter {
     async fn shutdown(&mut self) -> Result<(), Box<dyn Error>> {
-        println!("Sending Shutdown Request");
+        info!("Sending Shutdown Request");
         if let Ok(mut running) = self.running.write() {
             *running = false;
         }
 
         if let Some(transmitter_thread) = self.transmitter_thread.as_mut() {
             transmitter_thread.await?;
-            println!("Joined transmitter_thread");
+            info!("Joined transmitter_thread");
         }
 
         Ok(())
