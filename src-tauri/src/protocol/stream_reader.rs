@@ -1,4 +1,5 @@
 use byteorder::{BigEndian, ReadBytesExt};
+use tracing::error;
 use std::io::Cursor;
 use super::message_handler::MessageHandler;
 
@@ -20,7 +21,9 @@ impl StreamReader {
     pub fn read_next(&mut self, data: &mut Vec<u8>) {
         self.stream_buffer.append(data);
         while let Some(result) = self.try_read() {
-            self.message_handler.recv_message(result);
+            if let Err(e) = self.message_handler.recv_message(result) {
+                error!("Error handling message: {}", e);
+            }
         }
     }
 

@@ -25,7 +25,6 @@ impl MessageTransmitter {
         }
     }
 
-    //TODO: This is missing a shutdown for this channel and will cause a crash on shutdown!
     pub async fn start_message_transmit_handler(&mut self) {
         debug!("Starting MessageTransmitter");
 

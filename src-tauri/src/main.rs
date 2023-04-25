@@ -6,6 +6,7 @@
 mod commands;
 mod connection;
 mod errors;
+mod manager;
 mod protocol;
 mod utils;
 
