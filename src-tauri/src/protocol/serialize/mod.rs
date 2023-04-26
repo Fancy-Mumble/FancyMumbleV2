@@ -1,3 +1,5 @@
+pub mod message_container;
+
 use serde::ser::{Serialize, SerializeStruct};
 
 use crate::utils::messages::mumble::proto::{

@@ -42,8 +42,8 @@ impl MessageTransmitter {
             while *running_clone.read().unwrap() {
                 select! {
                     Ok(result) = channel.recv() => {
-                        trace!("text_message: {result}");
-                        _ = window_clone.emit_all("text_message", result);
+                        trace!("backend_update: {result}");
+                        _ = window_clone.emit_all("backend_update", result);
                     }
                 }
             }

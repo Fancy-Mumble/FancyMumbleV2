@@ -1,13 +1,14 @@
 use std::collections::{hash_map::Entry, HashMap};
 
-use tracing::{info, warn};
+use serde::Serialize;
+use tracing::{error, info, warn};
 
-use crate::utils::messages::mumble;
+use crate::{protocol::serialize::message_container::FrontendMessage, utils::messages::mumble};
 
 use super::Update;
 use tokio::sync::broadcast::Sender;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize)]
 pub struct User {
     id: u32,
     name: String,
@@ -45,12 +46,29 @@ impl Update<mumble::proto::UserState> for User {
 
 pub struct UserManager {
     users: HashMap<u32, User>,
+    frontend_channel: Sender<String>,
 }
 
 impl UserManager {
     pub fn new(send_to: Sender<String>) -> UserManager {
         UserManager {
             users: HashMap::new(),
+            frontend_channel: send_to,
+        }
+    }
+
+    fn notify(&self) {
+        let msg = FrontendMessage::new("user_list", &self.users);
+
+        match serde_json::to_string(&msg) {
+            Ok(json) => {
+                if let Err(e) = self.frontend_channel.send(json) {
+                    error!("Failed to send user list to frontend: {}", e);
+                }
+            }
+            Err(e) => {
+                error!("Failed to serialize user list: {}", e);
+            }
         }
     }
 
@@ -67,16 +85,11 @@ impl UserManager {
                 v.insert(user);
             }
         };
+
+        self.notify();
     }
 
     pub fn remove_user(&mut self, user_info: mumble::proto::UserRemove) {
-        match user_info.actor {
-            Some(actor) => {
-                self.users.remove(&actor);
-            }
-            None => {
-                warn!("UserRemove message did not contain an actor id");
-            }
-        }
+        self.users.remove(&user_info.session);
     }
 }

@@ -9,11 +9,12 @@ import { TextMessage } from './components/ChatMessage';
 import GifIcon from '@mui/icons-material/Gif';
 import GifSearch from './components/GifSearch';
 import React from 'react';
-import Sidebar from './Sidebar';
+import Sidebar, { Users } from './Sidebar';
 
 enum MessageTypes {
     Ping = "Ping",
-    TextMessage = "TextMessage"
+    TextMessage = "TextMessage",
+    UserList = "user_list"
 }
 
 interface BackendMessage {
@@ -26,12 +27,13 @@ function Chat() {
     const [messageLog, setMessageLog] = useState<TextMessage[]>([]);
     const [showGifSearch, setShowGifSearch] = useState(false);
     const [gifSearchAnchor, setGifSearchAnchor] = useState<HTMLElement>();
+    const [userList, setUserList] = useState<Users[]>([]);
 
     useEffect(() => {
         //listen to a event
-        const unlisten = listen("text_message", (e) => {
+        const unlisten = listen("backend_update", (e) => {
             let message: BackendMessage = JSON.parse(e.payload as any);
-            console.log(message);
+            console.log("msg: ", message);
 
             switch (message.message_type) {
                 case MessageTypes.TextMessage: {
@@ -41,6 +43,10 @@ function Chat() {
                 }
                 case MessageTypes.Ping: {
                     console.log("Got Ping");
+                    break;
+                }
+                case MessageTypes.UserList: {
+                    setUserList(Object.values(message.data));
                     break;
                 }
             }
@@ -101,7 +107,7 @@ function Chat() {
 
     return (
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'row' }}>
-            <Sidebar />
+            <Sidebar users={userList} />
             <Box sx={{ flex: 1, overflowY: 'auto' }}>
                 <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <ChatMessageContainer messages={messageLog}></ChatMessageContainer>
