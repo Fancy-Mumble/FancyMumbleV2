@@ -44,7 +44,7 @@ function Sidebar(props: SidebarProps) {
                 <Skeleton animation={false} variant="rectangular" width={100} height={60} />
                 <Skeleton animation={false} width={100} />
 
-                <List>
+                <List subheader={<li />}>
                     {props.users.map((user) => (
                         <ListItem>
                             <ListItemAvatar>

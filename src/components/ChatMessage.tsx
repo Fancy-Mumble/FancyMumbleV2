@@ -6,11 +6,14 @@ import 'dayjs/locale/de';
 import { blueGrey } from "@mui/material/colors";
 import DOMPurify from 'dompurify';
 
+export interface SenderInfo {
+    user_id: number,
+    user_name: string,
+}
 export interface TextMessage {
     // The message sender, identified by its session.
     actor: number,
-    // Target users for the message, identified by their session.
-    session: number[]
+    sender: SenderInfo,
     // The channels to which the message is sent, identified by their
     // channel_ids.
     channel_id: number[]
@@ -63,7 +66,7 @@ class ChatMessage extends React.Component<ChatMessageProps, ChatMessageState> {
                     primary={
                         <div>
                             <span style={{ marginRight: 15 }}>
-                                <Link underline="hover" href="#">{this.props.message.actor}</Link>
+                                <Link underline="hover" href="#">{this.props.message.sender.user_name}</Link>
                             </span>
                             <Typography variant="caption" color={blueGrey['300']}>
                                 {dayjs(this.props.message.timestamp).locale('de-de').format('DD.MM.YYYY HH:mm')}

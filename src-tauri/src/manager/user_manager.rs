@@ -1,7 +1,7 @@
 use std::collections::{hash_map::Entry, HashMap};
 
 use serde::Serialize;
-use tracing::{error, info, warn};
+use tracing::{error, info};
 
 use crate::{protocol::serialize::message_container::FrontendMessage, utils::messages::mumble};
 
@@ -10,8 +10,8 @@ use tokio::sync::broadcast::Sender;
 
 #[derive(Debug, Default, Serialize)]
 pub struct User {
-    id: u32,
-    name: String,
+    pub id: u32,
+    pub name: String,
     channel_id: u32,
     mute: bool,
     deaf: bool,
@@ -91,5 +91,9 @@ impl UserManager {
 
     pub fn remove_user(&mut self, user_info: mumble::proto::UserRemove) {
         self.users.remove(&user_info.session);
+    }
+
+    pub fn get_user_by_id(&self, id: u32) -> Option<&User> {
+        self.users.get(&id)
     }
 }

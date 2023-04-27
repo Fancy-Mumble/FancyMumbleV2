@@ -13,7 +13,7 @@ import Sidebar, { Users } from './Sidebar';
 
 enum MessageTypes {
     Ping = "Ping",
-    TextMessage = "TextMessage",
+    TextMessage = "text_message",
     UserList = "user_list"
 }
 
@@ -37,7 +37,6 @@ function Chat() {
 
             switch (message.message_type) {
                 case MessageTypes.TextMessage: {
-                    message.data.timestamp = Date.now();
                     addChatMessage(message.data);
                     break;
                 }

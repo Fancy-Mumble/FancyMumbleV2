@@ -1,5 +1,4 @@
 use serde::Serialize;
-use tracing::error;
 
 #[derive(Debug, Serialize)]
 pub struct FrontendMessage<T: Serialize + Clone> {

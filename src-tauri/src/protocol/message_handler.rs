@@ -1,22 +1,24 @@
-use std::error::Error;
+use std::{error::Error};
 
-use tracing::trace;
+use tracing::{error, trace};
 
 use crate::{
     connection::MessageChannels,
     errors::application_error::ApplicationError,
-    manager::user_manager::UserManager,
+    manager::{text_message_manager::TextMessageManager, user_manager::UserManager},
     utils::messages::{mumble, MessageInfo},
 };
 
 pub struct MessageHandler {
     user_manager: UserManager,
+    text_manager: TextMessageManager,
 }
 
 impl MessageHandler {
     pub fn new(sender: MessageChannels) -> MessageHandler {
         MessageHandler {
             user_manager: UserManager::new(sender.message_channel.clone()),
+            text_manager: TextMessageManager::new(sender.message_channel.clone()),
         }
     }
 
@@ -25,6 +27,24 @@ impl MessageHandler {
             return Ok(*a);
         }
         return Err(Box::new(ApplicationError::new("Invalid message type")));
+    }
+
+    fn handle_text_message(&mut self, message: MessageInfo) -> Result<(), Box<dyn Error>> {
+        let text_message = self.handle_downcast::<mumble::proto::TextMessage>(message)?;
+        match text_message.actor {
+            Some(actor) => {
+                let actor = self
+                    .user_manager
+                    .get_user_by_id(actor)
+                    .ok_or_else(|| Box::new(ApplicationError::new("msg")) as Box<dyn Error>)
+                    .map_err(|e| e)?;
+                self.text_manager.add_text_message(text_message, actor)?;
+            }
+            None => {
+                error!("Received text message without actor");
+            }
+        }
+        Ok(())
     }
 
     //TODO: create a message distributor
@@ -50,7 +70,9 @@ impl MessageHandler {
                 self.user_manager.update_user(changed_user);
             }
             crate::utils::messages::MessageTypes::BanList => {}
-            crate::utils::messages::MessageTypes::TextMessage => {}
+            crate::utils::messages::MessageTypes::TextMessage => {
+                self.handle_text_message(message)?;
+            }
             crate::utils::messages::MessageTypes::PermissionDenied => {}
             crate::utils::messages::MessageTypes::Acl => {}
             crate::utils::messages::MessageTypes::QueryUsers => {}
