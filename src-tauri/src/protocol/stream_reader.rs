@@ -1,29 +1,30 @@
 use byteorder::{BigEndian, ReadBytesExt};
+use tracing::error;
 use std::io::Cursor;
 
-use crate::connection::MessageChannels;
-use crate::utils::messages::{get_message, MessageInfo};
+use crate::{utils::messages::{get_message, MessageInfo}};
 
-use super::message_handler::MessageHandler;
+use super::message_router::MessageRouter;
 
 pub struct StreamReader {
     stream_buffer: Vec<u8>,
-
-    message_handler: MessageHandler,
+    message_handler: MessageRouter,
 }
 
 impl StreamReader {
-    pub fn new(sender: MessageChannels) -> StreamReader {
+    pub fn new(message_handler: MessageRouter) -> StreamReader {
         StreamReader {
             stream_buffer: Vec::<u8>::new(),
-            message_handler: MessageHandler::new(sender),
+            message_handler,
         }
     }
 
     pub fn read_next(&mut self, data: &mut Vec<u8>) {
         self.stream_buffer.append(data);
         while let Some(result) = self.try_read() {
-            self.message_handler.recv_message(result);
+            if let Err(e) = self.message_handler.recv_message(result) {
+                error!("Error handling message: {}", e);
+            }
         }
     }
 
