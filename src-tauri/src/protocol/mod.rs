@@ -24,7 +24,7 @@ pub async fn init_connection(username: &str, channel: Sender<Vec<u8>>) {
         password: None,
         tokens: vec![],
         username: Some(username.to_string()),
-        client_type: Some(0),
+        client_type: Some(0), // 1 = BOT, 0 = User
     };
 
     let buffer = message_builder(auth);

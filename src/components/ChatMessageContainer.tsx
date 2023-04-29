@@ -1,10 +1,12 @@
 import { Box, Card, CardContent, List } from "@mui/material";
 import React from "react";
 import ChatMessage, { TextMessage } from "./ChatMessage";
+import { Users } from "../Sidebar";
 
 
 interface ChatMessageContainerProps {
 	messages: TextMessage[]
+	users: Users[]
 }
 
 interface ChatMessageContainerState {
@@ -45,8 +47,6 @@ class ChatMessageContainer extends React.Component<ChatMessageContainerProps, Ch
 
 	componentDidUpdate(prevProps: ChatMessageContainerProps) {
 		if (!this.userScrolled && this.chatContainer.current) {
-			//let element = this.chatContainer.current;
-			//element.scrollTop = element.scrollHeight - element.clientHeight;
 			this.scrollToBottom();
 		}
 	}
@@ -55,7 +55,7 @@ class ChatMessageContainer extends React.Component<ChatMessageContainerProps, Ch
 		return (
 			<Box sx={{ flex: 1, overflowY: 'auto' }} ref={this.chatContainer}>
 				<List sx={{ width: '100%', maxWidth: '100%' }}>
-					{this.props.messages.map((el, index) => (<ChatMessage key={el.timestamp} message={el} />))}
+					{this.props.messages.map((el, index) => (<ChatMessage key={el.timestamp} message={el} userInfo={this.props.users} />))}
 				</List>
 				<div ref={this.messagesEndRef} />
 			</Box>

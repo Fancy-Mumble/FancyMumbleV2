@@ -77,8 +77,6 @@ function Chat() {
                 ...user,
             }
         });
-
-        console.log(newList);
         setUserList(newList);
     }
 
@@ -147,7 +145,7 @@ function Chat() {
             <Sidebar users={userList} />
             <Box sx={{ flex: 1, overflowY: 'auto' }}>
                 <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                    <ChatMessageContainer messages={messageLog}></ChatMessageContainer>
+                    <ChatMessageContainer messages={messageLog} users={userList}></ChatMessageContainer>
                     <Box m={2} sx={{ display: 'flex' }}>
                         <Paper
                             component="form"

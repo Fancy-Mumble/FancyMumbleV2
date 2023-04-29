@@ -6,6 +6,7 @@ import 'dayjs/locale/de';
 import { blueGrey } from "@mui/material/colors";
 import DOMPurify from 'dompurify';
 import MessageParser from "../helper/MessageParser";
+import { Users } from "../Sidebar";
 
 export interface SenderInfo {
     user_id: number,
@@ -30,6 +31,7 @@ export interface TextMessage {
 
 interface ChatMessageProps {
     message: TextMessage
+    userInfo: Users[]
 }
 
 interface ChatMessageState {
@@ -52,13 +54,20 @@ class ChatMessage extends React.Component<ChatMessageProps, ChatMessageState> {
         return message;
     }
 
+    getProfileImage(user_id: number) {
+        let userIndex = this.props.userInfo.findIndex(e => e.id === user_id);
+        if (userIndex !== -1) {
+            return this.props.userInfo[userIndex].profile_picture;
+        }
+
+        return "";
+    }
+
     render() {
         return (
             <ListItem>
                 <ListItemAvatar>
-                    <Avatar>
-                        <ImageIcon />
-                    </Avatar>
+                    <Avatar src={this.getProfileImage(this.props.message.sender.user_id)}/>
                 </ListItemAvatar>
                 <ListItemText
                     primary={
