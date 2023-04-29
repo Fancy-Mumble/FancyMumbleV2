@@ -1,5 +1,6 @@
 use std::{error::Error};
 
+use tokio::sync::broadcast::Sender;
 use tracing::{error, trace};
 
 use crate::{
@@ -9,15 +10,15 @@ use crate::{
     utils::messages::{mumble, MessageInfo},
 };
 
-pub struct MessageHandler {
+pub struct MessageRouter {
     user_manager: UserManager,
     text_manager: TextMessageManager,
 }
 
-impl MessageHandler {
-    pub fn new(sender: MessageChannels) -> MessageHandler {
-        MessageHandler {
-            user_manager: UserManager::new(sender.message_channel.clone()),
+impl MessageRouter {
+    pub fn new(sender: MessageChannels, server_channel: Sender<Vec<u8>>) -> MessageRouter {
+        MessageRouter {
+            user_manager: UserManager::new(sender.message_channel.clone(), server_channel.clone()),
             text_manager: TextMessageManager::new(sender.message_channel.clone()),
         }
     }
@@ -47,10 +48,8 @@ impl MessageHandler {
         Ok(())
     }
 
-    //TODO: create a message distributor
     pub fn recv_message(&mut self, message: MessageInfo) -> Result<(), Box<dyn Error>> {
-        // self.sender.message_channel.send("{}".to_string());
-        trace!("Received message: {:?}", message);
+        trace!("Received message: {:<100?}", message);
 
         match message.message_type {
             crate::utils::messages::MessageTypes::Version => {}
@@ -67,7 +66,7 @@ impl MessageHandler {
             }
             crate::utils::messages::MessageTypes::UserState => {
                 let changed_user = self.handle_downcast::<mumble::proto::UserState>(message)?;
-                self.user_manager.update_user(changed_user);
+                self.user_manager.update_user(changed_user)?;
             }
             crate::utils::messages::MessageTypes::BanList => {}
             crate::utils::messages::MessageTypes::TextMessage => {

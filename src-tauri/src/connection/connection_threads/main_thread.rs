@@ -3,12 +3,12 @@ use async_trait::async_trait;
 use crate::connection::{Connection, BUFFER_SIZE};
 use crate::errors::application_error::ApplicationError;
 
-use super::{ConnectionThread, MainThread};
+use super::{ConnectionThread, MainThread, DEADMAN_INTERVAL};
 use std::cmp;
 use std::error::Error;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader};
 use tokio::net::TcpStream;
-use tokio::select;
+use tokio::{select, time};
 use tracing::{error, trace};
 
 const MAX_SEND_SIZE: usize = 1024;
@@ -20,7 +20,9 @@ impl MainThread for Connection {
         stream: Option<tokio_native_tls::TlsStream<TcpStream>>,
     ) -> Result<(), Box<dyn Error>> {
         if self.threads.get(&ConnectionThread::MainThread).is_some() {
-            return Err(Box::new(ApplicationError::new("MainThread already running")));
+            return Err(Box::new(ApplicationError::new(
+                "MainThread already running",
+            )));
         }
 
         let mut buffer = [0; BUFFER_SIZE];
@@ -34,6 +36,8 @@ impl MainThread for Connection {
         self.threads.insert(
             ConnectionThread::MainThread,
             tokio::spawn(async move {
+                let mut interval = time::interval(DEADMAN_INTERVAL);
+
                 while *running_clone.read().unwrap() {
                     select! {
                         Ok(size) = reader.read(&mut buffer) => {
@@ -58,6 +62,7 @@ impl MainThread for Connection {
                                 }
                             }
                         }
+                        _ = interval.tick() => {}
                     }
                 }
             }),

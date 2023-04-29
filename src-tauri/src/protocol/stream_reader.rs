@@ -1,20 +1,21 @@
 use byteorder::{BigEndian, ReadBytesExt};
 use tracing::error;
 use std::io::Cursor;
-use super::message_handler::MessageHandler;
 
-use crate::{utils::messages::{get_message, MessageInfo}, connection::MessageChannels};
+use crate::{utils::messages::{get_message, MessageInfo}};
+
+use super::message_router::MessageRouter;
 
 pub struct StreamReader {
     stream_buffer: Vec<u8>,
-    message_handler: MessageHandler,
+    message_handler: MessageRouter,
 }
 
 impl StreamReader {
-    pub fn new(sender: MessageChannels) -> StreamReader {
+    pub fn new(message_handler: MessageRouter) -> StreamReader {
         StreamReader {
             stream_buffer: Vec::<u8>::new(),
-            message_handler: MessageHandler::new(sender),
+            message_handler,
         }
     }
 

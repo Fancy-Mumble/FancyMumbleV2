@@ -1,10 +1,12 @@
 use std::error::Error;
 use std::sync::{Arc, RwLock};
 
+use crate::connection::connection_threads::DEADMAN_INTERVAL;
 use crate::connection::connection_traits::{HandleMessage, Shutdown};
 use async_trait::async_trait;
 use tauri::Manager;
 use tokio::task::JoinHandle;
+use tokio::time;
 use tokio::{select, sync::broadcast::Receiver};
 use tracing::{debug, trace};
 
@@ -39,12 +41,15 @@ impl MessageTransmitter {
         let running_clone = self.running.clone();
 
         self.transmitter_thread = Some(tokio::spawn(async move {
+            let mut interval = time::interval(DEADMAN_INTERVAL);
+
             while *running_clone.read().unwrap() {
                 select! {
                     Ok(result) = channel.recv() => {
-                        trace!("backend_update: {result}");
+                        trace!("backend_update: {:<100}", result.len());
                         _ = window_clone.emit_all("backend_update", result);
                     }
+                    _ = interval.tick() => {}
                 }
             }
         }));

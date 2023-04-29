@@ -48,9 +48,7 @@ function Sidebar(props: SidebarProps) {
                     {props.users.map((user) => (
                         <ListItem>
                             <ListItemAvatar>
-                                <Avatar>
-                                    <InfoIcon />
-                                </Avatar>
+                                <Avatar src={user.profile_picture} />
                             </ListItemAvatar>
                             <ListItemText primary={user.name} secondary="Jan 9, 2014" />
                         </ListItem>

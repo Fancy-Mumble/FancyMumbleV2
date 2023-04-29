@@ -7,7 +7,7 @@ mod ping_thread;
 use std::{error::Error, time::Duration};
 use tokio::net::TcpStream;
 
-const DEADMAN_INTERVAL: Duration = Duration::from_millis(2000);
+pub const DEADMAN_INTERVAL: Duration = Duration::from_millis(500);
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum ConnectionThread {

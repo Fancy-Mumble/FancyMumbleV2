@@ -1,5 +1,5 @@
 pub mod stream_reader;
-pub mod message_handler;
+pub mod message_router;
 pub mod message_transmitter;
 pub mod serialize;
 

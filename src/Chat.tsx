@@ -14,7 +14,8 @@ import Sidebar, { Users } from './Sidebar';
 enum MessageTypes {
     Ping = "Ping",
     TextMessage = "text_message",
-    UserList = "user_list"
+    UserList = "user_list",
+    UserImage = "user_image"
 }
 
 interface BackendMessage {
@@ -45,7 +46,11 @@ function Chat() {
                     break;
                 }
                 case MessageTypes.UserList: {
-                    setUserList(Object.values(message.data));
+                    updateUser(Object.values(message.data));
+                    break;
+                }
+                case MessageTypes.UserImage: {
+                    updateUserImage(message.data);
                     break;
                 }
             }
@@ -60,9 +65,42 @@ function Chat() {
         setMessageLog(messageLog => [...messageLog, message]);
     }
 
+    function updateUser(user_info: any) {
+        let newList = [...user_info];
+        newList.map((user) => {
+            let userIndex = userList.findIndex(e => e.id === user.id);
+            if (userIndex !== -1) {
+                user.profile_picture = userList[userIndex].profile_picture;
+            }
+
+            return {
+                ...user,
+            }
+        });
+
+        console.log(newList);
+        setUserList(newList);
+    }
+
+     function updateUserImage(user_info: any) {
+        let newList = [...userList];
+        let userIndex = newList.findIndex(e => e.id === user_info.user_id);
+        if(userIndex !== -1) {
+            newList[userIndex].profile_picture = user_info.image;
+        }
+        setUserList(newList);
+    }
+
     function customChatMessage(data: string) {
         invoke('send_message', { chatMessage: data });
-        addChatMessage({actor: 0, channel_id: [0], message: data, session: [0], timestamp: Date.now(), tree_id: [0]})
+        addChatMessage({
+            actor: 0,
+            sender: { user_id: 0, user_name: "test" },
+            channel_id: [0],
+            tree_id: [0],
+            message: data,
+            timestamp: Date.now()
+        })
         setChatMessage("");
     }
 

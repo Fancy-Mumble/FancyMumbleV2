@@ -5,6 +5,7 @@ import dayjs from "dayjs";
 import 'dayjs/locale/de';
 import { blueGrey } from "@mui/material/colors";
 import DOMPurify from 'dompurify';
+import MessageParser from "../helper/MessageParser";
 
 export interface SenderInfo {
     user_id: number,
@@ -36,19 +37,16 @@ interface ChatMessageState {
 }
 
 class ChatMessage extends React.Component<ChatMessageProps, ChatMessageState> {
+
     parseMessage(message: string | undefined) {
         if (message && message.includes('<')) {
-            let cleanMessage = DOMPurify.sanitize(message);
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(cleanMessage, "text/html");
+            let messageParser = new MessageParser(message).parseForImages().parseForLinks().parseForEmojis().build();
 
-            const images = Array.from(doc.querySelectorAll('img')).map(img => img.src);
-
-            return (<div>
-                {images.map(e =>
-                    <img key={e} src={e} style={{maxWidth: '100%'}} />
-                )}
-            </div>);
+            return (
+                <div>
+                    {messageParser.map(e => e)}
+                </div>
+            )
         }
 
         return message;
