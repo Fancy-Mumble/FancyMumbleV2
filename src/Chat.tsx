@@ -15,7 +15,8 @@ enum MessageTypes {
     Ping = "Ping",
     TextMessage = "text_message",
     UserList = "user_list",
-    UserImage = "user_image"
+    UserImage = "user_image",
+    UserComment = "user_comment"
 }
 
 interface BackendMessage {
@@ -53,6 +54,10 @@ function Chat() {
                     updateUserImage(message.data);
                     break;
                 }
+                case MessageTypes.UserComment: {
+                    updateUserComment(message.data);
+                    break;
+                }
             }
         });
 
@@ -71,6 +76,7 @@ function Chat() {
             let userIndex = userList.findIndex(e => e.id === user.id);
             if (userIndex !== -1) {
                 user.profile_picture = userList[userIndex].profile_picture;
+                user.comment = userList[userIndex].comment;
             }
 
             return {
@@ -80,13 +86,28 @@ function Chat() {
         setUserList(newList);
     }
 
-     function updateUserImage(user_info: any) {
-        let newList = [...userList];
-        let userIndex = newList.findIndex(e => e.id === user_info.user_id);
-        if(userIndex !== -1) {
-            newList[userIndex].profile_picture = user_info.image;
-        }
-        setUserList(newList);
+    function updateUserImage(user_info: { user_id: number; data: any; }) {
+        updateUserData(user_info, "profile_picture");
+    }
+
+    function updateUserComment(user_info: { user_id: number; data: any; }) {
+        updateUserData(user_info, "comment");
+        console.log("updateUserComment for ", user_info.user_id, ": ", userList);
+    }
+
+    function updateUserData(user_info: any, field: string) {
+        setUserList(prevList => {
+            console.log("updateUserData: ", user_info, field, prevList);
+            const userIndex = prevList.findIndex(e => e.id === user_info.user_id);
+            if (userIndex !== -1) {
+                const newList = [...prevList];
+                // @ts-ignore (field is one of the above types, but TS doesn't like this)
+                newList[userIndex][field] = user_info.data;
+                return newList;
+            } else {
+                return prevList;
+            }
+        });
     }
 
     function customChatMessage(data: string) {

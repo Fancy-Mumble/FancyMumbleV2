@@ -1,5 +1,5 @@
 use byteorder::{BigEndian, ReadBytesExt};
-use tracing::error;
+use tracing::{error, trace};
 use std::io::Cursor;
 
 use crate::{utils::messages::{get_message, MessageInfo}};

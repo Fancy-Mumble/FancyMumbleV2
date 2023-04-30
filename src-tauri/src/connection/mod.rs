@@ -16,7 +16,7 @@ use tokio_native_tls::native_tls::TlsConnector;
 use self::connection_threads::ConnectionThread;
 
 const QUEUE_SIZE: usize = 256;
-const BUFFER_SIZE: usize = 1024;
+const BUFFER_SIZE: usize = 8192;
 
 struct ServerData {
     username: String,

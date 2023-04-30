@@ -11,7 +11,7 @@ use tokio::net::TcpStream;
 use tokio::{select, time};
 use tracing::{error, trace};
 
-const MAX_SEND_SIZE: usize = 1024;
+const MAX_SEND_SIZE: usize = 8192;
 
 #[async_trait]
 impl MainThread for Connection {
@@ -44,7 +44,6 @@ impl MainThread for Connection {
                             if size == 0 {
                                 return;
                             }
-
                             if let Err(e) = tx_in.send((&buffer[0..size]).to_vec()) {
                                 error!("Error while channeling incomming data: {e:?}");
                             }
