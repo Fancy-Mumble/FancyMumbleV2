@@ -9,14 +9,18 @@ import { TextMessage } from './components/ChatMessage';
 import GifIcon from '@mui/icons-material/Gif';
 import GifSearch from './components/GifSearch';
 import React from 'react';
-import Sidebar, { Users } from './Sidebar';
+import Sidebar from './Sidebar';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from './store/store';
+import { updateUser, updateUserComment, updateUserImage } from './store/features/users/userSlice';
 
 enum MessageTypes {
     Ping = "Ping",
     TextMessage = "text_message",
     UserList = "user_list",
     UserImage = "user_image",
-    UserComment = "user_comment"
+    UserComment = "user_comment",
+    UserUpdate = "user_update"
 }
 
 interface BackendMessage {
@@ -25,11 +29,13 @@ interface BackendMessage {
 }
 
 function Chat() {
+    const userList = useSelector((state: RootState) => state.user);
+    const dispatch = useDispatch();
+
     const [chatMessage, setChatMessage] = useState("");
     const [messageLog, setMessageLog] = useState<TextMessage[]>([]);
     const [showGifSearch, setShowGifSearch] = useState(false);
     const [gifSearchAnchor, setGifSearchAnchor] = useState<HTMLElement>();
-    const [userList, setUserList] = useState<Users[]>([]);
 
     useEffect(() => {
         //listen to a event
@@ -46,16 +52,16 @@ function Chat() {
                     console.log("Got Ping");
                     break;
                 }
-                case MessageTypes.UserList: {
-                    updateUser(Object.values(message.data));
-                    break;
-                }
                 case MessageTypes.UserImage: {
-                    updateUserImage(message.data);
+                    dispatch(updateUserImage(message.data));
                     break;
                 }
                 case MessageTypes.UserComment: {
-                    updateUserComment(message.data);
+                    dispatch(updateUserComment(message.data));
+                    break;
+                }
+                case MessageTypes.UserUpdate: {
+                    dispatch(updateUser(message.data));
                     break;
                 }
             }
@@ -68,46 +74,6 @@ function Chat() {
 
     function addChatMessage(message: TextMessage) {
         setMessageLog(messageLog => [...messageLog, message]);
-    }
-
-    function updateUser(user_info: any) {
-        let newList = [...user_info];
-        newList.map((user) => {
-            let userIndex = userList.findIndex(e => e.id === user.id);
-            if (userIndex !== -1) {
-                user.profile_picture = userList[userIndex].profile_picture;
-                user.comment = userList[userIndex].comment;
-            }
-
-            return {
-                ...user,
-            }
-        });
-        setUserList(newList);
-    }
-
-    function updateUserImage(user_info: { user_id: number; data: any; }) {
-        updateUserData(user_info, "profile_picture");
-    }
-
-    function updateUserComment(user_info: { user_id: number; data: any; }) {
-        updateUserData(user_info, "comment");
-        console.log("updateUserComment for ", user_info.user_id, ": ", userList);
-    }
-
-    function updateUserData(user_info: any, field: string) {
-        setUserList(prevList => {
-            console.log("updateUserData: ", user_info, field, prevList);
-            const userIndex = prevList.findIndex(e => e.id === user_info.user_id);
-            if (userIndex !== -1) {
-                const newList = [...prevList];
-                // @ts-ignore (field is one of the above types, but TS doesn't like this)
-                newList[userIndex][field] = user_info.data;
-                return newList;
-            } else {
-                return prevList;
-            }
-        });
     }
 
     function customChatMessage(data: string) {
@@ -200,4 +166,4 @@ function Chat() {
     )
 }
 
-export default Chat
+export default Chat;

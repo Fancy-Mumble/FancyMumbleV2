@@ -5,7 +5,7 @@ use std::{
 };
 
 use serde::Serialize;
-use tracing::{debug, error, info, trace};
+use tracing::{debug, error, info};
 
 use crate::{
     protocol::serialize::message_container::FrontendMessage,
@@ -94,10 +94,12 @@ impl UserManager {
         }
     }
 
-    fn notify(&self) {
-        let msg = FrontendMessage::new("user_list", &self.users);
+    fn notify(&self, session: &u32) {
+        if let Some(user) = self.users.get(session) {
+            let msg = FrontendMessage::new("user_update", &user);
 
-        self.send_to_frontend(&msg);
+            self.send_to_frontend(&msg);
+        }
     }
 
     fn notify_user_image(&self, session: u32) {
@@ -221,7 +223,7 @@ impl UserManager {
             self.fill_user_comment(user, &comment_hash)?;
         }
 
-        self.notify();
+        self.notify(&session);
 
         if has_texture {
             debug!("Notifying user image: {}", session);

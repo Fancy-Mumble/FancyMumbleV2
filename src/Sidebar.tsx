@@ -11,24 +11,10 @@ import { ReactNode, useState } from "react";
 import { LoadingButton } from "@mui/lab";
 import './Sidebar.css'
 import DOMPurify from "dompurify";
-
-export interface Users {
-    channel_id: number,
-    comment: string,
-    deaf: boolean,
-    id: number
-    mute: boolean,
-    name: string,
-    priority_speaker: boolean,
-    profile_picture: string,
-    recording: boolean,
-    self_deaf: boolean,
-    self_mute: boolean,
-    suppress: boolean,
-}
+import { UsersState } from "./store/features/users/userSlice";
 
 interface SidebarProps {
-    users: Users[]
+    users: UsersState[]
 }
 
 function Sidebar(props: SidebarProps) {
@@ -43,7 +29,7 @@ function Sidebar(props: SidebarProps) {
         })
     }
 
-    function displayUserInfo(user: Users): ReactNode {
+    function displayUserInfo(user: UsersState): ReactNode {
         return (
             <span>
                 {user.name}
@@ -55,7 +41,7 @@ function Sidebar(props: SidebarProps) {
         )
     }
 
-    function getBackgroundFromComment(user: Users) {
+    function getBackgroundFromComment(user: UsersState) {
         let cleanMessage = DOMPurify.sanitize(user.comment);
         const parser = new DOMParser();
         const document = parser.parseFromString(cleanMessage, "text/html");
