@@ -1,11 +1,11 @@
+use base64::{engine::general_purpose, Engine as _};
 use std::{
     collections::{hash_map::Entry, HashMap},
     error::Error,
 };
-use base64::{engine::general_purpose, Engine as _};
 
 use serde::Serialize;
-use tracing::{error, info, trace};
+use tracing::{debug, error, info, trace};
 
 use crate::{
     protocol::serialize::message_container::FrontendMessage,
@@ -33,14 +33,15 @@ pub struct User {
     profile_picture_hash: Vec<u8>,
     #[serde(skip_serializing)] // We don't want to send such a big blob to the frontend
     profile_picture: Vec<u8>,
+    comment_hash: Vec<u8>,
     #[serde(skip_serializing)] // We don't want to send such a big blob to the frontend
     comment: String,
 }
 
 #[derive(Debug, Default, Serialize)]
-pub struct UserImage {
+pub struct UserBlobData {
     pub user_id: u32,
-    pub image: String,
+    pub data: String,
 }
 
 impl Update<mumble::proto::UserState> for User {
@@ -57,8 +58,9 @@ impl Update<mumble::proto::UserState> for User {
         Self::update_if_some(&mut self.priority_speaker, other.priority_speaker);
         Self::update_if_some(&mut self.recording, other.recording);
         Self::update_if_some(&mut self.profile_picture, other.texture);
-        Self::update_if_some(&mut self.profile_picture_hash, other.texture_hash);
+        //Self::update_if_some(&mut self.profile_picture_hash, other.texture_hash);
         Self::update_if_some(&mut self.comment, other.comment);
+        //Self::update_if_some(&mut self.comment_hash, other.comment_hash);
 
         self
     }
@@ -79,9 +81,7 @@ impl UserManager {
         }
     }
 
-    fn notify(&self) {
-        let msg = FrontendMessage::new("user_list", &self.users);
-
+    fn send_to_frontend<T: Serialize + Clone>(&self, msg: &FrontendMessage<T>) {
         match serde_json::to_string(&msg) {
             Ok(json) => {
                 if let Err(e) = self.frontend_channel.send(json) {
@@ -94,49 +94,95 @@ impl UserManager {
         }
     }
 
+    fn notify(&self) {
+        let msg = FrontendMessage::new("user_list", &self.users);
+
+        self.send_to_frontend(&msg);
+    }
+
     fn notify_user_image(&self, session: u32) {
         if let Some(user) = self.users.get(&session) {
-            let base64 = format!("data:image/png;base64,{}", general_purpose::STANDARD.encode(&user.profile_picture));
+            let base64 = format!(
+                "data:image/png;base64,{}",
+                general_purpose::STANDARD.encode(&user.profile_picture)
+            );
 
-            let user_image = UserImage {
+            let user_image = UserBlobData {
                 user_id: user.id,
-                image: base64,
+                data: base64,
             };
             let msg = FrontendMessage::new("user_image", &user_image);
 
-            match serde_json::to_string(&msg) {
-                Ok(json) => {
-                    info!("Sending user image to frontend: {}", json.len());
-                    if let Err(e) = self.frontend_channel.send(json) {
-                        error!("Failed to send user image to frontend: {}", e);
-                    }
-                }
-                Err(e) => {
-                    error!("Failed to serialize user image: {}", e);
-                }
-            }
+            self.send_to_frontend(&msg);
+        }
+    }
+
+    fn notify_user_comment(&self, session: u32) {
+        if let Some(user) = self.users.get(&session) {
+            let user_image = UserBlobData {
+                user_id: user.id,
+                data: user.comment.clone(),
+            };
+            let msg = FrontendMessage::new("user_comment", &user_image);
+
+            self.send_to_frontend(&msg);
         }
     }
 
     fn fill_user_images(
-        &mut self,
-        user_info: &mumble::proto::UserState,
+        &self,
+        user_info: &User,
+        texture_hash: &Vec<u8>,
     ) -> Result<(), Box<dyn Error>> {
-        let user_session = user_info.session();
-        let user_texture_hash = user_info.texture_hash.clone().unwrap_or_default();
-        let user_profile_picture_hash = &self
-            .users
-            .entry(user_session)
-            .or_default()
-            .profile_picture_hash;
+        let user_session = user_info.id;
+        let cached_user_texture_hash = &self.users.get(&user_session).unwrap().profile_picture_hash;
 
-        if &user_texture_hash == user_profile_picture_hash {
+        if texture_hash == cached_user_texture_hash {
+            debug!(
+                "User image is up to date: {:?} vs {:?}",
+                texture_hash, cached_user_texture_hash
+            );
             return Ok(());
         }
+        debug!("User image is not up to date for user {}", user_session);
 
-        if user_info.texture.is_none() {
+        let no_texture_hash_available = cached_user_texture_hash.is_empty();
+        let texture_hash_in_current_message = !texture_hash.is_empty();
+
+        if no_texture_hash_available && texture_hash_in_current_message {
             let blob_request = mumble::proto::RequestBlob {
                 session_texture: vec![user_session],
+                ..Default::default()
+            };
+            self.server_channel.send(message_builder(blob_request))?;
+        }
+
+        Ok(())
+    }
+
+    fn fill_user_comment(
+        &self,
+        user_info: &User,
+        comment_hash: &Vec<u8>,
+    ) -> Result<(), Box<dyn Error>> {
+        let user_session = user_info.id;
+        let cached_user_comment_hash = &self.users.get(&user_session).unwrap().comment_hash;
+
+        if comment_hash == cached_user_comment_hash {
+            debug!(
+                "User comment is up to date {:?} vs {:?}",
+                comment_hash, cached_user_comment_hash
+            );
+            return Ok(());
+        }
+        debug!("User comment is not up to date for user {}", user_session);
+
+        let no_comment_available = cached_user_comment_hash.is_empty();
+        let comment_in_current_message = !comment_hash.is_empty();
+
+        if no_comment_available && comment_in_current_message {
+            let blob_request = mumble::proto::RequestBlob {
+                session_comment: vec![user_session],
                 ..Default::default()
             };
             self.server_channel.send(message_builder(blob_request))?;
@@ -149,9 +195,13 @@ impl UserManager {
         &mut self,
         user_info: mumble::proto::UserState,
     ) -> Result<(), Box<dyn Error>> {
-        let has_texture = user_info.texture.is_some();
+        let has_texture =
+            user_info.texture.is_some() && !user_info.texture.as_ref().unwrap().is_empty();
+        let texture_hash = user_info.texture_hash.clone().unwrap_or_default();
+        let has_comment =
+            user_info.comment.is_some() && !user_info.comment.as_ref().unwrap().is_empty();
+        let comment_hash = user_info.comment_hash.clone().unwrap_or_default();
         let session = user_info.session();
-        self.fill_user_images(&user_info)?;
 
         match self.users.entry(session) {
             Entry::Occupied(mut o) => {
@@ -160,17 +210,27 @@ impl UserManager {
             }
             Entry::Vacant(v) => {
                 let mut user = User::default();
-                trace!("Adding user: {:?}", user.name);
+                info!("Adding user: {:?}", user_info.name);
                 user.update_from(user_info);
                 v.insert(user);
             }
         };
 
+        if let Some(user) = self.users.get(&session) {
+            self.fill_user_images(user, &texture_hash)?;
+            self.fill_user_comment(user, &comment_hash)?;
+        }
+
         self.notify();
 
         if has_texture {
-            info!("Notifying user image: {}", session);
+            debug!("Notifying user image: {}", session);
             self.notify_user_image(session);
+        }
+
+        if has_comment {
+            debug!("Notifying user comment: {}", session);
+            self.notify_user_comment(session);
         }
 
         Ok(())

@@ -46,7 +46,7 @@ impl MessageTransmitter {
             while *running_clone.read().unwrap() {
                 select! {
                     Ok(result) = channel.recv() => {
-                        trace!("backend_update: {:<100}", result.len());
+                        trace!("backend_update received");
                         _ = window_clone.emit_all("backend_update", result);
                     }
                     _ = interval.tick() => {}
