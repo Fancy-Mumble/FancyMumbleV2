@@ -92,3 +92,33 @@ pub async fn logout(state: State<'_, ConnectionState>) -> Result<(), String> {
 
     Ok(())
 }
+
+#[tauri::command]
+pub async fn like_message(
+    message_id: String,
+    state: State<'_, ConnectionState>,
+) -> Result<(), String> {
+    let guard = state.connection.lock().await;
+    if let Some(guard) = guard.as_ref() {
+        if let Err(e) = guard.like_message(&message_id).await {
+            return Err(format!("{e:?}"));
+        }
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn join_channel(
+    channel_id: u32,
+    state: State<'_, ConnectionState>,
+) -> Result<(), String> {
+    let guard = state.connection.lock().await;
+    if let Some(guard) = guard.as_ref() {
+        if let Err(e) = guard.join_channel(channel_id).await {
+            return Err(format!("{e:?}"));
+        }
+    }
+
+    Ok(())
+}

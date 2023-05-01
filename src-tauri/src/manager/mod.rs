@@ -1,4 +1,5 @@
 pub mod user_manager;
+pub mod channel_manager;
 pub mod text_message_manager;
 
 trait Update<New> {

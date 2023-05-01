@@ -101,7 +101,8 @@ message_builder! {
     22 => UserStats,
     23 => RequestBlob,
     24 => ServerConfig,
-    25 => SuggestConfig
+    25 => SuggestConfig,
+    26 => PluginDataTransmission
 }
 
 pub fn message_builder<T>(message: T) -> Vec<u8>

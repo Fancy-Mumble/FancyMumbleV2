@@ -1,12 +1,12 @@
 import { Box, Card, CardContent, List } from "@mui/material";
 import React from "react";
 import ChatMessage, { TextMessage } from "./ChatMessage";
-import { Users } from "../Sidebar";
+import { useSelector } from "react-redux";
+import { RootState } from "../store/store";
 
 
 interface ChatMessageContainerProps {
 	messages: TextMessage[]
-	users: Users[]
 }
 
 interface ChatMessageContainerState {
@@ -55,7 +55,12 @@ class ChatMessageContainer extends React.Component<ChatMessageContainerProps, Ch
 		return (
 			<Box sx={{ flex: 1, overflowY: 'auto' }} ref={this.chatContainer}>
 				<List sx={{ width: '100%', maxWidth: '100%' }}>
-					{this.props.messages.map((el, index) => (<ChatMessage key={el.timestamp} message={el} userInfo={this.props.users} />))}
+					{this.props.messages.map((el, index, array) => {
+						let prevCommentBy = index - 1 >= 0 ? array[index - 1].sender.user_id : undefined;
+
+						return (<ChatMessage key={el.timestamp} message={el} prevCommentBy={prevCommentBy} />)
+					}
+					)}
 				</List>
 				<div ref={this.messagesEndRef} />
 			</Box>

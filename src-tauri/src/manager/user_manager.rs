@@ -239,7 +239,10 @@ impl UserManager {
     }
 
     pub fn remove_user(&mut self, user_info: mumble::proto::UserRemove) {
-        self.users.remove(&user_info.session);
+        let session = user_info.session;
+
+        self.users.remove(&session);
+        self.notify(&session);
     }
 
     pub fn get_user_by_id(&self, id: u32) -> Option<&User> {

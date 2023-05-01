@@ -1,7 +1,8 @@
 import './App.css'
-import { RouterProvider, createBrowserRouter } from 'react-router-dom';
+import { RouterProvider, createBrowserRouter, useLocation } from 'react-router-dom';
 import Login from './Login';
 import Chat from './Chat';
+import { useEffect } from 'react';
 
 let router = createBrowserRouter([
   {
@@ -24,3 +25,7 @@ function App() {
 }
 
 export default App
+function dispatch(arg0: any) {
+  throw new Error('Function not implemented.');
+}
+
