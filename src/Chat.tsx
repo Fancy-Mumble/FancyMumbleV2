@@ -13,6 +13,8 @@ import Sidebar from './Sidebar';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from './store/store';
 import { updateUser, updateUserComment, updateUserImage } from './store/features/users/userSlice';
+import { updateChannel } from './store/features/users/channelSlice';
+import { useLocation } from 'react-router-dom';
 
 enum MessageTypes {
     Ping = "Ping",
@@ -20,7 +22,8 @@ enum MessageTypes {
     UserList = "user_list",
     UserImage = "user_image",
     UserComment = "user_comment",
-    UserUpdate = "user_update"
+    UserUpdate = "user_update",
+    ChannelUpdate = "channel_update"
 }
 
 interface BackendMessage {
@@ -29,13 +32,12 @@ interface BackendMessage {
 }
 
 function Chat() {
-    const userList = useSelector((state: RootState) => state.user);
-    const dispatch = useDispatch();
-
     const [chatMessage, setChatMessage] = useState("");
     const [messageLog, setMessageLog] = useState<TextMessage[]>([]);
     const [showGifSearch, setShowGifSearch] = useState(false);
     const [gifSearchAnchor, setGifSearchAnchor] = useState<HTMLElement>();
+
+    const dispatch = useDispatch();
 
     useEffect(() => {
         //listen to a event
@@ -48,10 +50,6 @@ function Chat() {
                     addChatMessage(message.data);
                     break;
                 }
-                case MessageTypes.Ping: {
-                    console.log("Got Ping");
-                    break;
-                }
                 case MessageTypes.UserImage: {
                     dispatch(updateUserImage(message.data));
                     break;
@@ -62,6 +60,10 @@ function Chat() {
                 }
                 case MessageTypes.UserUpdate: {
                     dispatch(updateUser(message.data));
+                    break;
+                }
+                case MessageTypes.ChannelUpdate: {
+                    dispatch(updateChannel(message.data));
                     break;
                 }
             }
@@ -129,10 +131,10 @@ function Chat() {
 
     return (
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'row' }}>
-            <Sidebar users={userList} />
+            <Sidebar />
             <Box sx={{ flex: 1, overflowY: 'auto' }}>
                 <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                    <ChatMessageContainer messages={messageLog} users={userList}></ChatMessageContainer>
+                    <ChatMessageContainer messages={messageLog}></ChatMessageContainer>
                     <Box m={2} sx={{ display: 'flex' }}>
                         <Paper
                             component="form"

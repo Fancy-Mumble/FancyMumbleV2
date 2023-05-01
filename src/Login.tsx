@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import { Alert, Box, Container, Grid, TextField, Typography } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton';
 import { invoke } from '@tauri-apps/api/tauri'
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 
 function Login() {
     const navigate = useNavigate();
@@ -13,6 +14,21 @@ function Login() {
     const [username, setUsername] = useState("Endor");
     const [connecting, setConnecting] = useState(false);
     const [errorInfo, setErrorInfo] = useState({ show: false, text: "" });
+
+    const location = useLocation();
+    const dispatch = useDispatch();
+
+    useEffect(() => {
+        console.log("effect: " + location.pathname);
+        switch (location.pathname) {
+            case "/":
+                console.log("logout");
+                dispatch({ type: "logout" });
+                break;
+            default:
+                break;
+        }
+    }, [location]);
 
     function connect() {
         setConnecting(true);

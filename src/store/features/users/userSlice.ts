@@ -25,8 +25,6 @@ const initialState: UsersState[] = [];
 
 function updateUserData(state: UsersState[], user_info: UserDataUpdate, field: string) {
   let prevList = state;
-
-  console.log("updateUserData: ", user_info, field, prevList);
   const userIndex = prevList.findIndex(e => e.id === user_info.user_id);
   if (userIndex !== -1) {
     // @ts-ignore (field is one of the above types, but TS doesn't like this)
@@ -45,7 +43,10 @@ export const userSlice = createSlice({
       updateUserData(state, action.payload, "profile_picture");
     },
     deleteUser: (state, action: PayloadAction<number>) => {
-      //state.value += action.payload
+      let userId = action.payload;
+      let userIndex = state.findIndex(e => e.id === userId);
+      state.splice(userIndex, 1);
+
     },
     updateUser: (state, action: PayloadAction<UsersState>) => {
       let userId = action.payload.id;
@@ -59,7 +60,7 @@ export const userSlice = createSlice({
       } else {
         state.push(action.payload);
       }
-    }
+    },
   },
 })
 

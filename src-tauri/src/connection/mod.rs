@@ -2,9 +2,9 @@ pub mod connection_threads;
 pub mod connection_traits;
 use crate::connection::connection_traits::Shutdown;
 use crate::protocol::init_connection;
+use crate::utils::messages::{mumble, message_builder};
 use async_trait::async_trait;
 use connection_threads::{InputThread, MainThread, OutputThread, PingThread};
-use tracing::{trace, info};
 use std::collections::HashMap;
 use std::error::Error;
 use std::sync::{Arc, RwLock};
@@ -12,6 +12,7 @@ use tokio::net::TcpStream;
 use tokio::sync::broadcast::{self, Receiver, Sender};
 use tokio::task::JoinHandle;
 use tokio_native_tls::native_tls::TlsConnector;
+use tracing::{info, trace};
 
 use self::connection_threads::ConnectionThread;
 
@@ -111,6 +112,50 @@ impl Connection {
 
     pub fn get_message_channel(&self) -> Receiver<String> {
         self.message_channels.message_channel.subscribe()
+    }
+
+    //TODO: Move to output Thread
+    pub async fn like_message(&self, message_id: &str) -> Result<(), Box<dyn Error>> {
+        let like_message = mumble::proto::PluginDataTransmission {
+            sender_session: None,
+            receiver_sessions: Vec::new(),
+            data: Some(message_id.as_bytes().to_vec()),
+            data_id: None,
+        };
+        self.tx_out.send(message_builder(like_message))?;
+
+        Ok(())
+    }
+
+    pub async fn join_channel(&self, channel_id: u32) -> Result<(), Box<dyn Error>> {
+        let join_channel = mumble::proto::UserState{
+            session: None,
+            actor: None,
+            name: None,
+            user_id: None,
+            channel_id: Some(channel_id),
+            mute: None,
+            deaf: None,
+            suppress: None,
+            self_mute: None,
+            self_deaf: None,
+            texture: None,
+            plugin_context: None,
+            plugin_identity: None,
+            comment: None,
+            hash: None,
+            comment_hash: None,
+            texture_hash: None,
+            priority_speaker: None,
+            recording: None,
+            temporary_access_tokens: Vec::new(),
+            listening_channel_add:  Vec::new(),
+            listening_channel_remove:  Vec::new(),
+            listening_volume_adjustment:  Vec::new(),
+        };
+        self.tx_out.send(message_builder(join_channel))?;
+
+        Ok(())
     }
 }
 

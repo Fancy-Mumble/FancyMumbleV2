@@ -20,7 +20,7 @@ use tracing::Level;
 use tracing_subscriber;
 use tracing_subscriber::fmt;
 
-use crate::commands::{connect_to_server, logout, send_message};
+use crate::commands::{connect_to_server, logout, send_message, like_message, join_channel};
 
 fn init_logging() {
     let format = fmt::format()
@@ -52,7 +52,9 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             connect_to_server,
             send_message,
-            logout
+            logout,
+            like_message,
+            join_channel
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
