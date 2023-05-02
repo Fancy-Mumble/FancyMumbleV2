@@ -1,8 +1,9 @@
 import { Box, Card, CardContent, List } from "@mui/material";
 import React from "react";
-import ChatMessage, { TextMessage } from "./ChatMessage";
+import ChatMessage from "./ChatMessage";
 import { useSelector } from "react-redux";
 import { RootState } from "../store/store";
+import { TextMessage } from "../store/features/users/chatMessageSlice";
 
 
 interface ChatMessageContainerProps {

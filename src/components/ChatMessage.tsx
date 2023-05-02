@@ -1,11 +1,11 @@
-import { Avatar, Grid, IconButton, Link, Typography } from "@mui/material"
+import { Avatar, Box, Grid, IconButton, Link, Typography } from "@mui/material"
 import { makeStyles } from '@mui/styles';
 import dayjs from "dayjs";
 import 'dayjs/locale/de';
 import 'dayjs/plugin/isToday';
 import 'dayjs/plugin/isYesterday';
 import { grey } from "@mui/material/colors";
-import MessageParser from "../helper/MessageParser";
+import IncomingMessageParser from "../helper/IncomingMessageParser";
 import ThumbUpOffAltIcon from '@mui/icons-material/ThumbUpOffAlt';
 import { invoke } from "@tauri-apps/api";
 import { getProfileImage } from "../helper/UserInfoHelper";
@@ -71,11 +71,11 @@ function ChatMessage(props: ChatMessageProps) {
 
     function parseMessage(message: string | undefined) {
         if (message && message.includes('<')) {
-            let messageParser = new MessageParser(message).parseForImages().parseForLinks().parseForEmojis().build();
+            let messageParser = new IncomingMessageParser(message).parseForImages().build();
 
             return (
                 <div>
-                    {messageParser.map(e => e)}
+                    {messageParser}
                 </div>
             )
         }
@@ -107,13 +107,9 @@ function ChatMessage(props: ChatMessageProps) {
             </Grid>
             <Grid item xs={10} className={classes.messageContainer}>
                 <Grid item className={classes.messageContainerInner}>
-                    <Typography
-                        variant="body1"
-                        className={`${classes.message} ${false ? classes.sender : classes.receiver
-                            }`}
-                    >
+                    <Box className={`${classes.message} ${false ? classes.sender : classes.receiver}`}>
                         {parseMessage(props.message.message)}
-                    </Typography>
+                    </Box>
                 </Grid>
                 <Grid item className={classes.messageMetadata}>
                     <Typography variant="subtitle2" color="textSecondary" className={classes.metadata}>

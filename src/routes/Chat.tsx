@@ -11,6 +11,8 @@ import Sidebar from '../components/Sidebar';
 import { RootState } from '../store/store';
 import { useDispatch, useSelector } from 'react-redux';
 import { TextMessage, addChatMessage } from '../store/features/users/chatMessageSlice';
+import { formatBytes } from '../helper/Fomat';
+import OutgoingMessageParser from '../helper/OutgoingMessageParser';
 
 function Chat() {
     const [chatMessage, setChatMessage] = useState("");
@@ -19,7 +21,10 @@ function Chat() {
 
     const dispatch = useDispatch();
     const userInfo = useSelector((state: RootState) => state.reducer.userInfo);
+    const channelInfo = useSelector((state: RootState) => state.reducer.channel);
     const messageLog = useSelector((state: RootState) => state.reducer.chatMessage);
+
+    const currentChannel = channelInfo.find(e => e.channel_id === userInfo.currentUser?.channel_id)?.name;
 
     function pushChatMessage(message: TextMessage) {
         dispatch(addChatMessage(message));
@@ -27,6 +32,7 @@ function Chat() {
 
     function customChatMessage(data: string) {
         invoke('send_message', { chatMessage: data, channelId: userInfo.currentUser?.channel_id });
+        console.log("customChatMessage", data);
         pushChatMessage({
             actor: 0,
             sender: { user_id: 0, user_name: "test" },
@@ -39,7 +45,8 @@ function Chat() {
     }
 
     function sendChatMessage(e: any) {
-        customChatMessage(chatMessage)
+        let message = new OutgoingMessageParser(chatMessage).parseLinks().build();
+        customChatMessage(message)
     }
 
     function keyDownHandler(e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) {
@@ -66,12 +73,15 @@ function Chat() {
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
                 reader.onload = function () {
+                    if (reader.result && (reader.result as string).length > 0x7fffff) {
+                        customChatMessage("[[ Image too large ( " + formatBytes((reader.result as string).length) + " out of " + formatBytes(0x7fffff) + ") ]]");
+                        return;
+                    }
                     let img = '<img src="' + reader.result + '" />';
                     customChatMessage(img);
                 };
             }
         }
-
     }
 
     return (
@@ -90,8 +100,8 @@ function Chat() {
                             </IconButton>
                             <InputBase
                                 sx={{ ml: 1, flex: 1 }}
-                                placeholder="Send Message to {TO_DO}"
-                                inputProps={{ 'aria-label': 'Send Message to {TO_DO}' }}
+                                placeholder={"Send Message to " + currentChannel}
+                                inputProps={{ 'aria-label': 'Send Message to ' + currentChannel }}
                                 onChange={e => setChatMessage(e.target.value)}
                                 onKeyDown={keyDownHandler}
                                 value={chatMessage}
