@@ -22,11 +22,16 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libayatana-appindicator3-dev librsvg2-dev
-      - name:  Install conan
+
+      - name:  Install conan (windows only)
         if: matrix.platform == 'windows-latest'
-        uses: turtlebrowser/get-conan@main
-        with:
-          version: 1.59.0
+        uses: lukka/run-vcpkg@v11
+
+      - name: Install dependencies (windows only)
+        if: matrix.platform == 'windows-latest'
+        run: |
+           vcpkg install openssl:x64-windows
+
       - name: Rust setup
         uses: dtolnay/rust-toolchain@stable
 
