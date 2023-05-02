@@ -68,6 +68,7 @@ impl Update<mumble::proto::UserState> for User {
 
 pub struct UserManager {
     users: HashMap<u32, User>,
+    current_user_id: Option<u32>,
     frontend_channel: Sender<String>,
     server_channel: Sender<Vec<u8>>,
 }
@@ -76,6 +77,7 @@ impl UserManager {
     pub fn new(send_to: Sender<String>, server_channel: Sender<Vec<u8>>) -> UserManager {
         UserManager {
             users: HashMap::new(),
+            current_user_id: None,
             frontend_channel: send_to,
             server_channel,
         }
@@ -247,5 +249,14 @@ impl UserManager {
 
     pub fn get_user_by_id(&self, id: u32) -> Option<&User> {
         self.users.get(&id)
+    }
+
+    pub fn notify_current_user(&mut self, sync_info: mumble::proto::ServerSync) {
+        if sync_info.session.is_some() {
+            self.current_user_id = sync_info.session;
+
+            let message = FrontendMessage::new("current_user_id", self.current_user_id);
+            self.send_to_frontend(&message);
+        }
     }
 }

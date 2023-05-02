@@ -56,11 +56,12 @@ pub async fn connect_to_server(
 #[tauri::command]
 pub async fn send_message(
     chat_message: String,
+    channel_id: Option<u32>,
     state: State<'_, ConnectionState>,
 ) -> Result<(), String> {
     let guard = state.connection.lock().await;
     if let Some(guard) = guard.as_ref() {
-        if let Err(e) = guard.send_message(&chat_message).await {
+        if let Err(e) = guard.send_message(channel_id, &chat_message).await {
             return Err(format!("{e:?}"));
         }
     }

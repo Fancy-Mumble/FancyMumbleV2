@@ -21,7 +21,15 @@ interface UserDataUpdate {
   data: any
 }
 
-const initialState: UsersState[] = [];
+interface UserInfoState {
+  currentUser: UsersState | undefined,
+  users: UsersState[]
+}
+
+const initialState: UserInfoState = {
+  currentUser: undefined,
+  users: [],
+};
 
 function updateUserData(state: UsersState[], user_info: UserDataUpdate, field: string) {
   let prevList = state;
@@ -37,34 +45,40 @@ export const userSlice = createSlice({
   initialState,
   reducers: {
     updateUserComment: (state, action: PayloadAction<UserDataUpdate>) => {
-      updateUserData(state, action.payload, "comment");
+      updateUserData(state.users, action.payload, "comment");
     },
     updateUserImage: (state, action: PayloadAction<UserDataUpdate>) => {
-      updateUserData(state, action.payload, "profile_picture");
+      updateUserData(state.users, action.payload, "profile_picture");
     },
     deleteUser: (state, action: PayloadAction<number>) => {
       let userId = action.payload;
-      let userIndex = state.findIndex(e => e.id === userId);
-      state.splice(userIndex, 1);
+      let userIndex = state.users.findIndex(e => e.id === userId);
+      state.users.splice(userIndex, 1);
 
     },
     updateUser: (state, action: PayloadAction<UsersState>) => {
       let userId = action.payload.id;
-      let userIndex = state.findIndex(e => e.id === userId);
+      let userIndex = state.users.findIndex(e => e.id === userId);
       if (userIndex !== -1) {
-        let profilePicture = state[userIndex].profile_picture;
-        let comment = state[userIndex].comment;
-        state[userIndex] = action.payload;
-        state[userIndex].comment = comment;
-        state[userIndex].profile_picture = profilePicture;
+        let profilePicture = state.users[userIndex].profile_picture;
+        let comment = state.users[userIndex].comment;
+        state.users[userIndex] = action.payload;
+        state.users[userIndex].comment = comment;
+        state.users[userIndex].profile_picture = profilePicture;
       } else {
-        state.push(action.payload);
+        state.users.push(action.payload);
       }
     },
+    updateCurrentUserById: (state, action: PayloadAction<number>) => {
+      let currentUser = state.users.find(e => e.id === action.payload);
+      if (currentUser) {
+        state.currentUser = currentUser;
+      }
+    }
   },
 })
 
 // Action creators are generated for each case reducer function
-export const { updateUser, deleteUser, updateUserComment, updateUserImage } = userSlice.actions
+export const { updateUser, deleteUser, updateUserComment, updateUserImage, updateCurrentUserById, } = userSlice.actions
 
 export default userSlice.reducer

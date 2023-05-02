@@ -1,4 +1,4 @@
-import { Box, Divider, IconButton, IconButtonClasses, IconButtonTypeMap, InputBase, Paper, Skeleton } from '@mui/material';
+import { Box, Divider, IconButton, InputBase, Paper } from '@mui/material';
 import { invoke } from '@tauri-apps/api';
 import { useEffect, useState } from 'react';
 import { listen } from '@tauri-apps/api/event'
@@ -12,9 +12,8 @@ import React from 'react';
 import Sidebar from './Sidebar';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from './store/store';
-import { updateUser, updateUserComment, updateUserImage } from './store/features/users/userSlice';
+import { updateCurrentUserById, updateUser, updateUserComment, updateUserImage } from './store/features/users/userSlice';
 import { updateChannel } from './store/features/users/channelSlice';
-import { useLocation } from 'react-router-dom';
 
 enum MessageTypes {
     Ping = "Ping",
@@ -23,7 +22,8 @@ enum MessageTypes {
     UserImage = "user_image",
     UserComment = "user_comment",
     UserUpdate = "user_update",
-    ChannelUpdate = "channel_update"
+    ChannelUpdate = "channel_update",
+    NotifyCurrentUser = "current_user_id"
 }
 
 interface BackendMessage {
@@ -38,8 +38,10 @@ function Chat() {
     const [gifSearchAnchor, setGifSearchAnchor] = useState<HTMLElement>();
 
     const dispatch = useDispatch();
+    const userInfo = useSelector((state: RootState) => state.reducer.userInfo);
 
     useEffect(() => {
+
         //listen to a event
         const unlisten = listen("backend_update", (e) => {
             let message: BackendMessage = JSON.parse(e.payload as any);
@@ -66,6 +68,10 @@ function Chat() {
                     dispatch(updateChannel(message.data));
                     break;
                 }
+                case MessageTypes.NotifyCurrentUser: {
+                    dispatch(updateCurrentUserById(message.data));
+                    break;
+                }
             }
         });
 
@@ -79,7 +85,7 @@ function Chat() {
     }
 
     function customChatMessage(data: string) {
-        invoke('send_message', { chatMessage: data });
+        //invoke('send_message', { chatMessage: data, channelId: userInfo.currentUser.userState?.channel_id });
         addChatMessage({
             actor: 0,
             sender: { user_id: 0, user_name: "test" },
@@ -98,7 +104,7 @@ function Chat() {
 
 
     function keyDownHandler(e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) {
-        if (e && e.key === 'Enter') {
+        if (e && e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             sendChatMessage({});
         }
