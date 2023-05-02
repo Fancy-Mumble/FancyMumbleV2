@@ -6,7 +6,7 @@ use tracing::{error, trace};
 use crate::{
     connection::MessageChannels,
     errors::application_error::ApplicationError,
-    manager::{text_message_manager::TextMessageManager, user_manager::UserManager, channel_manager::ChannelManager},
+    manager::{text_message_manager::TextMessageManager, user_manager::UserManager, channel_manager::ChannelManager, connection_manager::ConnectionManager},
     utils::messages::{mumble, MessageInfo},
 };
 
@@ -14,6 +14,7 @@ pub struct MessageRouter {
     user_manager: UserManager,
     channel_manager: ChannelManager,
     text_manager: TextMessageManager,
+    connection_manager: ConnectionManager,
 }
 
 impl MessageRouter {
@@ -22,6 +23,7 @@ impl MessageRouter {
             user_manager: UserManager::new(sender.message_channel.clone(), server_channel.clone()),
             channel_manager: ChannelManager::new(sender.message_channel.clone(), server_channel.clone()),
             text_manager: TextMessageManager::new(sender.message_channel.clone()),
+            connection_manager: ConnectionManager::new(sender.message_channel.clone(), server_channel.clone()),
         }
     }
 
@@ -60,11 +62,13 @@ impl MessageRouter {
             crate::utils::messages::MessageTypes::Ping => {}
             crate::utils::messages::MessageTypes::Reject => {
                 let reject = self.handle_downcast::<mumble::proto::Reject>(message)?;
+                self.connection_manager.notify_disconnected(&reject.reason);
                 return Err(Box::new(ApplicationError::new(format!("Received reject message: {:?}", reject.reason).as_str())));
             }
             crate::utils::messages::MessageTypes::ServerSync => {
                 let server_sync = self.handle_downcast::<mumble::proto::ServerSync>(message)?;
                 self.user_manager.notify_current_user(server_sync);
+                self.connection_manager.notify_connected();
             }
             crate::utils::messages::MessageTypes::ChannelRemove => {
                 let removed_channel = self.handle_downcast::<mumble::proto::ChannelRemove>(message)?;

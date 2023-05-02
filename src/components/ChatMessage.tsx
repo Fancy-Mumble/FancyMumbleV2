@@ -1,4 +1,4 @@
-import { Avatar, Box, Grid, IconButton, Link, Typography } from "@mui/material"
+import { Avatar, Box, Grid, IconButton, Link, Tooltip, Typography } from "@mui/material"
 import { makeStyles } from '@mui/styles';
 import dayjs from "dayjs";
 import 'dayjs/locale/de';
@@ -123,12 +123,16 @@ function ChatMessage(props: ChatMessageProps) {
                     <Typography variant="subtitle2" color="textSecondary" className={classes.metadata}>
                         <Link className={classes.userInfo} href="#">{props.message.sender.user_name}</Link> - {generateDate(props.message.timestamp)}
                     </Typography>
+                    <Tooltip title="Like">
                     <IconButton aria-label="Example" size="small" onClick={e => likeMessage("abc")}>
                         <ThumbUpOffAltIcon fontSize="small" color="disabled" />
                     </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete message locally">
                     <IconButton aria-label="Example" size="small" onClick={e => deleteMessageEvent(props.messageId)}>
                         <ClearIcon fontSize="small" color="disabled" />
                     </IconButton>
+                    </Tooltip>
                 </Grid>
             </Grid>
         </Grid>

@@ -23,12 +23,14 @@ interface UserDataUpdate {
 
 interface UserInfoState {
   currentUser: UsersState | undefined,
-  users: UsersState[]
+  users: UsersState[],
+  connected: boolean,
 }
 
 const initialState: UserInfoState = {
   currentUser: undefined,
   users: [],
+  connected: false,
 };
 
 function updateUserData(state: UsersState[], user_info: UserDataUpdate, field: string) {
@@ -78,11 +80,14 @@ export const userSlice = createSlice({
       if (currentUser) {
         state.currentUser = currentUser;
       }
+    },
+    updateConnected: (state, action: PayloadAction<boolean>) => {
+      state.connected = action.payload;
     }
   },
 })
 
 // Action creators are generated for each case reducer function
-export const { updateUser, deleteUser, updateUserComment, updateUserImage, updateCurrentUserById, } = userSlice.actions
+export const { updateUser, deleteUser, updateUserComment, updateUserImage, updateCurrentUserById, updateConnected } = userSlice.actions
 
 export default userSlice.reducer

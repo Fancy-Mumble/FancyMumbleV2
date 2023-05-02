@@ -1,5 +1,5 @@
 import './App.css'
-import { RouterProvider } from 'react-router-dom';
+import { RouterProvider, useNavigate } from 'react-router-dom';
 import { router } from './routes/router';
 import { useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event';

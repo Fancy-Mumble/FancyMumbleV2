@@ -4,10 +4,12 @@ import { Alert, Box, Container, Grid, TextField, Typography } from '@mui/materia
 import LoadingButton from '@mui/lab/LoadingButton';
 import { invoke } from '@tauri-apps/api/tauri'
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../store/store';
 
 function Login() {
-    const navigate = useNavigate();
+
+    const userInfo = useSelector((state: RootState) => state.reducer.userInfo);
 
     const [server, setServer] = useState("magical.rocks");
     const [port, setPort] = useState("64738");
@@ -17,12 +19,13 @@ function Login() {
 
     const location = useLocation();
     const dispatch = useDispatch();
+    const navigate = useNavigate();
 
     useEffect(() => {
         console.log("effect: " + location.pathname);
         switch (location.pathname) {
             case "/":
-                console.log("logout");
+                console.log("logout triggered");
                 dispatch({ type: "logout" });
                 break;
             default:
@@ -30,13 +33,20 @@ function Login() {
         }
     }, [location]);
 
+    //TODO: We shouldn't just have a binary connected state,
+    //TODO: but a state that can have multiple values, like "connecting",
+    //TODO: "connected", "disconnected", "error"
+    if (userInfo.connected) {
+        console.log("connected");
+        navigate("/chat");
+    }
+
     function connect() {
         setConnecting(true);
         setErrorInfo({ show: false, text: "" });
 
         invoke('connect_to_server', { serverHost: server, serverPort: parseInt(port), username: username }).then(e => {
             setConnecting(false);
-            navigate("/chat");
         }).catch(e => {
             setErrorInfo({ show: true, text: e });
             setConnecting(false);

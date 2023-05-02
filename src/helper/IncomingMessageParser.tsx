@@ -12,13 +12,9 @@ class IncomingMessageParser {
     }
 
     parseForImages() {
-        const images = Array.from(this.document.querySelectorAll('img')).map(img => img.src);
-
-        (<div key={Math.random()}>
-            {images.map(e =>
-                <img key={e} src={e} style={{ maxWidth: '100%' }} />
-            )}
-        </div>);
+        Array.from(this.document.querySelectorAll('img')).forEach(e => {
+            e.setAttribute('style', 'max-width: 100%;');
+        });
 
         return this;
     }

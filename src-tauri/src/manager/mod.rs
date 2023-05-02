@@ -1,6 +1,7 @@
 pub mod user_manager;
 pub mod channel_manager;
 pub mod text_message_manager;
+pub mod  connection_manager;
 
 trait Update<New> {
     fn update_if_some<T>(original: &mut T, other: Option<T>) {

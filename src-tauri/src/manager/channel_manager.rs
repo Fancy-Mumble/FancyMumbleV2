@@ -61,7 +61,7 @@ impl Update<mumble::proto::ChannelState> for Channel {
 pub struct ChannelManager {
     channels: HashMap<u32, Channel>,
     frontend_channel: Sender<String>,
-    server_channel: Sender<Vec<u8>>,
+    _server_channel: Sender<Vec<u8>>,
 }
 
 impl ChannelManager {
@@ -69,7 +69,7 @@ impl ChannelManager {
         ChannelManager {
             channels: HashMap::new(),
             frontend_channel: send_to,
-            server_channel,
+            _server_channel: server_channel,
         }
     }
 
