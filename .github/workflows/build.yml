@@ -37,6 +37,9 @@ jobs:
             return data.id
 
   build-app:
+    needs: create-release
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -66,12 +69,10 @@ jobs:
 
       - name: Install dependencies (windows only)
         if: matrix.platform == 'windows-latest'
-        run: vcpkg install openssl:x64-windows
-
-      - name: Install dependencies (windows only)
-        if: matrix.platform == 'windows-latest'
         run: |
-           vcpkg install openssl:x64-windows
+          vcpkg install openssl:x64-windows
+          vcpkg install openssl:x64-windows-static
+          vcpkg integrate install
 
       - name: Rust setup
         uses: dtolnay/rust-toolchain@stable
