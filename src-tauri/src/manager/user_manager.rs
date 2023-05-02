@@ -104,6 +104,12 @@ impl UserManager {
         }
     }
 
+    fn notify_remove(&self, session: &u32) {
+        let msg = FrontendMessage::new("user_remove", session);
+
+        self.send_to_frontend(&msg);
+    }
+
     fn notify_user_image(&self, session: u32) {
         if let Some(user) = self.users.get(&session) {
             let base64 = format!(
@@ -244,7 +250,7 @@ impl UserManager {
         let session = user_info.session;
 
         self.users.remove(&session);
-        self.notify(&session);
+        self.notify_remove(&session);
     }
 
     pub fn get_user_by_id(&self, id: u32) -> Option<&User> {

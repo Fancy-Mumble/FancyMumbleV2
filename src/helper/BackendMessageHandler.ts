@@ -1,4 +1,4 @@
-import { updateCurrentUserById, updateUser, updateUserComment, updateUserImage } from '../store/features/users/userSlice';
+import { deleteUser, updateCurrentUserById, updateUser, updateUserComment, updateUserImage } from '../store/features/users/userSlice';
 import { updateChannel } from '../store/features/users/channelSlice';
 import { Event } from '@tauri-apps/api/event';
 import { TextMessage, addChatMessage } from '../store/features/users/chatMessageSlice';
@@ -12,6 +12,7 @@ enum MessageTypes {
     UserImage = "user_image",
     UserComment = "user_comment",
     UserUpdate = "user_update",
+    UserRemove = "user_remove",
     ChannelUpdate = "channel_update",
     NotifyCurrentUser = "current_user_id"
 }
@@ -40,6 +41,10 @@ export function handleBackendMessage<T>(event: Event<T>, dispatch: Dispatch<AnyA
         }
         case MessageTypes.UserUpdate: {
             dispatch(updateUser(message.data));
+            break;
+        }
+        case MessageTypes.UserRemove: {
+            dispatch(deleteUser(message.data));
             break;
         }
         case MessageTypes.ChannelUpdate: {

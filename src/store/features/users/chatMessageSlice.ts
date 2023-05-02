@@ -31,9 +31,14 @@ export const chatMessageSlice = createSlice({
             console.log("addChatMessage: ", action.payload);
             state.push(action.payload);
         },
+        deleteChatMessage: (state, action: PayloadAction<number>) => {
+            let messageId = action.payload;
+            let messageIndex = state.findIndex(e => e.timestamp === messageId);
+            state.splice(messageIndex, 1);
+        }
     },
 })
 
-export const { addChatMessage } = chatMessageSlice.actions
+export const { addChatMessage, deleteChatMessage } = chatMessageSlice.actions
 
 export default chatMessageSlice.reducer

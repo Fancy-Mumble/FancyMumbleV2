@@ -58,7 +58,7 @@ class ChatMessageContainer extends React.Component<ChatMessageContainerProps, Ch
 					{this.props.messages.map((el, index, array) => {
 						let prevCommentBy = index - 1 >= 0 ? array[index - 1].sender.user_id : undefined;
 
-						return (<ChatMessage key={el.timestamp} message={el} prevCommentBy={prevCommentBy} />)
+						return (<ChatMessage messageId={el.timestamp} key={el.timestamp} message={el} prevCommentBy={prevCommentBy} />)
 					}
 					)}
 				</List>

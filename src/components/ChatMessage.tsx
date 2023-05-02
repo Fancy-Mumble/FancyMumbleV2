@@ -9,12 +9,15 @@ import IncomingMessageParser from "../helper/IncomingMessageParser";
 import ThumbUpOffAltIcon from '@mui/icons-material/ThumbUpOffAlt';
 import { invoke } from "@tauri-apps/api";
 import { getProfileImage } from "../helper/UserInfoHelper";
-import { TextMessage } from "../store/features/users/chatMessageSlice";
+import { TextMessage, deleteChatMessage } from "../store/features/users/chatMessageSlice";
+import ClearIcon from '@mui/icons-material/Clear';
+import { useDispatch } from "react-redux";
 
 
 interface ChatMessageProps {
-    message: TextMessage
-    prevCommentBy: number | undefined
+    message: TextMessage,
+    prevCommentBy: number | undefined,
+    messageId: number,
 }
 
 const useStyles = makeStyles((theme: any) => ({
@@ -66,6 +69,7 @@ const useStyles = makeStyles((theme: any) => ({
 }));
 
 function ChatMessage(props: ChatMessageProps) {
+    const dispatch = useDispatch();
     const classes = useStyles();
     const followUpMessage = props.prevCommentBy === props.message.sender.user_id;
 
@@ -100,6 +104,10 @@ function ChatMessage(props: ChatMessageProps) {
         invoke('like_message', { messageId: messageId });
     }
 
+    function deleteMessageEvent(messageId: number) {
+       dispatch(deleteChatMessage(messageId));
+    }
+
     return (
         <Grid container className={classes.root} style={{ marginBottom: (followUpMessage ? 0 : '16px') }}>
             <Grid item>
@@ -118,6 +126,9 @@ function ChatMessage(props: ChatMessageProps) {
                     <IconButton aria-label="Example" size="small" onClick={e => likeMessage("abc")}>
                         <ThumbUpOffAltIcon fontSize="small" color="disabled" />
                     </IconButton>
+                    <IconButton aria-label="Example" size="small" onClick={e => deleteMessageEvent(props.messageId)}>
+                        <ClearIcon fontSize="small" color="disabled" />
+                    </IconButton>
                 </Grid>
             </Grid>
         </Grid>
@@ -125,4 +136,4 @@ function ChatMessage(props: ChatMessageProps) {
 
 }
 
-export default ChatMessage
+export default ChatMessage;
