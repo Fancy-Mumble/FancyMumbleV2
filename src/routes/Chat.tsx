@@ -1,92 +1,33 @@
 import { Box, Divider, IconButton, InputBase, Paper } from '@mui/material';
 import { invoke } from '@tauri-apps/api';
-import { useEffect, useState } from 'react';
-import { listen } from '@tauri-apps/api/event'
+import { useState } from 'react';
 import SendIcon from '@mui/icons-material/Send';
 import AddToPhotosIcon from '@mui/icons-material/AddToPhotos';
-import ChatMessageContainer from './components/ChatMessageContainer';
-import { TextMessage } from './components/ChatMessage';
+import ChatMessageContainer from '../components/ChatMessageContainer';
 import GifIcon from '@mui/icons-material/Gif';
-import GifSearch from './components/GifSearch';
+import GifSearch from '../components/GifSearch';
 import React from 'react';
-import Sidebar from './Sidebar';
+import Sidebar from '../components/Sidebar';
+import { RootState } from '../store/store';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from './store/store';
-import { updateCurrentUserById, updateUser, updateUserComment, updateUserImage } from './store/features/users/userSlice';
-import { updateChannel } from './store/features/users/channelSlice';
-
-enum MessageTypes {
-    Ping = "Ping",
-    TextMessage = "text_message",
-    UserList = "user_list",
-    UserImage = "user_image",
-    UserComment = "user_comment",
-    UserUpdate = "user_update",
-    ChannelUpdate = "channel_update",
-    NotifyCurrentUser = "current_user_id"
-}
-
-interface BackendMessage {
-    message_type: MessageTypes,
-    data: any
-}
+import { TextMessage, addChatMessage } from '../store/features/users/chatMessageSlice';
 
 function Chat() {
     const [chatMessage, setChatMessage] = useState("");
-    const [messageLog, setMessageLog] = useState<TextMessage[]>([]);
     const [showGifSearch, setShowGifSearch] = useState(false);
     const [gifSearchAnchor, setGifSearchAnchor] = useState<HTMLElement>();
 
     const dispatch = useDispatch();
     const userInfo = useSelector((state: RootState) => state.reducer.userInfo);
+    const messageLog = useSelector((state: RootState) => state.reducer.chatMessage);
 
-    useEffect(() => {
-
-        //listen to a event
-        const unlisten = listen("backend_update", (e) => {
-            let message: BackendMessage = JSON.parse(e.payload as any);
-            console.log("msg: ", message);
-
-            switch (message.message_type) {
-                case MessageTypes.TextMessage: {
-                    addChatMessage(message.data);
-                    break;
-                }
-                case MessageTypes.UserImage: {
-                    dispatch(updateUserImage(message.data));
-                    break;
-                }
-                case MessageTypes.UserComment: {
-                    dispatch(updateUserComment(message.data));
-                    break;
-                }
-                case MessageTypes.UserUpdate: {
-                    dispatch(updateUser(message.data));
-                    break;
-                }
-                case MessageTypes.ChannelUpdate: {
-                    dispatch(updateChannel(message.data));
-                    break;
-                }
-                case MessageTypes.NotifyCurrentUser: {
-                    dispatch(updateCurrentUserById(message.data));
-                    break;
-                }
-            }
-        });
-
-        return () => {
-            unlisten.then(f => f());
-        }
-    });
-
-    function addChatMessage(message: TextMessage) {
-        setMessageLog(messageLog => [...messageLog, message]);
+    function pushChatMessage(message: TextMessage) {
+        dispatch(addChatMessage(message));
     }
 
     function customChatMessage(data: string) {
         invoke('send_message', { chatMessage: data, channelId: userInfo.currentUser?.channel_id });
-        addChatMessage({
+        pushChatMessage({
             actor: 0,
             sender: { user_id: 0, user_name: "test" },
             channel_id: [0],
@@ -100,8 +41,6 @@ function Chat() {
     function sendChatMessage(e: any) {
         customChatMessage(chatMessage)
     }
-
-
 
     function keyDownHandler(e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) {
         if (e && e.key === 'Enter' && !e.shiftKey) {

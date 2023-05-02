@@ -1,4 +1,4 @@
-use std::error::Error;
+use std::{error::Error};
 
 use openssl::{
     asn1::Asn1Time,
@@ -22,19 +22,23 @@ async fn create_tls_certificate() -> Result<CertificateStore, Box<dyn Error>> {
     //TODO: We should also check if the certificate is still valid and generate a new one if it is not.
     //TODO: We currently always use fancy-mumble.com as the certificate's common name. We should use a client specified common name instead.
 
-    let rsa = Rsa::generate(2048)?;
+    const KEY_LENGTH: u32 = 2048;
+    const COMMON_NAME: &str = "fancy-mumble.com";
+    const CERTIFICATE_VALIDITY_DAYS: u32 = 365 * 10;
+
+    let rsa = Rsa::generate(KEY_LENGTH)?;
     let private_key = PKey::from_rsa(rsa)?;
 
     let mut x509 = X509::builder()?;
     let mut name = X509NameBuilder::new()?;
-    name.append_entry_by_text("CN", "fancy-mumble.com")?;
+    name.append_entry_by_text("CN", COMMON_NAME)?;
     let name = name.build();
     x509.set_subject_name(&name)?;
     x509.set_issuer_name(&name)?;
     x509.set_pubkey(&private_key)?;
 
     let not_before = Asn1Time::days_from_now(0)?;
-    let not_after = Asn1Time::days_from_now(365 * 10)?;
+    let not_after = Asn1Time::days_from_now(CERTIFICATE_VALIDITY_DAYS)?;
     x509.set_not_before(&not_before)?;
     x509.set_not_after(&not_after)?;
 
@@ -59,7 +63,8 @@ async fn create_tls_certificate() -> Result<CertificateStore, Box<dyn Error>> {
 pub async fn get_client_certificate() -> Result<Identity, Box<dyn Error>> {
     let cert_store = create_tls_certificate().await?;
 
-    let identity = native_tls::Identity::from_pkcs8(&cert_store.certificate, &cert_store.private_key)?;
+    let identity =
+        native_tls::Identity::from_pkcs8(&cert_store.certificate, &cert_store.private_key)?;
 
     return Ok(identity);
 }

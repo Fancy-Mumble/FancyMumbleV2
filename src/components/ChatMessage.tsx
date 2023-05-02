@@ -9,26 +9,7 @@ import MessageParser from "../helper/MessageParser";
 import ThumbUpOffAltIcon from '@mui/icons-material/ThumbUpOffAlt';
 import { invoke } from "@tauri-apps/api";
 import { getProfileImage } from "../helper/UserInfoHelper";
-
-export interface SenderInfo {
-    user_id: number,
-    user_name: string,
-}
-export interface TextMessage {
-    // The message sender, identified by its session.
-    actor: number,
-    sender: SenderInfo,
-    // The channels to which the message is sent, identified by their
-    // channel_ids.
-    channel_id: number[]
-    // The root channels when sending message recursively to several channels,
-    // identified by their channel_ids.
-    tree_id: number[]
-    // The UTF-8 encoded message. May be HTML if the server allows.
-    message: string,
-    // custom property to keep track of time
-    timestamp: number
-}
+import { TextMessage } from "../store/features/users/chatMessageSlice";
 
 
 interface ChatMessageProps {
