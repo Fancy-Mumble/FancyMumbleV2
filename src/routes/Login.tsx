@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import './App.css'
+import '../App.css'
 import { Alert, Box, Container, Grid, TextField, Typography } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton';
 import { invoke } from '@tauri-apps/api/tauri'

@@ -1,4 +1,4 @@
-import { Box, ButtonGroup } from "@mui/material"
+import { Box, Button, ButtonGroup } from "@mui/material"
 import LogoutIcon from '@mui/icons-material/Logout';
 import InfoIcon from '@mui/icons-material/Info';
 import { invoke } from "@tauri-apps/api";
@@ -6,8 +6,9 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { LoadingButton } from "@mui/lab";
 import './Sidebar.css'
-import ChannelViewer from "./components/ChannelViewer";
-import CurrentUserInfo from "./components/CurrentUserInfo";
+import ChannelViewer from "./ChannelViewer";
+import CurrentUserInfo from "./CurrentUserInfo";
+import SettingsIcon from '@mui/icons-material/Settings';
 
 interface SidebarProps {
 }
@@ -17,12 +18,18 @@ function Sidebar(props: SidebarProps) {
     const navigate = useNavigate();
     const [logoutInProgress, setLogoutInProgress] = useState(false);
 
-    function triggerLogout() {
+    function triggerLogout(event: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
+        event.preventDefault();
         setLogoutInProgress(true);
         invoke('logout').then(e => {
             setLogoutInProgress(false);
             navigate("/");
         })
+    }
+
+    function openSettings(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
+        event.preventDefault();
+        navigate("/settings");
     }
 
     return (
@@ -32,11 +39,14 @@ function Sidebar(props: SidebarProps) {
                 <ChannelViewer />
             </Box>
             <Box m={3}>
-                <ButtonGroup variant="contained">
-                    <LoadingButton loading={logoutInProgress} onClick={e => triggerLogout()} color="error"><LogoutIcon /></LoadingButton >
-                    <LoadingButton color="info">
+                <ButtonGroup variant="text">
+                    <LoadingButton loading={logoutInProgress} onClick={triggerLogout} color="error"><LogoutIcon /></LoadingButton >
+                    <Button color="primary">
                         <InfoIcon />
-                    </LoadingButton>
+                    </Button>
+                    <Button onClick={openSettings} color="primary">
+                        <SettingsIcon />
+                    </Button>
                 </ButtonGroup>
             </Box>
         </Box >

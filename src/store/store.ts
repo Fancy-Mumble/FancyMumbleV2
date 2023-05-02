@@ -1,10 +1,12 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit'
 import userReducer from './features/users/userSlice';
 import channelReducer from './features/users/channelSlice';
+import chatMessageReducer from './features/users/chatMessageSlice';
 
 const combinedReducer = combineReducers({
   channel: channelReducer,
   userInfo: userReducer,
+  chatMessage: chatMessageReducer
 })
 
 const rootReducer = (state: any, action: any) => {
