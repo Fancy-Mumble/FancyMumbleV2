@@ -98,12 +98,12 @@ jobs:
       - name: "Set environmental variables (Windows)"
         if: matrix.platform == 'windows-latest'
         run: |
-          echo "OPENSSL_DIR=$VCPKG_INSTALLED_DIR\x64-windows-static" >> $GITHUB_ENV
+          echo "OPENSSL_DIR=$env:VCPKG_INSTALLED_DIR\x64-windows-static" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Test if env is set correctly
         if: matrix.platform == 'windows-latest'
         run: |
-          echo "${{ env.OPENSSL_DIR }}"
+          echo $env:OPENSSL_DIR
 
       - name: Build the app (Ubuntu)
         uses: tauri-apps/tauri-action@v0
