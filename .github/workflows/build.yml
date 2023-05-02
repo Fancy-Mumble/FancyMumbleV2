@@ -26,6 +26,9 @@ jobs:
       - name:  Install conan (windows only)
         if: matrix.platform == 'windows-latest'
         uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+          vcpkgGitCommitId: '501db0f17ef6df184fcdbfbe0f87cde2313b6ab1'
 
       - name: Install dependencies (windows only)
         if: matrix.platform == 'windows-latest'
