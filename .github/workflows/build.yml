@@ -29,7 +29,6 @@ jobs:
         with:
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
           vcpkgGitCommitId: '501db0f17ef6df184fcdbfbe0f87cde2313b6ab1'
-          runVcpkgInstall: true
           vcpkgGitUrl: 'https://github.com/microsoft/vcpkg.git'
         env:
           VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg_installed
