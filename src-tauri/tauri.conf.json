@@ -7,7 +7,7 @@
   },
   "package": {
     "productName": "Fancy Mumble",
-    "version": "1.0.0"
+    "version": "0.1.0"
   },
   "tauri": {
     "allowlist": {
@@ -34,7 +34,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "rocks.magical.mumble",
+      "identifier": "com.fancy-mumble",
       "longDescription": "",
       "macOS": {
         "entitlements": null,
@@ -64,7 +64,7 @@
         "height": 600,
         "resizable": true,
         "title": "Fancy Mumble",
-        "width": 800
+        "width": 1000
       }
     ]
   }
