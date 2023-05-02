@@ -1,4 +1,4 @@
-import { Box, ButtonGroup, Skeleton } from "@mui/material"
+import { Box, ButtonGroup } from "@mui/material"
 import LogoutIcon from '@mui/icons-material/Logout';
 import InfoIcon from '@mui/icons-material/Info';
 import { invoke } from "@tauri-apps/api";
@@ -7,6 +7,7 @@ import { useState } from "react";
 import { LoadingButton } from "@mui/lab";
 import './Sidebar.css'
 import ChannelViewer from "./components/ChannelViewer";
+import CurrentUserInfo from "./components/CurrentUserInfo";
 
 interface SidebarProps {
 }
@@ -27,9 +28,7 @@ function Sidebar(props: SidebarProps) {
     return (
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', alignContent: 'center' }} className="sidebar">
             <Box sx={{ flex: 1, overflowY: 'auto', width: '100%' }} >
-                <Skeleton animation={false} variant="rectangular" width={100} height={60} />
-                <Skeleton animation={false} width={100} />
-
+                <CurrentUserInfo />
                 <ChannelViewer />
             </Box>
             <Box m={3}>

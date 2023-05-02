@@ -58,8 +58,14 @@ impl MessageRouter {
             crate::utils::messages::MessageTypes::UdpTunnel => {}
             crate::utils::messages::MessageTypes::Authenticate => {}
             crate::utils::messages::MessageTypes::Ping => {}
-            crate::utils::messages::MessageTypes::Reject => {}
-            crate::utils::messages::MessageTypes::ServerSync => {}
+            crate::utils::messages::MessageTypes::Reject => {
+                let reject = self.handle_downcast::<mumble::proto::Reject>(message)?;
+                return Err(Box::new(ApplicationError::new(format!("Received reject message: {:?}", reject.reason).as_str())));
+            }
+            crate::utils::messages::MessageTypes::ServerSync => {
+                let server_sync = self.handle_downcast::<mumble::proto::ServerSync>(message)?;
+                self.user_manager.notify_current_user(server_sync);
+            }
             crate::utils::messages::MessageTypes::ChannelRemove => {
                 let removed_channel = self.handle_downcast::<mumble::proto::ChannelRemove>(message)?;
                 self.channel_manager.remove_channel(removed_channel);
@@ -96,12 +102,6 @@ impl MessageRouter {
             crate::utils::messages::MessageTypes::SuggestConfig => {}
             crate::utils::messages::MessageTypes::PluginDataTransmission => {},
         };
-
-        /*downcast_message(
-            message.message_data,
-            message.message_type,
-            self.sender.message_channel.clone(),
-        );*/
 
         Ok(())
     }

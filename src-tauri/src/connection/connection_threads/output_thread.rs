@@ -4,7 +4,7 @@ use crate::{
 };
 use tokio::select;
 use tokio::time;
-use tracing::error;
+use tracing::{error, debug};
 
 use super::{OutputThread, DEADMAN_INTERVAL, ConnectionThread};
 
@@ -25,12 +25,13 @@ impl OutputThread for Connection {
             while *running_clone.read().unwrap() {
                 select! {
                     Ok(result) = rx_message_channel.recv() => {
+                        debug!("Sending text message to channel: {:?}", result.channel_id);
                         let message = mumble::proto::TextMessage {
                             actor: None,
                             session: Vec::new(),
-                            channel_id: vec![60u32],
+                            channel_id: vec![result.channel_id.unwrap_or(0)],
                             tree_id: Vec::new(),
-                            message: result,
+                            message: result.message,
                         };
                         let buffer = message_builder(message);
 

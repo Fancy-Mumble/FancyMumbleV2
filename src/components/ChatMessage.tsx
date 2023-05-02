@@ -1,18 +1,14 @@
-import { Avatar, Chip, Grid, IconButton, ImageList, ImageListItem, Link, ListItem, ListItemAvatar, ListItemText, Typography } from "@mui/material"
+import { Avatar, Grid, IconButton, Link, Typography } from "@mui/material"
 import { makeStyles } from '@mui/styles';
-import ImageIcon from '@mui/icons-material/Image';
-import React from "react"
 import dayjs from "dayjs";
 import 'dayjs/locale/de';
 import 'dayjs/plugin/isToday';
 import 'dayjs/plugin/isYesterday';
-import { blueGrey, grey } from "@mui/material/colors";
-import DOMPurify from 'dompurify';
+import { grey } from "@mui/material/colors";
 import MessageParser from "../helper/MessageParser";
-import { useSelector } from "react-redux";
-import { RootState } from "../store/store";
 import ThumbUpOffAltIcon from '@mui/icons-material/ThumbUpOffAlt';
 import { invoke } from "@tauri-apps/api";
+import { getProfileImage } from "../helper/UserInfoHelper";
 
 export interface SenderInfo {
     user_id: number,
@@ -89,7 +85,6 @@ const useStyles = makeStyles((theme: any) => ({
 }));
 
 function ChatMessage(props: ChatMessageProps) {
-    const userList = useSelector((state: RootState) => state.reducer.user);
     const classes = useStyles();
     const followUpMessage = props.prevCommentBy === props.message.sender.user_id;
 
@@ -105,15 +100,6 @@ function ChatMessage(props: ChatMessageProps) {
         }
 
         return message;
-    }
-
-    function getProfileImage(user_id: number) {
-        let userIndex = userList.findIndex(e => e.id === user_id);
-        if (userIndex !== -1) {
-            return userList[userIndex].profile_picture;
-        }
-
-        return "";
     }
 
     function generateDate(timestamp: number) {
@@ -134,7 +120,7 @@ function ChatMessage(props: ChatMessageProps) {
     }
 
     return (
-        <Grid container className={classes.root} style={{marginBottom: (followUpMessage ? 0 : '16px')}}>
+        <Grid container className={classes.root} style={{ marginBottom: (followUpMessage ? 0 : '16px') }}>
             <Grid item>
                 <Avatar src={getProfileImage(props.message.sender.user_id)} className={classes.avatar} style={{ visibility: (followUpMessage ? 'hidden' : 'visible') }} />
             </Grid>

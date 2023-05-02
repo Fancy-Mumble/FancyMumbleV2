@@ -40,7 +40,6 @@ class ChatMessageContainer extends React.Component<ChatMessageContainerProps, Ch
 				this.userScrolled = false;
 			}
 		}
-		console.log("Update?", this.userScrolled);
 
 		return null;
 	}

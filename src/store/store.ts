@@ -4,7 +4,7 @@ import channelReducer from './features/users/channelSlice';
 
 const combinedReducer = combineReducers({
   channel: channelReducer,
-  user: userReducer,
+  userInfo: userReducer,
 })
 
 const rootReducer = (state: any, action: any) => {
