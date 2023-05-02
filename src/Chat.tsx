@@ -85,7 +85,7 @@ function Chat() {
     }
 
     function customChatMessage(data: string) {
-        //invoke('send_message', { chatMessage: data, channelId: userInfo.currentUser.userState?.channel_id });
+        invoke('send_message', { chatMessage: data, channelId: userInfo.currentUser?.channel_id });
         addChatMessage({
             actor: 0,
             sender: { user_id: 0, user_name: "test" },

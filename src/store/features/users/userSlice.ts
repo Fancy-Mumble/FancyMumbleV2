@@ -68,6 +68,10 @@ export const userSlice = createSlice({
       } else {
         state.users.push(action.payload);
       }
+
+      if(state.currentUser?.id === userId) {
+        state.currentUser = action.payload;
+      }
     },
     updateCurrentUserById: (state, action: PayloadAction<number>) => {
       let currentUser = state.users.find(e => e.id === action.payload);
