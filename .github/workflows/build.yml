@@ -128,7 +128,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         with:
-          file: ${{env.app_name}}-${{matrix.label}}-${{ github.ref_name }}*
+          file: "${{env.app_name}}-${{matrix.platform}}-${{ github.ref_name }}*"
           tags: false
           draft: false
           overwrite: true
