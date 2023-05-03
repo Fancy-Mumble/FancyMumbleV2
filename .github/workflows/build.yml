@@ -117,13 +117,13 @@ jobs:
 
       - name: Add Windows Executeable
         continue-on-error: true
-        if: matrix.os == 'windows-latest'
+        if: matrix.platform == 'windows-latest'
         run: |
           mv src-tauri/target/release/${{env.app_name}}${{matrix.executable_extension}} ${{env.app_name}}-${{matrix.label}}-${{ github.ref_name }}${{matrix.executable_extension}}
 
       - name: 'Publish binary to release (windows)'
         continue-on-error: true
-        if: matrix.os == 'windows-latest'
+        if: matrix.platform == 'windows-latest'
         uses: xresloader/upload-to-github-release@v1
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
