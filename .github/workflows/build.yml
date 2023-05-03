@@ -131,7 +131,8 @@ jobs:
           file: "${{env.app_name}}-${{matrix.platform}}-${{ github.ref_name }}*"
           tags: false
           draft: false
-          overwrite: true
+          overwrite: false
+          release_id: ${{ needs.create-release.outputs.release_id }}
 
   publish-release:
     permissions:
