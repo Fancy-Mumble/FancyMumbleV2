@@ -19,6 +19,14 @@ class IncomingMessageParser {
         return this;
     }
 
+    parseForLinks() {
+        Array.from(this.document.querySelectorAll('a')).forEach(e => {
+            e.setAttribute('target', '_blank');
+        });
+
+        return this;
+    }
+
     public build() {
         return (<Box dangerouslySetInnerHTML={{__html: this.document.documentElement.innerHTML}}></Box>);
     }

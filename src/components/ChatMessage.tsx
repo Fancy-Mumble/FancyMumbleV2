@@ -75,7 +75,10 @@ function ChatMessage(props: ChatMessageProps) {
 
     function parseMessage(message: string | undefined) {
         if (message && message.includes('<')) {
-            let messageParser = new IncomingMessageParser(message).parseForImages().build();
+            let messageParser = new IncomingMessageParser(message)
+                .parseForImages()
+                .parseForLinks()
+                .build();
 
             return (
                 <div>
@@ -105,7 +108,7 @@ function ChatMessage(props: ChatMessageProps) {
     }
 
     function deleteMessageEvent(messageId: number) {
-       dispatch(deleteChatMessage(messageId));
+        dispatch(deleteChatMessage(messageId));
     }
 
     return (
@@ -124,14 +127,14 @@ function ChatMessage(props: ChatMessageProps) {
                         <Link className={classes.userInfo} href="#">{props.message.sender.user_name}</Link> - {generateDate(props.message.timestamp)}
                     </Typography>
                     <Tooltip title="Like">
-                    <IconButton aria-label="Example" size="small" onClick={e => likeMessage("abc")}>
-                        <ThumbUpOffAltIcon fontSize="small" color="disabled" />
-                    </IconButton>
+                        <IconButton aria-label="Example" size="small" onClick={e => likeMessage("abc")}>
+                            <ThumbUpOffAltIcon fontSize="small" color="disabled" />
+                        </IconButton>
                     </Tooltip>
                     <Tooltip title="Delete message locally">
-                    <IconButton aria-label="Example" size="small" onClick={e => deleteMessageEvent(props.messageId)}>
-                        <ClearIcon fontSize="small" color="disabled" />
-                    </IconButton>
+                        <IconButton aria-label="Example" size="small" onClick={e => deleteMessageEvent(props.messageId)}>
+                            <ClearIcon fontSize="small" color="disabled" />
+                        </IconButton>
                     </Tooltip>
                 </Grid>
             </Grid>

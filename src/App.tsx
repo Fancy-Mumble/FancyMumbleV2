@@ -6,6 +6,7 @@ import { listen } from '@tauri-apps/api/event';
 import { handleBackendMessage } from './helper/BackendMessageHandler';
 import { useDispatch } from 'react-redux';
 import Titlebar from './components/Titlebar';
+import { Box } from '@mui/material';
 
 function App() {
   const dispatch = useDispatch();
@@ -23,7 +24,9 @@ function App() {
   return (
     <div className="App">
       <Titlebar />
-      <RouterProvider router={router} />
+      <Box sx={{ flex: 1, overflow: 'auto' }}>
+        <RouterProvider router={router} />
+      </Box>
     </div>
   )
 }
