@@ -119,7 +119,7 @@ jobs:
         continue-on-error: true
         if: matrix.platform == 'windows-latest'
         run: |
-          mv src-tauri/target/release/${{env.app_name}}${{matrix.executable_extension}} ${{env.app_name}}-${{matrix.label}}-${{ github.ref_name }}${{matrix.executable_extension}}
+          mv "src-tauri/target/release/${{env.app_name}}.exe" "${{env.app_name}}-${{matrix.platform}}-${{ github.ref_name }}.exe"
 
       - name: 'Publish binary to release (windows)'
         continue-on-error: true
@@ -129,7 +129,7 @@ jobs:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         with:
           file: ${{env.app_name}}-${{matrix.label}}-${{ github.ref_name }}*
-          tags: true
+          tags: false
           draft: false
           overwrite: true
 
