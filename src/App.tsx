@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { handleBackendMessage } from './helper/BackendMessageHandler';
 import { useDispatch } from 'react-redux';
+import Titlebar from './components/Titlebar';
 
 function App() {
   const dispatch = useDispatch();
@@ -21,6 +22,7 @@ function App() {
 
   return (
     <div className="App">
+      <Titlebar />
       <RouterProvider router={router} />
     </div>
   )

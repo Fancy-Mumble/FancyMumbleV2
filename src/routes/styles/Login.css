@@ -1,0 +1,9 @@
+.login {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.login-form {
+    max-width: 600px;
+}

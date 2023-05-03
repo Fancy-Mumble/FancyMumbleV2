@@ -4,6 +4,9 @@ on:
     branches:
       - master
 
+env:
+  app_name: Fancy Mumble
+
 jobs:
   create-release:
     permissions:
@@ -111,6 +114,25 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
+
+      - name: Add Windows Executeable
+        continue-on-error: true
+        if: matrix.os == 'windows-latest'
+        run: |
+          mv src-tauri/target/release/${{env.app_name}}${{matrix.executable_extension}} ${{env.app_name}}-${{matrix.label}}-${{ github.ref_name }}${{matrix.executable_extension}}
+
+      - name: 'Publish binary to release (windows)'
+        continue-on-error: true
+        if: matrix.os == 'windows-latest'
+        uses: xresloader/upload-to-github-release@v1
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        with:
+          file: ${{env.app_name}}-${{matrix.label}}-${{ github.ref_name }}*
+          tags: true
+          draft: false
+          overwrite: true
+
   publish-release:
     permissions:
       contents: write

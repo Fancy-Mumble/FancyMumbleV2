@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import '../App.css'
+import '../App.css';
+import './styles/Login.css';
 import { Alert, Box, Container, Grid, TextField, Typography } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton';
 import { invoke } from '@tauri-apps/api/tauri'
@@ -56,10 +57,10 @@ function Login() {
     let errorBox = errorInfo.show ? (<Box mb={3}><Alert severity="error">{errorInfo.text}</Alert></Box>) : (<div></div>);
 
     return (
-        <Container className='Login'>
+        <Box className='login' sx={{ height: '100%' }}>
             <Typography align='center' variant='h2' gutterBottom>Fancy Mumble</Typography >
             {errorBox}
-            <Container>
+            <Container className='login-form'>
                 <Grid container spacing={1}>
                     <Grid xs={8}>
                         <Box mr={2} mb={2}>
@@ -79,7 +80,7 @@ function Login() {
                     </Grid>
                 </Grid>
             </Container>
-        </Container>
+        </Box>
     )
 }
 
