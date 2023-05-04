@@ -1,10 +1,9 @@
 import { deleteUser, updateConnected, updateCurrentUserById, updateUser, updateUserComment, updateUserImage } from '../store/features/users/userSlice';
-import { updateChannel } from '../store/features/users/channelSlice';
+import { updateChannel, updateChannelDescription } from '../store/features/users/channelSlice';
 import { Event } from '@tauri-apps/api/event';
-import { TextMessage, addChatMessage } from '../store/features/users/chatMessageSlice';
+import { addChatMessage } from '../store/features/users/chatMessageSlice';
 import { Dispatch } from 'react';
 import { AnyAction } from '@reduxjs/toolkit';
-import { NavigateFunction } from 'react-router-dom';
 
 enum MessageTypes {
     Connected = "connected",
@@ -17,6 +16,7 @@ enum MessageTypes {
     UserUpdate = "user_update",
     UserRemove = "user_remove",
     ChannelUpdate = "channel_update",
+    ChannelDescription = "channel_description",
     NotifyCurrentUser = "current_user_id",
 }
 
@@ -61,6 +61,10 @@ export function handleBackendMessage<T>(event: Event<T>, dispatch: Dispatch<AnyA
         }
         case MessageTypes.ChannelUpdate: {
             dispatch(updateChannel(message.data));
+            break;
+        }
+        case MessageTypes.ChannelDescription: {
+            dispatch(updateChannelDescription(message.data));
             break;
         }
         case MessageTypes.NotifyCurrentUser: {
