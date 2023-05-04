@@ -9,6 +9,7 @@ import MicOffIcon from '@mui/icons-material/MicOff';
 import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import DOMPurify from "dompurify";
 import { ReactNode } from "react";
+import { Property } from "csstype";
 
 function ChannelViewer() {
     const userList = useSelector((state: RootState) => state.reducer.userInfo);
@@ -45,17 +46,24 @@ function ChannelViewer() {
         )
     }
 
+    function getChannelImageFromDescription(channel: ChannelState): Property.Background<string | number> | undefined {
+        let lastImage = channelList[channel.channel_id].channelImage
+        return `url(${lastImage})`;
+    }
+
     return (
         <List subheader={<li />}>
             {
                 Array.from(getChannelUserMapping()).map(([channel, users]) => (
                     <li key={`channel-${channel.channel_id}`}>
                         <ul style={{ padding: 0 }}>
-                            <ListSubheader className="subheader-flex" onClick={e => joinChannel(channel.channel_id)}>
-                                {channel.name}
-                                <ListItemIcon className="join-button" style={{ cursor: 'pointer' }}>
-                                    <ArrowForwardIosIcon />
-                                </ListItemIcon>
+                            <ListSubheader className="subheader-flex" sx={{ background: getChannelImageFromDescription(channel), backgroundSize: 'cover', padding: '0' }} onClick={e => joinChannel(channel.channel_id)}>
+                                <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', textShadow: '1px 1px #000', backdropFilter: 'blur(10px)', padding: '5px'}}>
+                                    {channel.name}
+                                    <ListItemIcon className="join-button" style={{ cursor: 'pointer', filter: 'drop-shadow(1px 1px 1px #000)' }}>
+                                        <ArrowForwardIosIcon />
+                                    </ListItemIcon>
+                                </Box>
                             </ListSubheader>
                             {users.map((user) => (
                                 <Box key={`user-${user.id}`}>
