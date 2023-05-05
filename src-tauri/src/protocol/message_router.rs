@@ -1,4 +1,4 @@
-use std::{error::Error};
+use std::error::Error;
 
 use tokio::sync::broadcast::Sender;
 use tracing::{error, trace};
@@ -6,7 +6,10 @@ use tracing::{error, trace};
 use crate::{
     connection::MessageChannels,
     errors::application_error::ApplicationError,
-    manager::{text_message_manager::TextMessageManager, user_manager::UserManager, channel_manager::ChannelManager, connection_manager::ConnectionManager},
+    manager::{
+        channel_manager::ChannelManager, connection_manager::ConnectionManager,
+        text_message_manager::TextMessageManager, user_manager::UserManager,
+    },
     utils::messages::{mumble, MessageInfo},
 };
 
@@ -21,9 +24,15 @@ impl MessageRouter {
     pub fn new(sender: MessageChannels, server_channel: Sender<Vec<u8>>) -> MessageRouter {
         MessageRouter {
             user_manager: UserManager::new(sender.message_channel.clone(), server_channel.clone()),
-            channel_manager: ChannelManager::new(sender.message_channel.clone(), server_channel.clone()),
+            channel_manager: ChannelManager::new(
+                sender.message_channel.clone(),
+                server_channel.clone(),
+            ),
             text_manager: TextMessageManager::new(sender.message_channel.clone()),
-            connection_manager: ConnectionManager::new(sender.message_channel.clone(), server_channel.clone()),
+            connection_manager: ConnectionManager::new(
+                sender.message_channel.clone(),
+                server_channel.clone(),
+            ),
         }
     }
 
@@ -46,7 +55,7 @@ impl MessageRouter {
                 self.text_manager.add_text_message(text_message, actor)?;
             }
             None => {
-                error!("Received text message without actor");
+                error!("Received text message without actor: {:?}", text_message);
             }
         }
         Ok(())
@@ -63,7 +72,9 @@ impl MessageRouter {
             crate::utils::messages::MessageTypes::Reject => {
                 let reject = self.handle_downcast::<mumble::proto::Reject>(message)?;
                 self.connection_manager.notify_disconnected(&reject.reason);
-                return Err(Box::new(ApplicationError::new(format!("Received reject message: {:?}", reject.reason).as_str())));
+                return Err(Box::new(ApplicationError::new(
+                    format!("Received reject message: {:?}", reject.reason).as_str(),
+                )));
             }
             crate::utils::messages::MessageTypes::ServerSync => {
                 let server_sync = self.handle_downcast::<mumble::proto::ServerSync>(message)?;
@@ -71,11 +82,13 @@ impl MessageRouter {
                 self.connection_manager.notify_connected();
             }
             crate::utils::messages::MessageTypes::ChannelRemove => {
-                let removed_channel = self.handle_downcast::<mumble::proto::ChannelRemove>(message)?;
+                let removed_channel =
+                    self.handle_downcast::<mumble::proto::ChannelRemove>(message)?;
                 self.channel_manager.remove_channel(removed_channel);
             }
             crate::utils::messages::MessageTypes::ChannelState => {
-                let changed_channel = self.handle_downcast::<mumble::proto::ChannelState>(message)?;
+                let changed_channel =
+                    self.handle_downcast::<mumble::proto::ChannelState>(message)?;
                 self.channel_manager.update_channel(changed_channel)?;
             }
             crate::utils::messages::MessageTypes::UserRemove => {
@@ -104,7 +117,7 @@ impl MessageRouter {
             crate::utils::messages::MessageTypes::RequestBlob => {}
             crate::utils::messages::MessageTypes::ServerConfig => {}
             crate::utils::messages::MessageTypes::SuggestConfig => {}
-            crate::utils::messages::MessageTypes::PluginDataTransmission => {},
+            crate::utils::messages::MessageTypes::PluginDataTransmission => {}
         };
 
         Ok(())

@@ -20,7 +20,7 @@ use tracing::Level;
 use tracing_subscriber;
 use tracing_subscriber::fmt;
 
-use crate::commands::{connect_to_server, logout, send_message, like_message, join_channel};
+use crate::commands::{connect_to_server, join_channel, like_message, logout, send_message};
 
 fn init_logging() {
     let format = fmt::format()
@@ -44,6 +44,7 @@ fn main() {
             app.manage(ConnectionState {
                 connection: Mutex::new(None),
                 window: Mutex::new(app.get_window("main").unwrap()),
+                package_info: Mutex::new(app.package_info().clone()),
                 message_handler: Mutex::new(HashMap::new()),
             });
 

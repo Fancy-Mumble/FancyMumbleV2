@@ -11,6 +11,7 @@ use tracing::{error, info, trace};
 pub struct ConnectionState {
     pub connection: Mutex<Option<Connection>>,
     pub window: Mutex<tauri::Window>,
+    pub package_info: Mutex<tauri::PackageInfo>,
     pub message_handler: Mutex<HashMap<String, Box<dyn Shutdown + Send>>>,
 }
 
@@ -39,7 +40,8 @@ pub async fn connect_to_server(
         }
     }
 
-    let connection = guard.insert(Connection::new(&server_host, server_port, &username));
+    let app_info = state.package_info.lock().await.clone();
+    let connection = guard.insert(Connection::new(&server_host, server_port, &username, app_info));
     if let Err(e) = connection.connect().await {
         return Err(format!("{e:?}"));
     }
