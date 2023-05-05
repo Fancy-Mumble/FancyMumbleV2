@@ -9,6 +9,7 @@ use connection_threads::{InputThread, MainThread, OutputThread, PingThread};
 use std::collections::HashMap;
 use std::error::Error;
 use std::sync::{Arc, RwLock};
+use tauri::PackageInfo;
 use tokio::net::TcpStream;
 use tokio::sync::broadcast::{self, Receiver, Sender};
 use tokio::task::JoinHandle;
@@ -47,10 +48,16 @@ pub struct Connection {
     running: Arc<RwLock<bool>>,
     threads: HashMap<ConnectionThread, JoinHandle<()>>,
     message_channels: MessageChannels,
+    package_info: PackageInfo,
 }
 
 impl Connection {
-    pub fn new(server_host: &str, server_port: u16, username: &str) -> Connection {
+    pub fn new(
+        server_host: &str,
+        server_port: u16,
+        username: &str,
+        package_info: PackageInfo,
+    ) -> Connection {
         let (tx_in, _): (Sender<Vec<u8>>, Receiver<Vec<u8>>) = broadcast::channel(QUEUE_SIZE);
         let (tx_out, _): (Sender<Vec<u8>>, Receiver<Vec<u8>>) = broadcast::channel(QUEUE_SIZE);
         let (tx_message_channel, _): (Sender<TextMessage>, Receiver<TextMessage>) =
@@ -59,6 +66,7 @@ impl Connection {
             broadcast::channel(QUEUE_SIZE);
 
         Connection {
+            package_info,
             server_data: ServerData {
                 username: username.to_string(),
                 server_host: server_host.to_string(),
@@ -82,6 +90,7 @@ impl Connection {
             "{}:{}",
             self.server_data.server_host, self.server_data.server_port
         );
+
         let socket = TcpStream::connect(server_uri).await?;
         let cx = TlsConnector::builder()
             .identity(get_client_certificate().await?)
@@ -107,12 +116,16 @@ impl Connection {
         self.spawn_output_thread();
 
         self.init_main_thread(stream).await?;
-        init_connection(&self.server_data.username, self.tx_out.clone()).await;
+        init_connection(&self.server_data.username, self.tx_out.clone(), self.package_info.clone()).await;
 
         Ok(())
     }
 
-    pub async fn send_message(&self, channel_id: Option<u32>, message: &str) -> Result<(), Box<dyn Error>> {
+    pub async fn send_message(
+        &self,
+        channel_id: Option<u32>,
+        message: &str,
+    ) -> Result<(), Box<dyn Error>> {
         self.tx_message_channel.send(TextMessage {
             message: message.to_string(),
             channel_id: channel_id,
