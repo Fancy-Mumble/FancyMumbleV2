@@ -1,13 +1,13 @@
 use byteorder::{BigEndian, ReadBytesExt};
-use tracing::{error};
-use std::io::Cursor;
+use std::{io::Cursor, collections::VecDeque};
+use tracing::error;
 
-use crate::{utils::messages::{get_message, MessageInfo}};
+use crate::utils::messages::{get_message, MessageInfo, MessageTypes};
 
 use super::message_router::MessageRouter;
 
 pub struct StreamReader {
-    stream_buffer: Vec<u8>,
+    stream_buffer: Vec<u8>, //TODO: replace with vecdeque
     message_handler: MessageRouter,
 }
 
@@ -40,6 +40,7 @@ impl StreamReader {
 
         let message_size = message_size as usize;
         if message_size + 6 > self.stream_buffer.len() {
+            // we don't have enough data yet
             return None;
         }
 
@@ -48,6 +49,13 @@ impl StreamReader {
 
         let buffer = self.stream_buffer.drain(0..message_size);
 
+        // special case for UDP tunnel, because it's not a protobuf message
+        if message_type == (MessageTypes::UdpTunnel as u16) {
+            return Some(MessageInfo {
+                message_type: MessageTypes::UdpTunnel,
+                message_data: Box::new(buffer.collect::<VecDeque<u8>>()),
+            });
+        }
         get_message(message_type, buffer.as_slice()).ok()
     }
 

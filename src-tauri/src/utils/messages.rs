@@ -36,29 +36,10 @@ macro_rules! message_builder {
             }
         })*
 
-        #[derive(Debug, Clone, Serialize)]
+        #[derive(Debug, Clone, Serialize, PartialEq)]
         pub enum MessageTypes {
             $( $proto ),*
         }
-
-        /*pub fn downcast_message(data: Box<dyn Any>, message_type: MessageTypes, send_to: Sender<String>) {
-                match message_type {
-                    $( MessageTypes::$proto => {
-                        match data.downcast::<mumble::proto::$proto>() {
-                            Ok(b) => {
-                                let data = MessageSendData{message_type, data: b.as_ref() };
-                                if let Ok(v) = serde_json::to_string(&data) {
-                                    _ = send_to.send(v);
-                                }
-                            }
-                            Err(e) => {
-                                println!("Type not yet implemented: {:?}, {e:?}", message_type);
-                            }
-                        };
-                    }
-                ),*
-                }
-        }*/
 
         pub fn get_message(id: u16, buf: &[u8]) -> Result<MessageInfo, DecodeError> {
             match id {

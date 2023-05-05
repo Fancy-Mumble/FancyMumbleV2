@@ -5,7 +5,7 @@ use std::{
 };
 
 use serde::Serialize;
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, trace};
 
 use crate::{
     protocol::serialize::message_container::FrontendMessage,
@@ -148,13 +148,13 @@ impl UserManager {
         let cached_user_texture_hash = &self.users.get(&user_session).unwrap().profile_picture_hash;
 
         if texture_hash == cached_user_texture_hash {
-            debug!(
+            trace!(
                 "User image is up to date: {:?} vs {:?}",
                 texture_hash, cached_user_texture_hash
             );
             return Ok(());
         }
-        debug!("User image is not up to date for user {}", user_session);
+        trace!("User image is not up to date for user {}", user_session);
 
         let no_texture_hash_available = cached_user_texture_hash.is_empty();
         let texture_hash_in_current_message = !texture_hash.is_empty();
@@ -179,13 +179,13 @@ impl UserManager {
         let cached_user_comment_hash = &self.users.get(&user_session).unwrap().comment_hash;
 
         if comment_hash == cached_user_comment_hash {
-            debug!(
+            trace!(
                 "User comment is up to date {:?} vs {:?}",
                 comment_hash, cached_user_comment_hash
             );
             return Ok(());
         }
-        debug!("User comment is not up to date for user {}", user_session);
+        trace!("User comment is not up to date for user {}", user_session);
 
         let no_comment_available = cached_user_comment_hash.is_empty();
         let comment_in_current_message = !comment_hash.is_empty();
