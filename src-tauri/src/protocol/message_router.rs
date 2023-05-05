@@ -1,4 +1,4 @@
-use std::error::Error;
+use std::{collections::VecDeque, error::Error};
 
 use tokio::sync::broadcast::Sender;
 use tracing::{error, trace};
@@ -10,7 +10,10 @@ use crate::{
         channel_manager::ChannelManager, connection_manager::ConnectionManager,
         text_message_manager::TextMessageManager, user_manager::UserManager,
     },
-    utils::messages::{mumble, MessageInfo},
+    utils::{
+        messages::{mumble, MessageInfo},
+        varint::parse_varint,
+    },
 };
 
 pub struct MessageRouter {
@@ -37,10 +40,12 @@ impl MessageRouter {
     }
 
     fn handle_downcast<T: 'static>(&self, message_info: MessageInfo) -> Result<T, Box<dyn Error>> {
-        if let Ok(a) = message_info.message_data.downcast::<T>() {
-            return Ok(*a);
+        match message_info.message_data.downcast::<T>() {
+            Ok(a) => return Ok(*a),
+            Err(e) => Err(Box::new(ApplicationError::new(
+                format!("Invalid message type {:?}", e).as_str(),
+            ))),
         }
-        return Err(Box::new(ApplicationError::new("Invalid message type")));
     }
 
     fn handle_text_message(&mut self, message: MessageInfo) -> Result<(), Box<dyn Error>> {
@@ -62,11 +67,41 @@ impl MessageRouter {
     }
 
     pub fn recv_message(&mut self, message: MessageInfo) -> Result<(), Box<dyn Error>> {
-        trace!("Received message: {:<100?}", message);
+        if message.message_type != crate::utils::messages::MessageTypes::UdpTunnel {
+            trace!("Received message: {:<100?}", message);
+        }
 
         match message.message_type {
             crate::utils::messages::MessageTypes::Version => {}
-            crate::utils::messages::MessageTypes::UdpTunnel => {}
+            crate::utils::messages::MessageTypes::UdpTunnel => {
+                let mut audio_data = self.handle_downcast::<VecDeque<u8>>(message)?;
+                //trace!("Received audio data: {:?}", audio_data);
+                let audio_header = audio_data.pop_front().unwrap();
+
+                let audio_type = (audio_header & 0xE0) >> 5;
+                let audio_target = audio_header & 0x1F;
+                if audio_type != 4 {
+                    return Ok(());
+                }
+
+                let session_id = parse_varint(audio_data.make_contiguous())?;
+                audio_data.drain(0..(session_id.1 as usize));
+
+                let sequence_number = parse_varint(audio_data.make_contiguous())?;
+                audio_data.drain(0..(sequence_number.1 as usize));
+
+                let opus_header = parse_varint(audio_data.make_contiguous())?;
+                audio_data.drain(0..(opus_header.1 as usize));
+
+                trace!(
+                    "Type: {:?} | Target: {:?} | Session: {:?} | Sequence: {:?} | Opus: {:?}",
+                    audio_type,
+                    audio_target,
+                    session_id.0,
+                    sequence_number.0,
+                    opus_header.0
+                );
+            }
             crate::utils::messages::MessageTypes::Authenticate => {}
             crate::utils::messages::MessageTypes::Ping => {}
             crate::utils::messages::MessageTypes::Reject => {
