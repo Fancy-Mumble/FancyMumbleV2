@@ -93,14 +93,14 @@ impl MessageRouter {
                 let opus_header = parse_varint(audio_data.make_contiguous())?;
                 audio_data.drain(0..(opus_header.1 as usize));
 
-                trace!(
+                /*trace!(
                     "Type: {:?} | Target: {:?} | Session: {:?} | Sequence: {:?} | Opus: {:?}",
                     audio_type,
                     audio_target,
                     session_id.0,
                     sequence_number.0,
                     opus_header.0
-                );
+                );*/
             }
             crate::utils::messages::MessageTypes::Authenticate => {}
             crate::utils::messages::MessageTypes::Ping => {}
