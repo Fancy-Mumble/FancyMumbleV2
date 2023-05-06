@@ -41,7 +41,12 @@ pub async fn connect_to_server(
     }
 
     let app_info = state.package_info.lock().await.clone();
-    let connection = guard.insert(Connection::new(&server_host, server_port, &username, app_info));
+    let connection = guard.insert(Connection::new(
+        &server_host,
+        server_port,
+        &username,
+        app_info,
+    ));
     if let Err(e) = connection.connect().await {
         return Err(format!("{e:?}"));
     }
@@ -119,6 +124,22 @@ pub async fn join_channel(
     let guard = state.connection.lock().await;
     if let Some(guard) = guard.as_ref() {
         if let Err(e) = guard.join_channel(channel_id).await {
+            return Err(format!("{e:?}"));
+        }
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn set_user_image(
+    image: String,
+    image_type: String,
+    state: State<'_, ConnectionState>,
+) -> Result<(), String> {
+    let guard = state.connection.lock().await;
+    if let Some(guard) = guard.as_ref() {
+        if let Err(e) = guard.set_user_image(image.as_str(), &image_type).await {
             return Err(format!("{e:?}"));
         }
     }

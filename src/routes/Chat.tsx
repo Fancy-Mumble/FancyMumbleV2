@@ -45,7 +45,7 @@ function Chat() {
     }
 
     function sendChatMessage(e: any) {
-        let message = new OutgoingMessageParser(chatMessage).parseLinks().build();
+        let message = new OutgoingMessageParser(chatMessage).parseLinks().parseCommands().build();
         customChatMessage(message)
     }
 

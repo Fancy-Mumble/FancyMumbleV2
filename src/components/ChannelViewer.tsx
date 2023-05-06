@@ -7,9 +7,8 @@ import { invoke } from "@tauri-apps/api";
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import VolumeOffIcon from '@mui/icons-material/VolumeOff';
-import DOMPurify from "dompurify";
 import { ReactNode } from "react";
-import { Property } from "csstype";
+import './styles/ChannelViewer.css';
 
 function ChannelViewer() {
     const userList = useSelector((state: RootState) => state.reducer.userInfo);
@@ -46,6 +45,14 @@ function ChannelViewer() {
         )
     }
 
+    function isTalking(userId: number): boolean {
+        let user = userList.users.find(user => user.id === userId);
+        if (user !== undefined && user.talking) {
+            return true;
+        }
+        return false;
+    }
+
     return (
         <List subheader={<li />}>
             {
@@ -63,8 +70,8 @@ function ChannelViewer() {
                             {users.map((user) => (
                                 <Box key={`user-${user.id}`}>
                                     <ListItem key={user.id} sx={{ py: 0, minHeight: 32 }}>
-                                        <ListItemAvatar sx={{ width: 24, height: 24, minWidth: 0, marginRight: 1 }}>
-                                            <Avatar sx={{ width: 24, height: 24 }} src={user.profile_picture} />
+                                        <ListItemAvatar sx={{ width: 24, height: 24, minWidth: 0, marginRight: 1}}>
+                                            <Avatar sx={{ width: 24, height: 24 }} src={user.profile_picture} className={isTalking(user.id) ? 'talking-avatar' : 'silent-avatar'} />
                                         </ListItemAvatar>
                                         <ListItemText primary={displayUserInfo(user)} primaryTypographyProps={{ fontSize: 14, fontWeight: 'medium' }} />
                                     </ListItem>

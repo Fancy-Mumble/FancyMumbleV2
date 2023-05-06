@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, error::Error};
+use std::error::Error;
 
 use tokio::sync::broadcast::Sender;
 use tracing::{error, trace};
@@ -9,11 +9,9 @@ use crate::{
     manager::{
         channel_manager::ChannelManager, connection_manager::ConnectionManager,
         text_message_manager::TextMessageManager, user_manager::UserManager,
+        voice_manager::VoiceManager,
     },
-    utils::{
-        messages::{mumble, MessageInfo},
-        varint::parse_varint,
-    },
+    utils::messages::{mumble, MessageInfo},
 };
 
 pub struct MessageRouter {
@@ -21,6 +19,7 @@ pub struct MessageRouter {
     channel_manager: ChannelManager,
     text_manager: TextMessageManager,
     connection_manager: ConnectionManager,
+    voice_manager: VoiceManager,
 }
 
 impl MessageRouter {
@@ -33,6 +32,10 @@ impl MessageRouter {
             ),
             text_manager: TextMessageManager::new(sender.message_channel.clone()),
             connection_manager: ConnectionManager::new(
+                sender.message_channel.clone(),
+                server_channel.clone(),
+            ),
+            voice_manager: VoiceManager::new(
                 sender.message_channel.clone(),
                 server_channel.clone(),
             ),
@@ -74,33 +77,8 @@ impl MessageRouter {
         match message.message_type {
             crate::utils::messages::MessageTypes::Version => {}
             crate::utils::messages::MessageTypes::UdpTunnel => {
-                let mut audio_data = self.handle_downcast::<VecDeque<u8>>(message)?;
-                //trace!("Received audio data: {:?}", audio_data);
-                let audio_header = audio_data.pop_front().unwrap();
-
-                let audio_type = (audio_header & 0xE0) >> 5;
-                let audio_target = audio_header & 0x1F;
-                if audio_type != 4 {
-                    return Ok(());
-                }
-
-                let session_id = parse_varint(audio_data.make_contiguous())?;
-                audio_data.drain(0..(session_id.1 as usize));
-
-                let sequence_number = parse_varint(audio_data.make_contiguous())?;
-                audio_data.drain(0..(sequence_number.1 as usize));
-
-                let opus_header = parse_varint(audio_data.make_contiguous())?;
-                audio_data.drain(0..(opus_header.1 as usize));
-
-                /*trace!(
-                    "Type: {:?} | Target: {:?} | Session: {:?} | Sequence: {:?} | Opus: {:?}",
-                    audio_type,
-                    audio_target,
-                    session_id.0,
-                    sequence_number.0,
-                    opus_header.0
-                );*/
+                let audio_data = self.handle_downcast::<Vec<u8>>(message)?;
+                self.voice_manager.notify_audio(&audio_data)?;
             }
             crate::utils::messages::MessageTypes::Authenticate => {}
             crate::utils::messages::MessageTypes::Ping => {}

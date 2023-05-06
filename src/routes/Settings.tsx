@@ -5,13 +5,14 @@ import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import PersonIcon from '@mui/icons-material/Person';
 import KeyIcon from '@mui/icons-material/Key';
 import SecurityIcon from '@mui/icons-material/Security';
+import Profile from "../components/settings/Profile";
 
 function Settings() {
     const navigate = useNavigate();
     const [selectedIndex, setSelectedIndex] = React.useState(1);
 
     return (
-        <Box sx={{ height: '100%' }}>
+        <Box sx={{ height: '100%', display: 'flex' }}>
             <Box sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
                     <List component="nav" aria-label="main mailbox folders" subheader={<ListSubheader>Settings</ListSubheader>}>
@@ -58,6 +59,14 @@ function Settings() {
                 </Box>
                 <Box>
                     <Button onClick={e => navigate("/chat")}>Go Back</Button>
+                </Box>
+            </Box>
+            <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+                <Box sx={{ p: 3 }}>
+                    {selectedIndex === 0 && <div>Audio</div>}
+                    {selectedIndex === 1 && <Profile />}
+                    {selectedIndex === 2 && <div>Additional Features</div>}
+                    {selectedIndex === 3 && <div>Privacy</div>}
                 </Box>
             </Box>
         </Box>

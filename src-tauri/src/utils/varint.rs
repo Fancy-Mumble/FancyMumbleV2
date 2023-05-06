@@ -1,6 +1,21 @@
-pub fn parse_varint(bytes: &[u8]) -> Result<(i128, u32), String> {
+use std::error::Error;
+
+use crate::errors::voice_error::VoiceError;
+
+fn create_voice_eoi(on: &str) -> Box<dyn Error> {
+    return Box::new(VoiceError::new(format!(
+        "Unexpected end of input for {}",
+        on
+    )));
+}
+
+pub fn parse_varint(bytes: &[u8]) -> Result<(i128, u32), Box<dyn Error>> {
     if bytes.is_empty() {
-        return Err("Unexpected end of input".to_owned());
+        return Err(Box::new(VoiceError::new("Unexpected end of input")));
+    }
+
+    if bytes.len() < 1 {
+        return Err(create_voice_eoi("varint"));
     }
 
     let first_byte = bytes[0];
@@ -10,7 +25,7 @@ pub fn parse_varint(bytes: &[u8]) -> Result<(i128, u32), String> {
         // 14-bit positive number
         128..=191 => {
             if bytes.len() < 2 {
-                return Err("Unexpected end of input".to_owned());
+                return Err(create_voice_eoi("14-bit positive number"));
             }
             let value = u64::from(first_byte & 0b0011_1111) << 8 | u64::from(bytes[1]);
             (value as i128, 2)
@@ -18,7 +33,7 @@ pub fn parse_varint(bytes: &[u8]) -> Result<(i128, u32), String> {
         // 21-bit positive number
         192..=223 => {
             if bytes.len() < 3 {
-                return Err("Unexpected end of input".to_owned());
+                return Err(create_voice_eoi("21-bit positive number"));
             }
             let value = u64::from(first_byte & 0b0001_1111) << 16
                 | u64::from(bytes[1]) << 8
@@ -28,7 +43,7 @@ pub fn parse_varint(bytes: &[u8]) -> Result<(i128, u32), String> {
         // 28-bit positive number
         224..=239 => {
             if bytes.len() < 4 {
-                return Err("Unexpected end of input".to_owned());
+                return Err(create_voice_eoi("28-bit positive number"));
             }
             let value = u64::from(first_byte & 0b0000_1111) << 24
                 | u64::from(bytes[1]) << 16
@@ -38,31 +53,26 @@ pub fn parse_varint(bytes: &[u8]) -> Result<(i128, u32), String> {
         }
 
         // 32-bit positive number
-        0b11110000 | 0b11110001 | 0b11110010 | 0b11110011 => {
+        0b11110000..=0b11110011 => {
             if bytes.len() < 5 {
-                return Err("Unexpected end of input".to_owned());
+                return Err(create_voice_eoi("32-bit positive number"));
             }
             (
-                u64::from_be_bytes([0, 0, 0, 0, bytes[1], bytes[2], bytes[3], bytes[4]]) as i128,
+                u32::from_be_bytes(bytes[1..=4].try_into()?) as i128,
                 5,
             )
         }
 
         // 64-bit positive number
-        0b11110100 | 0b11110101 | 0b11110110 | 0b11110111 => {
+        0b11110100..=0b11110111 => {
             if bytes.len() < 9 {
-                return Err("Unexpected end of input".to_owned());
+                return Err(create_voice_eoi("64-bit positive number"));
             }
-            (
-                u64::from_be_bytes([
-                    bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7], bytes[8],
-                ]) as i128,
-                9,
-            )
+            (u64::from_be_bytes(bytes[1..=8].try_into()?) as i128, 9)
         }
 
         // Negative recursive varint
-        0b11111000 | 0b11111001 | 0b11111010 | 0b11111011 => {
+        0b11111000..=0b11111011 => {
             let value = parse_varint(&bytes[1..])?;
             (-value.0 as i128, value.1 + 1)
         }
