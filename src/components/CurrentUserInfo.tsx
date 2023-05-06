@@ -1,18 +1,20 @@
 import { useSelector } from "react-redux";
 import { RootState } from "../store/store";
 import { getBackgroundFromComment, getProfileImage } from "../helper/UserInfoHelper";
-import { Avatar, Container } from "@mui/material";
+import { Avatar, Box, Container } from "@mui/material";
 
 function CurrentUserInfo() {
     const userInfo = useSelector((state: RootState) => state.reducer.userInfo);
     return (
-        <Container style={{background: getBackgroundFromComment(userInfo.currentUser)}}>
-            <Avatar
-                alt="Remy Sharp"
-                src={getProfileImage(userInfo.currentUser?.id || -1)}
-                sx={{ width: 24, height: 24 }}
-            />
-            {userInfo.currentUser?.name}
-        </Container>)
+        <Box style={{ background: getBackgroundFromComment(userInfo.currentUser) }}>
+            <Box sx={{display: 'flex', background: '#192932', justifyContent: 'space-between', padding: '2px 10px', alignItems: 'center'}}>
+                <Avatar
+                    alt={userInfo.currentUser?.name}
+                    src={getProfileImage(userInfo.currentUser?.id || -1)}
+                    sx={{ width: 32, height: 32 }}
+                />
+                {userInfo.currentUser?.name}
+            </Box>
+        </Box>)
 }
 export default CurrentUserInfo;

@@ -9,6 +9,7 @@ import './Sidebar.css'
 import ChannelViewer from "./ChannelViewer";
 import CurrentUserInfo from "./CurrentUserInfo";
 import SettingsIcon from '@mui/icons-material/Settings';
+import ChannelSearch from "./ChannelSearch";
 
 interface SidebarProps {
 }
@@ -36,15 +37,16 @@ function Sidebar(props: SidebarProps) {
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', alignContent: 'center' }} className="sidebar">
             <Box sx={{ flex: 1, overflowY: 'auto', width: '100%' }} >
                 <CurrentUserInfo />
+                <ChannelSearch />
                 <ChannelViewer />
             </Box>
             <Box m={3}>
                 <ButtonGroup variant="text">
                     <LoadingButton loading={logoutInProgress} onClick={triggerLogout} color="error"><LogoutIcon /></LoadingButton >
-                    <Button color="primary">
+                    <Button color="inherit">
                         <InfoIcon />
                     </Button>
-                    <Button onClick={openSettings} color="primary">
+                    <Button onClick={openSettings} color="inherit">
                         <SettingsIcon />
                     </Button>
                 </ButtonGroup>

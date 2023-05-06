@@ -46,20 +46,13 @@ function ChannelViewer() {
         )
     }
 
-    function getChannelImageFromDescription(channel: ChannelState): Property.Background<string | number> | undefined {
-        if (channelList[channel.channel_id] !== undefined) {
-            let lastImage = channelList[channel.channel_id].channelImage
-            return `url(${lastImage})`;
-        }
-    }
-
     return (
         <List subheader={<li />}>
             {
                 Array.from(getChannelUserMapping()).map(([channel, users]) => (
                     <li key={`channel-${channel.channel_id}`}>
                         <ul style={{ padding: 0 }}>
-                            <ListSubheader className="subheader-flex" sx={{ backgroundSize: 'cover', padding: '0' }} onClick={e => joinChannel(channel.channel_id)}>
+                            <ListSubheader className="subheader-flex" sx={{ padding: '0' }} onClick={e => joinChannel(channel.channel_id)}>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '5px' }}>
                                     {channel.name}
                                     <ListItemIcon className="join-button" style={{ cursor: 'pointer', filter: 'drop-shadow(1px 1px 1px #000)' }}>
