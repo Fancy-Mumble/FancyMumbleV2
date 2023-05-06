@@ -37,7 +37,6 @@ function Sidebar(props: SidebarProps) {
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', alignContent: 'center' }} className="sidebar">
             <Box sx={{ flex: 1, overflowY: 'auto', width: '100%' }} >
                 <CurrentUserInfo />
-                <ChannelSearch />
                 <ChannelViewer />
             </Box>
             <Box m={3}>

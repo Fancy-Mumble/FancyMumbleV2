@@ -11,7 +11,10 @@ mod tests {
 
     #[test]
     fn test_14bit_positive_integer() {
-        assert_eq!((16383, 2), parse_varint(vec![0xBF, 0xFF].as_slice()).unwrap());
+        assert_eq!(
+            (16383, 2),
+            parse_varint(vec![0xBF, 0xFF].as_slice()).unwrap()
+        );
         assert_eq!((0, 2), parse_varint(vec![0x80, 0].as_slice()).unwrap());
         assert_eq!((42, 2), parse_varint(vec![0x80, 42].as_slice()).unwrap());
     }
@@ -32,8 +35,14 @@ mod tests {
             (0xFFFFFFF, 4),
             parse_varint(vec![0xEF, 0xFF, 0xFF, 0xFF].as_slice()).unwrap()
         );
-        assert_eq!((0, 4), parse_varint(vec![0xE0, 0, 0, 0].as_slice()).unwrap());
-        assert_eq!((42, 4), parse_varint(vec![0xE0, 0, 0, 42].as_slice()).unwrap());
+        assert_eq!(
+            (0, 4),
+            parse_varint(vec![0xE0, 0, 0, 0].as_slice()).unwrap()
+        );
+        assert_eq!(
+            (42, 4),
+            parse_varint(vec![0xE0, 0, 0, 42].as_slice()).unwrap()
+        );
     }
 
     #[test]
@@ -55,10 +64,22 @@ mod tests {
             parse_varint(vec![0xF0, 0xFF, 0xFF, 0xFF, 0xFF].as_slice()).unwrap()
         );
 
-        assert_eq!((0, 5), parse_varint(vec![0xF3, 0, 0, 0, 0].as_slice()).unwrap());
-        assert_eq!((0, 5), parse_varint(vec![0xF2, 0, 0, 0, 0].as_slice()).unwrap());
-        assert_eq!((0, 5), parse_varint(vec![0xF1, 0, 0, 0, 0].as_slice()).unwrap());
-        assert_eq!((0, 5), parse_varint(vec![0xF0, 0, 0, 0, 0].as_slice()).unwrap());
+        assert_eq!(
+            (0, 5),
+            parse_varint(vec![0xF3, 0, 0, 0, 0].as_slice()).unwrap()
+        );
+        assert_eq!(
+            (0, 5),
+            parse_varint(vec![0xF2, 0, 0, 0, 0].as_slice()).unwrap()
+        );
+        assert_eq!(
+            (0, 5),
+            parse_varint(vec![0xF1, 0, 0, 0, 0].as_slice()).unwrap()
+        );
+        assert_eq!(
+            (0, 5),
+            parse_varint(vec![0xF0, 0, 0, 0, 0].as_slice()).unwrap()
+        );
 
         assert_eq!(
             (42, 5),
@@ -199,6 +220,33 @@ mod tests {
         assert_eq!(
             (-42, 10),
             parse_varint(vec![0xF8, 0xF7, 0, 0, 0, 0, 0, 0, 0, 42].as_slice()).unwrap()
+        );
+    }
+
+    #[test]
+    fn test_invalid_varint() {
+        assert_eq!(true, parse_varint(vec![].as_slice()).is_err());
+        assert_eq!(true, parse_varint(vec![0xBF].as_slice()).is_err());
+        assert_eq!(true, parse_varint(vec![0xDF, 0xFF].as_slice()).is_err());
+        assert_eq!(
+            true,
+            parse_varint(vec![0xEF, 0xFF, 0xFF].as_slice()).is_err()
+        );
+        assert_eq!(
+            true,
+            parse_varint(vec![0xF3, 0xFF, 0xFF, 0xFF].as_slice()).is_err()
+        );
+        assert_eq!(
+            true,
+            parse_varint(vec![0xF7, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF].as_slice())
+                .is_err()
+        );
+        assert_eq!(
+            true,
+            parse_varint(
+                vec![0xFB, 0xF7, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF].as_slice()
+            )
+            .is_err()
         );
     }
 }

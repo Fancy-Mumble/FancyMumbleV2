@@ -14,6 +14,7 @@ export interface UsersState {
   self_deaf: boolean,
   self_mute: boolean,
   suppress: boolean,
+  talking: boolean,
 }
 
 interface UserDataUpdate {
@@ -68,6 +69,7 @@ export const userSlice = createSlice({
         state.users[userIndex].comment = comment;
         state.users[userIndex].profile_picture = profilePicture;
       } else {
+        action.payload.talking = false;
         state.users.push(action.payload);
       }
 
@@ -83,11 +85,17 @@ export const userSlice = createSlice({
     },
     updateConnected: (state, action: PayloadAction<boolean>) => {
       state.connected = action.payload;
+    },
+    updateUserTalkingInfo(state, action: PayloadAction<{user_id: number, talking: boolean}>) {
+      let userIndex = state.users.findIndex(e => e.id === action.payload.user_id);
+      if (userIndex !== -1) {
+        state.users[userIndex].talking = action.payload.talking;
+      }
     }
   },
 })
 
 // Action creators are generated for each case reducer function
-export const { updateUser, deleteUser, updateUserComment, updateUserImage, updateCurrentUserById, updateConnected } = userSlice.actions
+export const { updateUser, deleteUser, updateUserComment, updateUserImage, updateCurrentUserById, updateConnected, updateUserTalkingInfo } = userSlice.actions
 
 export default userSlice.reducer

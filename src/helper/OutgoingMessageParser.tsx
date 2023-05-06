@@ -15,6 +15,26 @@ class OutgoingMessageParser {
         return this;
     }
 
+    parseCommands() {
+        const commandRegex = /^@[A-Za-z]+/
+        let foundCommand = this.message.match(commandRegex);
+        if (!foundCommand) return this;
+
+        //TODO: Move this to the backend
+        switch (foundCommand[0]) {
+            case "@dice":
+                let diceRoll = Math.floor(Math.random() * 6) + 1;
+                this.message = this.message.replace(commandRegex, "The dice rolled: " + diceRoll);
+                break;
+            case "@coin":
+                let coinFlip = Math.floor(Math.random() * 2) + 1;
+                this.message = this.message.replace(commandRegex, "Coin flip: " + (coinFlip === 1 ? "Heads" : "Tails"));
+                break;
+        }
+
+        return this;
+    }
+
     public build() {
         return this.message;
     }

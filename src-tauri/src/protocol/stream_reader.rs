@@ -1,5 +1,5 @@
 use byteorder::{BigEndian, ReadBytesExt};
-use std::{io::Cursor, collections::VecDeque};
+use std::io::Cursor;
 use tracing::error;
 
 use crate::utils::messages::{get_message, MessageInfo, MessageTypes};
@@ -53,9 +53,10 @@ impl StreamReader {
         if message_type == (MessageTypes::UdpTunnel as u16) {
             return Some(MessageInfo {
                 message_type: MessageTypes::UdpTunnel,
-                message_data: Box::new(buffer.collect::<VecDeque<u8>>()),
+                message_data: Box::new(buffer.collect::<Vec<u8>>()),
             });
         }
+
         get_message(message_type, buffer.as_slice()).ok()
     }
 

@@ -27,11 +27,10 @@ function ChannelSearch() {
 
 
     return (
-        <Container sx={{ background: '#121212', padding: '4px 0' }}>
+        <Container sx={{ background: 'transparent', padding: '4px 0' }}>
             <Paper
-                elevation={1}
                 component="form"
-                sx={{ p: '2px 4px', display: 'flex', alignItems: 'center' }}
+                sx={{ p: '2px 4px', display: 'flex', alignItems: 'center', backdropFilter: 'blur(10px)', background: 'rgba(0, 0, 0, 0.5)' }}
                 onClick={() => handleOpen()}
             >
                 <InputBase

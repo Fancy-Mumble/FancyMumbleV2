@@ -5,6 +5,8 @@ use crate::protocol::init_connection;
 use crate::utils::certificate_store::get_client_certificate;
 use crate::utils::messages::{message_builder, mumble};
 use async_trait::async_trait;
+use base64::Engine;
+use base64::engine::general_purpose;
 use connection_threads::{InputThread, MainThread, OutputThread, PingThread};
 use std::collections::HashMap;
 use std::error::Error;
@@ -116,7 +118,12 @@ impl Connection {
         self.spawn_output_thread();
 
         self.init_main_thread(stream).await?;
-        init_connection(&self.server_data.username, self.tx_out.clone(), self.package_info.clone()).await;
+        init_connection(
+            &self.server_data.username,
+            self.tx_out.clone(),
+            self.package_info.clone(),
+        )
+        .await;
 
         Ok(())
     }
@@ -147,6 +154,38 @@ impl Connection {
             data_id: None,
         };
         self.tx_out.send(message_builder(like_message))?;
+
+        Ok(())
+    }
+
+    pub async fn set_user_image(
+        &self,
+        background: &str,
+        image_type: &str,
+    ) -> Result<(), Box<dyn Error>> {
+        match image_type {
+            "background" => {
+                let img = Some(format!(
+                    "<img src='data:image/png;base64,{}' />",
+                    background.to_string()
+                ));
+
+                let set_profile_background = mumble::proto::UserState {
+                    comment: img,
+                    ..Default::default()
+                };
+                self.tx_out.send(message_builder(set_profile_background))?;
+            }
+            "profile" => {
+                let image_vec = Some(general_purpose::STANDARD.decode(background)?);
+                let set_profile_background = mumble::proto::UserState {
+                    texture: image_vec,
+                    ..Default::default()
+                };
+                self.tx_out.send(message_builder(set_profile_background))?;
+            }
+            _ => {}
+        }
 
         Ok(())
     }

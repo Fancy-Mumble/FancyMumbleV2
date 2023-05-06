@@ -1,0 +1,8 @@
+.talking-avatar {
+    box-shadow: 0 0 5px #a7cbe0;
+    border: 2px solid #6eacda;
+}
+
+.silent-avatar {
+    border: 2px solid #000;
+}
