@@ -135,4 +135,10 @@ impl MessageRouter {
 
         Ok(())
     }
+
+    pub async fn shutdown(&mut self) -> Result<(), Box<dyn Error>> {
+        self.voice_manager.shutdown().await?;
+
+        Ok(())
+    }
 }

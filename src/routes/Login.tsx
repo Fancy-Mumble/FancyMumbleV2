@@ -62,18 +62,18 @@ function Login() {
             {errorBox}
             <Container className='login-form'>
                 <Grid container spacing={1}>
-                    <Grid xs={8}>
+                    <Grid item={true} xs={8}>
                         <Box mr={2} mb={2}>
                             <TextField fullWidth label="Server" value={server} onChange={e => setServer(e.target.value)} />
                         </Box>
                     </Grid>
-                    <Grid xs={4}>
+                    <Grid item={true} xs={4}>
                         <TextField fullWidth label="Port" value={port} onChange={e => setPort(e.target.value)} />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid item={true} xs={12}>
                         <TextField fullWidth label="Username" value={username} onChange={e => setUsername(e.target.value)} />
                     </Grid>
-                    <Grid xs={12} container justifyContent="flex-end">
+                    <Grid item={true} xs={12} container justifyContent="flex-end">
                         <Box mt={2}>
                             <LoadingButton loading={connecting} variant="outlined" onClick={e => connect()}>Connect</LoadingButton >
                         </Box>

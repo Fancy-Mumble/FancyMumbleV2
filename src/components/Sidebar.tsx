@@ -9,7 +9,6 @@ import './Sidebar.css'
 import ChannelViewer from "./ChannelViewer";
 import CurrentUserInfo from "./CurrentUserInfo";
 import SettingsIcon from '@mui/icons-material/Settings';
-import ChannelSearch from "./ChannelSearch";
 
 interface SidebarProps {
 }

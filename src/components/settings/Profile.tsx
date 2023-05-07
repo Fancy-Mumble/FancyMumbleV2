@@ -1,6 +1,6 @@
-import { Box, Container, Typography } from "@mui/material";
+import { Box, Button, Container, Typography } from "@mui/material";
 import { invoke } from "@tauri-apps/api";
-import { ChangeEvent } from "react";
+import UploadBox from "../UploadBox";
 
 enum ImageType {
     Profile = 'profile',
@@ -8,28 +8,17 @@ enum ImageType {
 }
 
 function Profile() {
-    function uploadFile(type: ImageType, event: ChangeEvent<HTMLInputElement>) {
-        if (!event.target.files || event.target.files.length === 0) return;
-
-        let file = event.target.files[0];
-
-        if (file) {
-            //TODO: Just upload the path to the file, not the whole file and let the backend handle it
-            let reader = new FileReader();
-            reader.readAsDataURL(file);
-
-            reader.onload = function () {
-                let base64String = reader.result?.toString().split(',')[1];
-                invoke('set_user_image', { image: base64String, imageType: type });
-            };
-        }
+    async function uploadFile(path: string, type: ImageType) {
+                invoke('set_user_image', { imagePath: path, imageType: type });
     }
 
     return (
         <Container>
             <Typography variant="h3">Profile</Typography>
-            <Box>Background Image: <input type="file" onChange={(e) => uploadFile(ImageType.Background, e)} /></Box>
-            <Box>Profile Image: <input type="file" onChange={(e) => uploadFile(ImageType.Profile, e)} /></Box>
+            {/*<Box>Background Image: <input type="file" onChange={(e) => uploadFile(ImageType.Background, e)} /></Box>
+            <Box>Profile Image: <input type="file" onChange={(e) => uploadFile(ImageType.Profile, e)} /></Box>*/}
+            <UploadBox onUpload={(path) => uploadFile(path, ImageType.Background)}>Background Image</UploadBox>
+            <UploadBox onUpload={(path) => uploadFile(path, ImageType.Profile)}>Profile Image</UploadBox>
         </Container>
     )
 }

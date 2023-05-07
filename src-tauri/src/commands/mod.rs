@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap};
 
 use crate::{
     connection::{connection_traits::Shutdown, Connection},
@@ -133,13 +133,13 @@ pub async fn join_channel(
 
 #[tauri::command]
 pub async fn set_user_image(
-    image: String,
+    image_path: &str,
     image_type: String,
     state: State<'_, ConnectionState>,
 ) -> Result<(), String> {
     let guard = state.connection.lock().await;
     if let Some(guard) = guard.as_ref() {
-        if let Err(e) = guard.set_user_image(image.as_str(), &image_type).await {
+        if let Err(e) = guard.set_user_image(&image_path, &image_type).await {
             return Err(format!("{e:?}"));
         }
     }

@@ -2,11 +2,13 @@ pub mod connection_threads;
 pub mod connection_traits;
 use crate::connection::connection_traits::Shutdown;
 use crate::protocol::init_connection;
+use crate::protocol::stream_reader::StreamReader;
 use crate::utils::certificate_store::get_client_certificate;
+use crate::utils::file::get_file_as_byte_vec;
 use crate::utils::messages::{message_builder, mumble};
 use async_trait::async_trait;
-use base64::Engine;
 use base64::engine::general_purpose;
+use base64::Engine;
 use connection_threads::{InputThread, MainThread, OutputThread, PingThread};
 use std::collections::HashMap;
 use std::error::Error;
@@ -14,6 +16,7 @@ use std::sync::{Arc, RwLock};
 use tauri::PackageInfo;
 use tokio::net::TcpStream;
 use tokio::sync::broadcast::{self, Receiver, Sender};
+use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
 use tokio_native_tls::native_tls::TlsConnector;
 use tracing::{info, trace};
@@ -51,6 +54,7 @@ pub struct Connection {
     threads: HashMap<ConnectionThread, JoinHandle<()>>,
     message_channels: MessageChannels,
     package_info: PackageInfo,
+    stream_reader: Arc<Mutex<Option<StreamReader>>>,
 }
 
 impl Connection {
@@ -82,6 +86,7 @@ impl Connection {
             message_channels: MessageChannels {
                 message_channel: message_channel,
             },
+            stream_reader: Arc::new(Mutex::new(None)),
         }
     }
 
@@ -160,11 +165,14 @@ impl Connection {
 
     pub async fn set_user_image(
         &self,
-        background: &str,
+        image_path: &str,
         image_type: &str,
     ) -> Result<(), Box<dyn Error>> {
+        let image = get_file_as_byte_vec(image_path).await?;
+
         match image_type {
             "background" => {
+                let background = general_purpose::STANDARD.encode(image);
                 let img = Some(format!(
                     "<img src='data:image/png;base64,{}' />",
                     background.to_string()
@@ -177,7 +185,7 @@ impl Connection {
                 self.tx_out.send(message_builder(set_profile_background))?;
             }
             "profile" => {
-                let image_vec = Some(general_purpose::STANDARD.decode(background)?);
+                let image_vec = Some(image);
                 let set_profile_background = mumble::proto::UserState {
                     texture: image_vec,
                     ..Default::default()
@@ -230,6 +238,9 @@ impl Shutdown for Connection {
             *running = false;
         }
         trace!("Joining Threads");
+        if let Some(mut reader) = self.stream_reader.lock().await.take() {
+            reader.shutdown().await?;
+        }
 
         for (name, thread) in self.threads.iter_mut() {
             thread.await?;

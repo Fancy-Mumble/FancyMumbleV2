@@ -1,5 +1,5 @@
 use byteorder::{BigEndian, ReadBytesExt};
-use std::io::Cursor;
+use std::{io::Cursor, error::Error};
 use tracing::error;
 
 use crate::utils::messages::{get_message, MessageInfo, MessageTypes};
@@ -66,5 +66,12 @@ impl StreamReader {
 
     fn get_n_from(&self, n: usize, start: usize) -> &[u8] {
         &self.stream_buffer[start..(n + start)]
+    }
+
+    pub async fn shutdown(&mut self) -> Result<(), Box<dyn Error>> {
+        self.stream_buffer.clear();
+        self.message_handler.shutdown().await?;
+
+        Ok(())
     }
 }

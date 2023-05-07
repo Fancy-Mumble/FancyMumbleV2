@@ -27,7 +27,7 @@ function ChannelSearch() {
 
 
     return (
-        <Container sx={{ background: 'transparent', padding: '4px 0' }}>
+        <Box sx={{ background: 'transparent', padding: '4px 0', maxWidth: '150px', paddingLeft: '10px' }}>
             <Paper
                 component="form"
                 sx={{ p: '2px 4px', display: 'flex', alignItems: 'center', backdropFilter: 'blur(10px)', background: 'rgba(0, 0, 0, 0.5)' }}
@@ -35,8 +35,8 @@ function ChannelSearch() {
             >
                 <InputBase
                     sx={{ ml: 1, flex: 1 }}
-                    placeholder="Search Channel"
-                    inputProps={{ 'aria-label': 'search channel' }}
+                    placeholder="Search"
+                    inputProps={{ 'aria-label': 'search' }}
                 />
                 <IconButton type="button" sx={{ p: '5px' }} aria-label="search">
                     <SearchIcon />
@@ -82,7 +82,7 @@ function ChannelSearch() {
                         backdropFilter: 'blur(10px)',
                     }}>
                         {channelList.map((channel) => (
-                            <ListItemButton key={channel.id} onClick={joinChannel(channel.channel_id)}>
+                            <ListItemButton key={channel.channel_id} onClick={joinChannel(channel.channel_id)}>
                                 <ListItemAvatar>
                                     <Avatar
                                         alt={channel.name}
@@ -95,7 +95,7 @@ function ChannelSearch() {
                     </List>
                 </Box>
             </Backdrop>
-        </Container>
+        </Box>
     )
 }
 
