@@ -1,4 +1,4 @@
-use std::{collections::HashMap};
+use std::collections::HashMap;
 
 use crate::{
     connection::{connection_traits::Shutdown, Connection},
@@ -137,10 +137,12 @@ pub async fn set_user_image(
     image_type: String,
     state: State<'_, ConnectionState>,
 ) -> Result<(), String> {
-    let guard = state.connection.lock().await;
+    let connection = &state.connection;
+    let guard = connection.lock().await;
+
     if let Some(guard) = guard.as_ref() {
-        if let Err(e) = guard.set_user_image(&image_path, &image_type).await {
-            return Err(format!("{e:?}"));
+        if let Err(error) = guard.set_user_image(&image_path, &image_type).await {
+            return Err(format!("{:?}", error));
         }
     }
 

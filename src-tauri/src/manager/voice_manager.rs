@@ -1,3 +1,4 @@
+use crate::errors::voice_error::VoiceError;
 use crate::utils::audio_player::AudioPlayer;
 use crate::{protocol::serialize::message_container::FrontendMessage, utils::varint::parse_varint};
 use opus::Decoder;
@@ -27,7 +28,9 @@ pub struct VoiceManager {
 impl VoiceManager {
     pub fn new(send_to: Sender<String>, server_channel: Sender<Vec<u8>>) -> VoiceManager {
         let mut player = AudioPlayer::new();
-        player.start();
+        if let Err(error) = player.start() {
+            error!("Failed to start audio player: {}", error);
+        }
 
         VoiceManager {
             frontend_channel: send_to,
@@ -51,7 +54,6 @@ impl VoiceManager {
     }
 
     pub fn notify_audio(&mut self, audio_data: &Vec<u8>) -> Result<(), Box<dyn Error>> {
-        //trace!("Received audio data: {:?}", audio_data);
         let audio_header = audio_data.as_slice()[0];
 
         let audio_type = (audio_header & 0xE0) >> 5;
@@ -74,7 +76,7 @@ impl VoiceManager {
         let talking = (opus_header.0 & 0x2000) <= 0;
         let user_id = session_id.0 as u32;
 
-        self.send_taking_information(user_id, talking);
+        //self.send_taking_information(user_id, talking);
 
         /*trace!(
             "Type: {:?} | Target: {:?} | Session: {:?} | Sequence: {:?} | Opus: {:?}, EOF: {:?}",
@@ -101,7 +103,10 @@ impl VoiceManager {
         // https://tools.ietf.org/html/rfc6716#section-2.1.2
         let mut decoder = Decoder::new(sample_rate, channels)?;
         let num_decoded_samples = decoder.decode(payload, &mut decoded_data, false)?;
-        self.audio_player.add_to_queue(&decoded_data);
+
+        if let Err(error) = self.audio_player.add_to_queue(decoded_data) {
+            return Err(VoiceError::new(format!("Failed to add audio to queue: {}", error)).into());
+        }
 
         Ok(())
     }
