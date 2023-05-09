@@ -58,11 +58,10 @@ impl AudioPlayer {
             while playing_clone.load(Ordering::Relaxed) {
                 if let Ok(queue_value) = audio_queue_ref.recv() {
                     sink.append(rodio::buffer::SamplesBuffer::<i16>::new(
-                        2,
+                        1,
                         48000,
                         queue_value,
                     ));
-                    sink.sleep_until_end();
                 }
             }
         }));
