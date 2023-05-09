@@ -11,6 +11,7 @@ use tokio::sync::broadcast::Sender;
 use tracing::{error, warn};
 
 const SAMPLE_RATE: u32 = 48000;
+const CHANNELS: opus::Channels = opus::Channels::Mono;
 
 #[derive(Debug, Serialize, Clone)]
 struct AudioInfo {
@@ -23,6 +24,7 @@ pub struct VoiceManager {
     _server_channel: Sender<Vec<u8>>,
     user_audio_info: HashMap<u32, AudioInfo>,
     audio_player: AudioPlayer,
+    decoder: Decoder,
 }
 
 impl VoiceManager {
@@ -31,12 +33,19 @@ impl VoiceManager {
         if let Err(error) = player.start() {
             error!("Failed to start audio player: {}", error);
         }
+        // Always pretend Stereo mode is true by default. since opus will convert mono stream to stereo stream.
+        // https://tools.ietf.org/html/rfc6716#section-2.1.2
+        let decoder = Decoder::new(SAMPLE_RATE, CHANNELS);
+        if !decoder.is_ok() {
+            error!("Failed to create opus decoder: {:?}", decoder.as_ref().err());
+        }
 
         VoiceManager {
             frontend_channel: send_to,
             _server_channel: server_channel,
             user_audio_info: HashMap::new(),
             audio_player: player,
+            decoder: decoder.unwrap(),
         }
     }
 
@@ -76,33 +85,19 @@ impl VoiceManager {
         let talking = (opus_header.0 & 0x2000) <= 0;
         let user_id = session_id.0 as u32;
 
-        //self.send_taking_information(user_id, talking);
+        self.send_taking_information(user_id, talking);
 
-        /*trace!(
-            "Type: {:?} | Target: {:?} | Session: {:?} | Sequence: {:?} | Opus: {:?}, EOF: {:?}",
-            audio_type,
-            audio_target,
-            user_id,
-            sequence_number.0,
-            opus_header.0 & 0x1FFF,
-            talking
-        );*/
-
-        let sample_rate = SAMPLE_RATE;
-        let channels = opus::Channels::Stereo;
         // = SampleRate * 60ms = 48000Hz * 0.06s = 2880, ~12KB
-        let mut audio_buffer_size = sample_rate * 60 / 1000;
-        if channels == opus::Channels::Stereo {
+        let mut audio_buffer_size = SAMPLE_RATE * 60 / 1000;
+        if CHANNELS == opus::Channels::Stereo {
             audio_buffer_size *= 2;
         }
         let mut decoded_data = vec![0; audio_buffer_size as usize];
 
         let payload_size = opus_header.0 & 0x1FFF;
         let payload = &audio_data[position..position + payload_size as usize];
-        // Always pretend Stereo mode is true by default. since opus will convert mono stream to stereo stream.
-        // https://tools.ietf.org/html/rfc6716#section-2.1.2
-        let mut decoder = Decoder::new(sample_rate, channels)?;
-        let num_decoded_samples = decoder.decode(payload, &mut decoded_data, false)?;
+        let num_decoded_samples = self.decoder.decode(payload, &mut decoded_data, false)?;
+        decoded_data.truncate(num_decoded_samples);
 
         if let Err(error) = self.audio_player.add_to_queue(decoded_data) {
             return Err(VoiceError::new(format!("Failed to add audio to queue: {}", error)).into());
