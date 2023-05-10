@@ -99,7 +99,7 @@ impl VoiceManager {
         let num_decoded_samples = self.decoder.decode(payload, &mut decoded_data, false)?;
         decoded_data.truncate(num_decoded_samples);
 
-        if let Err(error) = self.audio_player.add_to_queue(decoded_data) {
+        if let Err(error) = self.audio_player.add_to_queue(decoded_data, user_id) {
             return Err(VoiceError::new(format!("Failed to add audio to queue: {}", error)).into());
         }
 

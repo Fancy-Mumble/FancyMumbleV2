@@ -228,6 +228,10 @@ impl Connection {
 
         Ok(())
     }
+
+    pub async fn update_user_info(&self) -> Result<(), Box<dyn Error>> {
+        Ok(())
+    }
 }
 
 #[async_trait]
