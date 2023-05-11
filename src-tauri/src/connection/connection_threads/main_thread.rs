@@ -6,6 +6,7 @@ use crate::errors::application_error::ApplicationError;
 use super::{ConnectionThread, MainThread, DEADMAN_INTERVAL};
 use std::cmp;
 use std::error::Error;
+use std::sync::atomic::Ordering;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader};
 use tokio::net::TcpStream;
 use tokio::{select, time};
@@ -31,14 +32,14 @@ impl MainThread for Connection {
 
         let tx_in = self.tx_in.clone();
         let mut rx_out = self.tx_out.subscribe();
-        let running_clone = self.running.clone();
+        let running = self.running.clone();
 
         self.threads.insert(
             ConnectionThread::MainThread,
             tokio::spawn(async move {
                 let mut interval = time::interval(DEADMAN_INTERVAL);
 
-                while *running_clone.read().unwrap() {
+                while running.load(Ordering::Relaxed) {
                     select! {
                         Ok(size) = reader.read(&mut buffer) => {
                             if size == 0 {

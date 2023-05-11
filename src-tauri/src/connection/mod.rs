@@ -12,6 +12,7 @@ use base64::Engine;
 use connection_threads::{InputThread, MainThread, OutputThread, PingThread};
 use std::collections::HashMap;
 use std::error::Error;
+use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, RwLock};
 use tauri::PackageInfo;
 use tokio::net::TcpStream;
@@ -50,7 +51,7 @@ pub struct Connection {
 
     tx_message_channel: Sender<TextMessage>,
 
-    running: Arc<RwLock<bool>>,
+    running: Arc<AtomicBool>,
     threads: HashMap<ConnectionThread, JoinHandle<()>>,
     message_channels: MessageChannels,
     package_info: PackageInfo,
@@ -81,7 +82,7 @@ impl Connection {
             tx_in,
             tx_out,
             tx_message_channel,
-            running: Arc::new(RwLock::new(false)),
+            running: Arc::new(AtomicBool::new(false)),
             threads: HashMap::new(),
             message_channels: MessageChannels {
                 message_channel: message_channel,
@@ -112,9 +113,7 @@ impl Connection {
 
     pub async fn connect(&mut self) -> Result<(), Box<dyn Error>> {
         {
-            if let Ok(mut running) = self.running.write() {
-                *running = true;
-            }
+            self.running.store(true, std::sync::atomic::Ordering::Relaxed);
         }
         let stream = self.setup_connection().await?;
 
@@ -238,9 +237,7 @@ impl Connection {
 impl Shutdown for Connection {
     async fn shutdown(&mut self) -> Result<(), Box<dyn Error>> {
         info!("Sending Shutdown Request");
-        if let Ok(mut running) = self.running.write() {
-            *running = false;
-        }
+        self.running.store(false, std::sync::atomic::Ordering::Relaxed);
         trace!("Joining Threads");
         if let Some(mut reader) = self.stream_reader.lock().await.take() {
             reader.shutdown().await?;

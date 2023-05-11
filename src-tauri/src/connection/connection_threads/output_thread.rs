@@ -1,3 +1,5 @@
+use std::sync::atomic::Ordering;
+
 use crate::{
     connection::Connection,
     utils::messages::{message_builder, mumble},
@@ -16,13 +18,13 @@ impl OutputThread for Connection {
         }
 
         let tx_out = self.tx_out.clone();
-        let running_clone = self.running.clone();
+        let running = self.running.clone();
         let mut rx_message_channel = self.tx_message_channel.subscribe();
 
         self.threads.insert(ConnectionThread::OutputThread, tokio::spawn(async move {
             let mut interval = time::interval(DEADMAN_INTERVAL);
 
-            while *running_clone.read().unwrap() {
+            while running.load(Ordering::Relaxed) {
                 select! {
                     Ok(result) = rx_message_channel.recv() => {
                         debug!("Sending text message to channel: {:?}", result.channel_id);
