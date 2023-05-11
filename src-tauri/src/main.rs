@@ -20,7 +20,9 @@ use tracing::Level;
 use tracing_subscriber;
 use tracing_subscriber::fmt;
 
-use crate::commands::{connect_to_server, join_channel, like_message, logout, send_message, set_user_image};
+use crate::commands::{
+    connect_to_server, join_channel, like_message, logout, send_message, set_user_image,
+};
 
 fn init_logging() {
     let format = fmt::format()

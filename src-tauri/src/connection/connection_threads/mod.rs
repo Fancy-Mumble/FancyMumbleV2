@@ -28,7 +28,6 @@ impl ToString for ConnectionThread {
     }
 }
 
-
 pub trait PingThread {
     fn spawn_ping_thread(&mut self);
 }

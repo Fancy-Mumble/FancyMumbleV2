@@ -149,9 +149,8 @@ pub async fn set_user_image(
     Ok(())
 }
 
-
 #[tauri::command]
-pub async fn change_user_state(state: State<'_, ConnectionState>,) -> Result<(), String> {
+pub async fn change_user_state(state: State<'_, ConnectionState>) -> Result<(), String> {
     let connection = &state.connection;
     let guard = connection.lock().await;
 

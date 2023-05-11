@@ -57,10 +57,7 @@ pub fn parse_varint(bytes: &[u8]) -> Result<(i128, u32), Box<dyn Error>> {
             if bytes.len() < 5 {
                 return Err(create_voice_eoi("32-bit positive number"));
             }
-            (
-                u32::from_be_bytes(bytes[1..=4].try_into()?) as i128,
-                5,
-            )
+            (u32::from_be_bytes(bytes[1..=4].try_into()?) as i128, 5)
         }
 
         // 64-bit positive number

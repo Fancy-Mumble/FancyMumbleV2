@@ -113,7 +113,8 @@ impl Connection {
 
     pub async fn connect(&mut self) -> Result<(), Box<dyn Error>> {
         {
-            self.running.store(true, std::sync::atomic::Ordering::Relaxed);
+            self.running
+                .store(true, std::sync::atomic::Ordering::Relaxed);
         }
         let stream = self.setup_connection().await?;
 
@@ -237,7 +238,8 @@ impl Connection {
 impl Shutdown for Connection {
     async fn shutdown(&mut self) -> Result<(), Box<dyn Error>> {
         info!("Sending Shutdown Request");
-        self.running.store(false, std::sync::atomic::Ordering::Relaxed);
+        self.running
+            .store(false, std::sync::atomic::Ordering::Relaxed);
         trace!("Joining Threads");
         if let Some(mut reader) = self.stream_reader.lock().await.take() {
             reader.shutdown().await?;
