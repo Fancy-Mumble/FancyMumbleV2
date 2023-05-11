@@ -77,7 +77,7 @@ impl ChannelManager {
         ChannelManager {
             channels: HashMap::new(),
             frontend_channel: send_to,
-            server_channel: server_channel,
+            server_channel,
         }
     }
 
@@ -140,7 +140,7 @@ impl ChannelManager {
     fn notify_channel_description(&self, channel_id: u32) {
         if let Some(user) = self.channels.get(&channel_id) {
             let channel_description = ChannelBlobData {
-                channel_id: channel_id,
+                channel_id,
                 data: user.description.clone(),
             };
             let msg = FrontendMessage::new("channel_description", &channel_description);

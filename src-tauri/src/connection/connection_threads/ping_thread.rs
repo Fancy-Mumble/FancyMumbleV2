@@ -15,7 +15,7 @@ const PING_INTERVAL: Duration = Duration::from_millis(5000);
 
 impl PingThread for Connection {
     fn spawn_ping_thread(&mut self) {
-        if self.threads.get(&ConnectionThread::PingThread).is_some() {
+        if self.threads.get(&ConnectionThread::Ping).is_some() {
             error!("PingThread already running");
             return;
         }
@@ -25,7 +25,7 @@ impl PingThread for Connection {
 
         // timer thread
         self.threads.insert(
-            ConnectionThread::PingThread,
+            ConnectionThread::Ping,
             tokio::spawn(async move {
                 let mut interval = time::interval(PING_INTERVAL);
                 let mut deadman_switch = time::interval(DEADMAN_INTERVAL);

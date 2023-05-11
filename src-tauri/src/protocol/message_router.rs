@@ -35,16 +35,13 @@ impl MessageRouter {
                 sender.message_channel.clone(),
                 server_channel.clone(),
             ),
-            voice_manager: VoiceManager::new(
-                sender.message_channel.clone(),
-                server_channel.clone(),
-            ),
+            voice_manager: VoiceManager::new(sender.message_channel, server_channel),
         }
     }
 
     fn handle_downcast<T: 'static>(&self, message_info: MessageInfo) -> Result<T, Box<dyn Error>> {
         match message_info.message_data.downcast::<T>() {
-            Ok(a) => return Ok(*a),
+            Ok(a) => Ok(*a),
             Err(e) => Err(Box::new(ApplicationError::new(
                 format!("Invalid message type {:?}", e).as_str(),
             ))),
@@ -58,8 +55,7 @@ impl MessageRouter {
                 let actor = self
                     .user_manager
                     .get_user_by_id(actor)
-                    .ok_or_else(|| Box::new(ApplicationError::new("msg")) as Box<dyn Error>)
-                    .map_err(|e| e)?;
+                    .ok_or_else(|| Box::new(ApplicationError::new("msg")) as Box<dyn Error>)?;
                 self.text_manager.add_text_message(text_message, actor)?;
             }
             None => {

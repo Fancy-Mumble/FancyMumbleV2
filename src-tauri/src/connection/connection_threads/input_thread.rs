@@ -17,7 +17,7 @@ impl InputThread for Connection {
 
         let reader_copy = self.stream_reader.clone();
         self.threads.insert(
-            ConnectionThread::InputThread,
+            ConnectionThread::Input,
             tokio::spawn(async move {
                 let mut interval = time::interval(DEADMAN_INTERVAL);
                 {

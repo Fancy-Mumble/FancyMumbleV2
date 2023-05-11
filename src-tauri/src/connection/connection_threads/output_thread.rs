@@ -12,7 +12,7 @@ use super::{ConnectionThread, OutputThread, DEADMAN_INTERVAL};
 
 impl OutputThread for Connection {
     fn spawn_output_thread(&mut self) {
-        if self.threads.get(&ConnectionThread::OutputThread).is_some() {
+        if self.threads.get(&ConnectionThread::Output).is_some() {
             error!("OutputThread already running");
             return;
         }
@@ -22,7 +22,7 @@ impl OutputThread for Connection {
         let mut rx_message_channel = self.tx_message_channel.subscribe();
 
         self.threads.insert(
-            ConnectionThread::OutputThread,
+            ConnectionThread::Output,
             tokio::spawn(async move {
                 let mut interval = time::interval(DEADMAN_INTERVAL);
 

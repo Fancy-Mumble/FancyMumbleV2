@@ -11,19 +11,19 @@ pub const DEADMAN_INTERVAL: Duration = Duration::from_millis(500);
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum ConnectionThread {
-    PingThread,
-    OutputThread,
-    InputThread,
-    MainThread,
+    Ping,
+    Output,
+    Input,
+    Main,
 }
 
 impl ToString for ConnectionThread {
     fn to_string(&self) -> String {
         match self {
-            ConnectionThread::PingThread => "PingThread".to_string(),
-            ConnectionThread::OutputThread => "OutputThread".to_string(),
-            ConnectionThread::InputThread => "InputThread".to_string(),
-            ConnectionThread::MainThread => "MainThread".to_string(),
+            ConnectionThread::Ping => "PingThread".to_string(),
+            ConnectionThread::Output => "OutputThread".to_string(),
+            ConnectionThread::Input => "InputThread".to_string(),
+            ConnectionThread::Main => "MainThread".to_string(),
         }
     }
 }

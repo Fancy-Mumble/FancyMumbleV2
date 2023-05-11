@@ -3,10 +3,10 @@ use std::error::Error;
 use crate::errors::voice_error::VoiceError;
 
 fn create_voice_eoi(on: &str) -> Box<dyn Error> {
-    return Box::new(VoiceError::new(format!(
+    Box::new(VoiceError::new(format!(
         "Unexpected end of input for {}",
         on
-    )));
+    )))
 }
 
 pub fn parse_varint(bytes: &[u8]) -> Result<(i128, u32), Box<dyn Error>> {
@@ -14,7 +14,7 @@ pub fn parse_varint(bytes: &[u8]) -> Result<(i128, u32), Box<dyn Error>> {
         return Err(Box::new(VoiceError::new("Unexpected end of input")));
     }
 
-    if bytes.len() < 1 {
+    if bytes.is_empty() {
         return Err(create_voice_eoi("varint"));
     }
 
@@ -71,7 +71,7 @@ pub fn parse_varint(bytes: &[u8]) -> Result<(i128, u32), Box<dyn Error>> {
         // Negative recursive varint
         0b11111000..=0b11111011 => {
             let value = parse_varint(&bytes[1..])?;
-            (-value.0 as i128, value.1 + 1)
+            (-value.0, value.1 + 1)
         }
 
         // inverted negative two bit number

@@ -26,21 +26,21 @@ fn get_minor(version: u64) -> u64 {
 }
 
 fn get_patch(version: u64) -> u64 {
-    return (version & FIELD_PATCH) >> OFFSET_PATCH;
+    (version & FIELD_PATCH) >> OFFSET_PATCH
 }
 
 fn from_components(major: u64, minor: u64, patch: u64) -> u64 {
-    return (major << OFFSET_MAJOR) | (minor << OFFSET_MINOR) | (patch << OFFSET_PATCH);
+    (major << OFFSET_MAJOR) | (minor << OFFSET_MINOR) | (patch << OFFSET_PATCH)
 }
 
 fn to_legacy_version(version: u64) -> u32 {
     // If any of the version components exceeds their allowed value range, they will
     // be truncated to the highest representable value
-    let major = ((cmp::min(get_major(version) as u16, u16::MAX) as u32) << 16) as u32;
-    let minor = ((cmp::min(get_minor(version) as u8, u8::MAX) as u32) << 8) as u32;
+    let major = (cmp::min(get_major(version) as u16, u16::MAX) as u32) << 16;
+    let minor = (cmp::min(get_minor(version) as u8, u8::MAX) as u32) << 8;
     let patch = cmp::min(get_patch(version) as u8, u8::MAX) as u32;
 
-    return major | minor | patch;
+    major | minor | patch
 }
 
 pub async fn init_connection(username: &str, channel: Sender<Vec<u8>>, package_info: PackageInfo) {

@@ -66,5 +66,5 @@ pub async fn get_client_certificate() -> Result<Identity, Box<dyn Error>> {
     let identity =
         native_tls::Identity::from_pkcs8(&cert_store.certificate, &cert_store.private_key)?;
 
-    return Ok(identity);
+    Ok(identity)
 }
