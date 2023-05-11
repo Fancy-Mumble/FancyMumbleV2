@@ -139,11 +139,7 @@ impl UserManager {
         }
     }
 
-    fn fill_user_images(
-        &self,
-        user_id: u32,
-        texture_hash: &Vec<u8>,
-    ) -> Result<(), Box<dyn Error>> {
+    fn fill_user_images(&self, user_id: u32, texture_hash: &Vec<u8>) -> Result<(), Box<dyn Error>> {
         let user = self.users.get(&user_id);
         if user.is_none() {
             return Err(format!("User {user_id} not found").into());

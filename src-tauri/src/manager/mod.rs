@@ -1,9 +1,9 @@
 use std::mem;
 
-pub mod user_manager;
 pub mod channel_manager;
+pub mod connection_manager;
 pub mod text_message_manager;
-pub mod  connection_manager;
+pub mod user_manager;
 pub mod voice_manager;
 
 trait Update<New> {

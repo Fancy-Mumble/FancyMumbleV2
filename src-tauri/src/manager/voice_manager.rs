@@ -37,7 +37,10 @@ impl VoiceManager {
         // https://tools.ietf.org/html/rfc6716#section-2.1.2
         let decoder = Decoder::new(SAMPLE_RATE, CHANNELS);
         if !decoder.is_ok() {
-            error!("Failed to create opus decoder: {:?}", decoder.as_ref().err());
+            error!(
+                "Failed to create opus decoder: {:?}",
+                decoder.as_ref().err()
+            );
         }
 
         VoiceManager {
@@ -62,8 +65,8 @@ impl VoiceManager {
         }
     }
 
-    pub fn notify_audio(&mut self, audio_data: &Vec<u8>) -> Result<(), Box<dyn Error>> {
-        let audio_header = audio_data.as_slice()[0];
+    pub fn notify_audio(&mut self, audio_data: &[u8]) -> Result<(), Box<dyn Error>> {
+        let audio_header = audio_data[0];
 
         let audio_type = (audio_header & 0xE0) >> 5;
         //let audio_target = audio_header & 0x1F;

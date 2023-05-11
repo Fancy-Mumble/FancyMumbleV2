@@ -45,8 +45,8 @@ pub struct ChannelBlobData {
 impl Update<mumble::proto::ChannelState> for Channel {
     fn update_from(&mut self, other: &mut mumble::proto::ChannelState) -> &Self {
         self.links = mem::take(&mut other.links);
-        self.links_add =  mem::take(&mut other.links_add);
-        self.links_remove =  mem::take(&mut other.links_remove);
+        self.links_add = mem::take(&mut other.links_add);
+        self.links_remove = mem::take(&mut other.links_remove);
 
         Self::update_if_some(&mut self.channel_id, &mut other.channel_id);
         Self::update_if_some(&mut self.parent, &mut other.parent);

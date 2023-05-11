@@ -2,7 +2,10 @@ use crate::{
     connection::{Connection, PingThread},
     utils::messages::{message_builder, mumble},
 };
-use std::{time::{Duration, SystemTime}, sync::atomic::Ordering};
+use std::{
+    sync::atomic::Ordering,
+    time::{Duration, SystemTime},
+};
 use tokio::{select, time};
 use tracing::error;
 

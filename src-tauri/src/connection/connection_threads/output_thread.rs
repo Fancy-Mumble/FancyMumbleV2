@@ -6,9 +6,9 @@ use crate::{
 };
 use tokio::select;
 use tokio::time;
-use tracing::{error, debug};
+use tracing::{debug, error};
 
-use super::{OutputThread, DEADMAN_INTERVAL, ConnectionThread};
+use super::{ConnectionThread, OutputThread, DEADMAN_INTERVAL};
 
 impl OutputThread for Connection {
     fn spawn_output_thread(&mut self) {
@@ -21,30 +21,33 @@ impl OutputThread for Connection {
         let running = self.running.clone();
         let mut rx_message_channel = self.tx_message_channel.subscribe();
 
-        self.threads.insert(ConnectionThread::OutputThread, tokio::spawn(async move {
-            let mut interval = time::interval(DEADMAN_INTERVAL);
+        self.threads.insert(
+            ConnectionThread::OutputThread,
+            tokio::spawn(async move {
+                let mut interval = time::interval(DEADMAN_INTERVAL);
 
-            while running.load(Ordering::Relaxed) {
-                select! {
-                    Ok(result) = rx_message_channel.recv() => {
-                        debug!("Sending text message to channel: {:?}", result.channel_id);
-                        let message = mumble::proto::TextMessage {
-                            actor: None,
-                            session: Vec::new(),
-                            channel_id: vec![result.channel_id.unwrap_or(0)],
-                            tree_id: Vec::new(),
-                            message: result.message,
-                        };
-                        let buffer = message_builder(message);
+                while running.load(Ordering::Relaxed) {
+                    select! {
+                        Ok(result) = rx_message_channel.recv() => {
+                            debug!("Sending text message to channel: {:?}", result.channel_id);
+                            let message = mumble::proto::TextMessage {
+                                actor: None,
+                                session: Vec::new(),
+                                channel_id: vec![result.channel_id.unwrap_or(0)],
+                                tree_id: Vec::new(),
+                                message: result.message,
+                            };
+                            let buffer = message_builder(message);
 
-                        if let Err(error) = tx_out.send(buffer) {
-                            error!("Unable to send message: {}", error);
+                            if let Err(error) = tx_out.send(buffer) {
+                                error!("Unable to send message: {}", error);
+                            }
                         }
-                    }
 
-                    _ = interval.tick() => {}
+                        _ = interval.tick() => {}
+                    }
                 }
-            }
-        }));
+            }),
+        );
     }
 }

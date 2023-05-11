@@ -18,7 +18,7 @@ pub struct MessageInfo {
 #[derive(Debug, Serialize)]
 pub struct MessageSendData<T>
 where
-    T: Clone
+    T: Clone,
 {
     message_type: MessageTypes,
     data: T,

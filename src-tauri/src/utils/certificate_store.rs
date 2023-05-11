@@ -1,4 +1,4 @@
-use std::{error::Error};
+use std::error::Error;
 
 use openssl::{
     asn1::Asn1Time,

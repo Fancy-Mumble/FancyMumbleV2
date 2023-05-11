@@ -8,6 +8,4 @@ pub trait Shutdown {
 }
 
 #[async_trait]
-pub trait HandleMessage {
-
-}
+pub trait HandleMessage {}

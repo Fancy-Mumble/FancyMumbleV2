@@ -5,7 +5,8 @@ use std::{
         mpsc::{self, Receiver, Sender},
         Arc,
     },
-    thread, time::Duration,
+    thread,
+    time::Duration,
 };
 
 use tracing::{error, trace};
