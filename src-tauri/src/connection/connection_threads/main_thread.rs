@@ -20,7 +20,7 @@ impl MainThread for Connection {
         &mut self,
         stream: Option<tokio_native_tls::TlsStream<TcpStream>>,
     ) -> Result<(), Box<dyn Error>> {
-        if self.threads.get(&ConnectionThread::MainThread).is_some() {
+        if self.threads.get(&ConnectionThread::Main).is_some() {
             return Err(Box::new(ApplicationError::new(
                 "MainThread already running",
             )));
@@ -35,7 +35,7 @@ impl MainThread for Connection {
         let running = self.running.clone();
 
         self.threads.insert(
-            ConnectionThread::MainThread,
+            ConnectionThread::Main,
             tokio::spawn(async move {
                 let mut interval = time::interval(DEADMAN_INTERVAL);
 
@@ -45,7 +45,7 @@ impl MainThread for Connection {
                             if size == 0 {
                                 return;
                             }
-                            if let Err(e) = tx_in.send((&buffer[0..size]).to_vec()) {
+                            if let Err(e) = tx_in.send(buffer[0..size].to_vec()) {
                                 error!("Error while channeling incomming data: {e:?}");
                             }
                         }
@@ -56,7 +56,7 @@ impl MainThread for Connection {
 
                             let chunks = result.chunks(cmp::max(1, result.len() / MAX_SEND_SIZE));
                             for chunk in chunks {
-                                if let Err(e) = writer.write(&chunk).await {
+                                if let Err(e) = writer.write(chunk).await {
                                     error!("Error while writing to socket: {:?}", e);
                                     return;
                                 }

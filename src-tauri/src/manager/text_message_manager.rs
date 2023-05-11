@@ -38,8 +38,8 @@ impl TextMessageManager {
     }
 
     fn notify(&self, element: Option<usize>) {
-        let result = if element.is_some() {
-            let text = &self.message_log[element.unwrap()];
+        let result = if let Some(inner_element) = element {
+            let text = &self.message_log[inner_element];
             let msg = FrontendMessage::new("text_message", text);
             serde_json::to_string(&msg)
         } else {

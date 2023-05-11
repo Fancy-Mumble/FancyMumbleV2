@@ -13,7 +13,7 @@ use connection_threads::{InputThread, MainThread, OutputThread, PingThread};
 use std::collections::HashMap;
 use std::error::Error;
 use std::sync::atomic::AtomicBool;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 use tauri::PackageInfo;
 use tokio::net::TcpStream;
 use tokio::sync::broadcast::{self, Receiver, Sender};
@@ -84,9 +84,7 @@ impl Connection {
             tx_message_channel,
             running: Arc::new(AtomicBool::new(false)),
             threads: HashMap::new(),
-            message_channels: MessageChannels {
-                message_channel: message_channel,
-            },
+            message_channels: MessageChannels { message_channel },
             stream_reader: Arc::new(Mutex::new(None)),
         }
     }
@@ -140,7 +138,7 @@ impl Connection {
     ) -> Result<(), Box<dyn Error>> {
         self.tx_message_channel.send(TextMessage {
             message: message.to_string(),
-            channel_id: channel_id,
+            channel_id,
         })?;
 
         Ok(())
@@ -173,10 +171,7 @@ impl Connection {
         match image_type {
             "background" => {
                 let background = general_purpose::STANDARD.encode(image);
-                let img = Some(format!(
-                    "<img src='data:image/png;base64,{}' />",
-                    background.to_string()
-                ));
+                let img = Some(format!("<img src='data:image/png;base64,{background}' />"));
 
                 let set_profile_background = mumble::proto::UserState {
                     comment: img,

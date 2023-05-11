@@ -36,7 +36,7 @@ impl VoiceManager {
         // Always pretend Stereo mode is true by default. since opus will convert mono stream to stereo stream.
         // https://tools.ietf.org/html/rfc6716#section-2.1.2
         let decoder = Decoder::new(SAMPLE_RATE, CHANNELS);
-        if !decoder.is_ok() {
+        if decoder.is_err() {
             error!(
                 "Failed to create opus decoder: {:?}",
                 decoder.as_ref().err()
@@ -74,7 +74,7 @@ impl VoiceManager {
             warn!("Received audio data with unknown type: {:?}", audio_type);
             return Ok(());
         }
-        let mut position = 1 as usize;
+        let mut position = 1;
 
         let session_id = parse_varint(&audio_data[position..])?;
         position += session_id.1 as usize;

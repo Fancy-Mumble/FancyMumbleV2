@@ -17,11 +17,11 @@ use tokio::sync::Mutex;
 
 use tauri::Manager;
 use tracing::Level;
-use tracing_subscriber;
 use tracing_subscriber::fmt;
 
 use crate::commands::{
-    connect_to_server, join_channel, like_message, logout, send_message, set_user_image,
+    change_user_state, connect_to_server, join_channel, like_message, logout, send_message,
+    set_user_image,
 };
 
 fn init_logging() {
@@ -58,7 +58,8 @@ fn main() {
             logout,
             like_message,
             join_channel,
-            set_user_image
+            set_user_image,
+            change_user_state
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
