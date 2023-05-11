@@ -100,17 +100,17 @@ impl MessageRouter {
                 self.channel_manager.remove_channel(removed_channel);
             }
             crate::utils::messages::MessageTypes::ChannelState => {
-                let changed_channel =
+                let mut changed_channel =
                     self.handle_downcast::<mumble::proto::ChannelState>(message)?;
-                self.channel_manager.update_channel(changed_channel)?;
+                self.channel_manager.update_channel(&mut changed_channel)?;
             }
             crate::utils::messages::MessageTypes::UserRemove => {
                 let removed_user = self.handle_downcast::<mumble::proto::UserRemove>(message)?;
                 self.user_manager.remove_user(removed_user);
             }
             crate::utils::messages::MessageTypes::UserState => {
-                let changed_user = self.handle_downcast::<mumble::proto::UserState>(message)?;
-                self.user_manager.update_user(changed_user)?;
+                let mut changed_user = self.handle_downcast::<mumble::proto::UserState>(message)?;
+                self.user_manager.update_user(&mut changed_user)?;
             }
             crate::utils::messages::MessageTypes::BanList => {}
             crate::utils::messages::MessageTypes::TextMessage => {

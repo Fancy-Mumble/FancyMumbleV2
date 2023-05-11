@@ -2,7 +2,7 @@ use crate::{
     connection::{Connection, PingThread},
     utils::messages::{message_builder, mumble},
 };
-use std::time::{Duration, SystemTime};
+use std::{time::{Duration, SystemTime}, sync::atomic::Ordering};
 use tokio::{select, time};
 use tracing::error;
 
@@ -27,7 +27,7 @@ impl PingThread for Connection {
                 let mut interval = time::interval(PING_INTERVAL);
                 let mut deadman_switch = time::interval(DEADMAN_INTERVAL);
 
-                while *running.read().unwrap() {
+                while running.load(Ordering::Relaxed) {
                     let now = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
                         Ok(duration) => duration.as_secs(),
                         Err(error) => {

@@ -2,6 +2,7 @@ use base64::{engine::general_purpose, Engine as _};
 use std::{
     collections::{hash_map::Entry, HashMap},
     error::Error,
+    mem,
 };
 
 use serde::Serialize;
@@ -45,21 +46,20 @@ pub struct UserBlobData {
 }
 
 impl Update<mumble::proto::UserState> for User {
-    fn update_from(&mut self, other: mumble::proto::UserState) -> &Self {
-        Self::update_if_some(&mut self.id, other.session);
-        Self::update_if_some(&mut self.id, other.session);
-        Self::update_if_some(&mut self.name, other.name);
-        Self::update_if_some(&mut self.channel_id, other.channel_id);
-        Self::update_if_some(&mut self.mute, other.mute);
-        Self::update_if_some(&mut self.deaf, other.deaf);
-        Self::update_if_some(&mut self.suppress, other.suppress);
-        Self::update_if_some(&mut self.self_mute, other.self_mute);
-        Self::update_if_some(&mut self.self_deaf, other.self_deaf);
-        Self::update_if_some(&mut self.priority_speaker, other.priority_speaker);
-        Self::update_if_some(&mut self.recording, other.recording);
-        Self::update_if_some(&mut self.profile_picture, other.texture);
+    fn update_from(&mut self, other: &mut mumble::proto::UserState) -> &Self {
+        Self::update_if_some(&mut self.id, &mut other.session);
+        Self::update_if_some(&mut self.name, &mut other.name);
+        Self::update_if_some(&mut self.channel_id, &mut other.channel_id);
+        Self::update_if_some(&mut self.mute, &mut other.mute);
+        Self::update_if_some(&mut self.deaf, &mut other.deaf);
+        Self::update_if_some(&mut self.suppress, &mut other.suppress);
+        Self::update_if_some(&mut self.self_mute, &mut other.self_mute);
+        Self::update_if_some(&mut self.self_deaf, &mut other.self_deaf);
+        Self::update_if_some(&mut self.priority_speaker, &mut other.priority_speaker);
+        Self::update_if_some(&mut self.recording, &mut other.recording);
+        Self::update_if_some(&mut self.profile_picture, &mut other.texture);
         //Self::update_if_some(&mut self.profile_picture_hash, other.texture_hash);
-        Self::update_if_some(&mut self.comment, other.comment);
+        Self::update_if_some(&mut self.comment, &mut other.comment);
         //Self::update_if_some(&mut self.comment_hash, other.comment_hash);
 
         self
@@ -141,27 +141,32 @@ impl UserManager {
 
     fn fill_user_images(
         &self,
-        user_info: &User,
+        user_id: u32,
         texture_hash: &Vec<u8>,
     ) -> Result<(), Box<dyn Error>> {
-        let user_session = user_info.id;
-        let cached_user_texture_hash = &self.users.get(&user_session).unwrap().profile_picture_hash;
+        let user = self.users.get(&user_id);
+        if user.is_none() {
+            return Err(format!("User {user_id} not found").into());
+        }
+
+        let cached_user_texture_hash = &user.unwrap().profile_picture_hash;
 
         if texture_hash == cached_user_texture_hash {
             trace!(
                 "User image is up to date: {:?} vs {:?}",
-                texture_hash, cached_user_texture_hash
+                texture_hash,
+                cached_user_texture_hash
             );
             return Ok(());
         }
-        trace!("User image is not up to date for user {}", user_session);
+        trace!("User image is not up to date for user {}", user_id);
 
         let no_texture_hash_available = cached_user_texture_hash.is_empty();
         let texture_hash_in_current_message = !texture_hash.is_empty();
 
         if no_texture_hash_available && texture_hash_in_current_message {
             let blob_request = mumble::proto::RequestBlob {
-                session_texture: vec![user_session],
+                session_texture: vec![user_id],
                 ..Default::default()
             };
             self.server_channel.send(message_builder(blob_request))?;
@@ -172,27 +177,27 @@ impl UserManager {
 
     fn fill_user_comment(
         &self,
-        user_info: &User,
+        user_id: u32,
         comment_hash: &Vec<u8>,
     ) -> Result<(), Box<dyn Error>> {
-        let user_session = user_info.id;
-        let cached_user_comment_hash = &self.users.get(&user_session).unwrap().comment_hash;
+        let cached_user_comment_hash = &self.users.get(&user_id).unwrap().comment_hash;
 
         if comment_hash == cached_user_comment_hash {
             trace!(
                 "User comment is up to date {:?} vs {:?}",
-                comment_hash, cached_user_comment_hash
+                comment_hash,
+                cached_user_comment_hash
             );
             return Ok(());
         }
-        trace!("User comment is not up to date for user {}", user_session);
+        trace!("User comment is not up to date for user {user_id}");
 
         let no_comment_available = cached_user_comment_hash.is_empty();
         let comment_in_current_message = !comment_hash.is_empty();
 
         if no_comment_available && comment_in_current_message {
             let blob_request = mumble::proto::RequestBlob {
-                session_comment: vec![user_session],
+                session_comment: vec![user_id],
                 ..Default::default()
             };
             self.server_channel.send(message_builder(blob_request))?;
@@ -203,15 +208,20 @@ impl UserManager {
 
     pub fn update_user(
         &mut self,
-        user_info: mumble::proto::UserState,
+        user_info: &mut mumble::proto::UserState,
     ) -> Result<(), Box<dyn Error>> {
         let has_texture =
             user_info.texture.is_some() && !user_info.texture.as_ref().unwrap().is_empty();
-        let texture_hash = user_info.texture_hash.clone().unwrap_or_default();
+
+        let texture_hash = &mut user_info.texture_hash;
+        let texture_hash = mem::take(texture_hash).unwrap_or_default();
+
         let has_comment =
             user_info.comment.is_some() && !user_info.comment.as_ref().unwrap().is_empty();
-        let comment_hash = user_info.comment_hash.clone().unwrap_or_default();
         let session = user_info.session();
+
+        let comment_hash = &mut user_info.comment_hash;
+        let comment_hash = mem::take(comment_hash).unwrap_or_default();
 
         match self.users.entry(session) {
             Entry::Occupied(mut o) => {
@@ -227,8 +237,8 @@ impl UserManager {
         };
 
         if let Some(user) = self.users.get(&session) {
-            self.fill_user_images(user, &texture_hash)?;
-            self.fill_user_comment(user, &comment_hash)?;
+            self.fill_user_images(user.id, &texture_hash)?;
+            self.fill_user_comment(user.id, &comment_hash)?;
         }
 
         self.notify(&session);

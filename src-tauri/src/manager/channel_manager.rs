@@ -1,6 +1,7 @@
 use std::{
     collections::{hash_map::Entry, HashMap},
     error::Error,
+    mem,
 };
 
 use serde::Serialize;
@@ -42,21 +43,24 @@ pub struct ChannelBlobData {
 }
 
 impl Update<mumble::proto::ChannelState> for Channel {
-    fn update_from(&mut self, other: mumble::proto::ChannelState) -> &Self {
-        self.links = other.links;
-        self.links_add = other.links_add;
-        self.links_remove = other.links_remove;
+    fn update_from(&mut self, other: &mut mumble::proto::ChannelState) -> &Self {
+        self.links = mem::take(&mut other.links);
+        self.links_add =  mem::take(&mut other.links_add);
+        self.links_remove =  mem::take(&mut other.links_remove);
 
-        Self::update_if_some(&mut self.channel_id, other.channel_id);
-        Self::update_if_some(&mut self.parent, other.parent);
-        Self::update_if_some(&mut self.name, other.name);
-        Self::update_if_some(&mut self.description, other.description);
-        Self::update_if_some(&mut self.position, other.position);
+        Self::update_if_some(&mut self.channel_id, &mut other.channel_id);
+        Self::update_if_some(&mut self.parent, &mut other.parent);
+        Self::update_if_some(&mut self.name, &mut other.name);
+        Self::update_if_some(&mut self.description, &mut other.description);
+        Self::update_if_some(&mut self.position, &mut other.position);
         //Self::update_if_some(&mut self.description_hash, other.description_hash);
-        Self::update_if_some(&mut self.max_users, other.max_users);
-        Self::update_if_some(&mut self.temporary, other.temporary);
-        Self::update_if_some(&mut self.is_enter_restricted, other.is_enter_restricted);
-        Self::update_if_some(&mut self.can_enter, other.can_enter);
+        Self::update_if_some(&mut self.max_users, &mut other.max_users);
+        Self::update_if_some(&mut self.temporary, &mut other.temporary);
+        Self::update_if_some(
+            &mut self.is_enter_restricted,
+            &mut other.is_enter_restricted,
+        );
+        Self::update_if_some(&mut self.can_enter, &mut other.can_enter);
 
         self
     }
@@ -147,12 +151,13 @@ impl ChannelManager {
 
     pub fn update_channel(
         &mut self,
-        channel_info: mumble::proto::ChannelState,
+        channel_info: &mut mumble::proto::ChannelState,
     ) -> Result<(), Box<dyn Error>> {
         let has_description = channel_info.description.is_some()
             && !channel_info.description.as_ref().unwrap().is_empty();
         let channel_id = channel_info.channel_id();
-        let description_hash = channel_info.description_hash.clone().unwrap_or_default();
+        let description = &mut channel_info.description_hash;
+        let description_hash = mem::take(description).unwrap_or_default();
 
         match self.channels.entry(channel_id) {
             Entry::Occupied(mut o) => {
