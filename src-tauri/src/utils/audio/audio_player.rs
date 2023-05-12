@@ -9,24 +9,23 @@ use std::{
     time::Duration,
 };
 
-use rodio::cpal;
 use tracing::{error, trace};
 
-pub struct AudioRecorder {
+pub struct AudioPlayer {
     audio_thread: Option<thread::JoinHandle<()>>,
-    queue_rx: Receiver<Vec<u8>>,
-    queue_tx: Option<Sender<Vec<u8>>>,
+    queue_rx: Option<Receiver<Vec<i16>>>,
+    queue_tx: Sender<Vec<i16>>,
     playing: Arc<AtomicBool>,
 }
 
-impl AudioRecorder {
-    pub fn new() -> AudioRecorder {
+impl AudioPlayer {
+    pub fn new() -> AudioPlayer {
         let (tx, rx) = mpsc::channel();
 
-        AudioRecorder {
+        AudioPlayer {
             audio_thread: None,
-            queue_rx: rx,
-            queue_tx: Some(tx),
+            queue_rx: Some(rx),
+            queue_tx: tx,
             playing: Arc::new(AtomicBool::new(false)),
         }
     }
@@ -37,25 +36,47 @@ impl AudioRecorder {
             return Err("Audio thread already started".into());
         }
 
-        let audio_queue_ref = self.queue_tx.take().unwrap();
+        let audio_queue_ref = self.queue_rx.take().unwrap();
         let playing_clone = self.playing.clone();
 
         self.audio_thread = Some(thread::spawn(move || {
             trace!("Starting audio thread");
 
-            let host = cpal::default_host();
+            let stream = rodio::OutputStream::try_default();
+            if let Err(e) = stream {
+                error!("Failed to create audio stream: {}", e);
+                return;
+            }
+
+            let (_stream, handle) = stream.unwrap();
+            let sink = rodio::Sink::try_new(&handle);
+            if let Err(e) = sink {
+                error!("Failed to create sink: {}", e);
+                return;
+            }
+            let sink = sink.unwrap();
+
+            while playing_clone.load(Ordering::Relaxed) {
+                if let Ok(queue_value) = audio_queue_ref.recv_timeout(Duration::from_millis(2000)) {
+                    sink.append(rodio::buffer::SamplesBuffer::<i16>::new(
+                        1,
+                        48000,
+                        queue_value,
+                    ));
+                }
+            }
         }));
 
         Ok(())
     }
 
-    pub fn read_queue(&mut self) -> Result<Vec<u8>, Box<dyn Error>> {
+    pub fn add_to_queue(&mut self, data: Vec<i16>, _user_id: u32) -> Result<(), Box<dyn Error>> {
         if self.playing.load(Ordering::Relaxed) {
             //todo add user id to audio data
-            return Ok(self.queue_rx.recv_timeout(Duration::from_millis(2000))?);
+            self.queue_tx.send(data)?;
         }
 
-        Err("Audio thread not started".into())
+        Ok(())
     }
 
     pub fn stop(&mut self) {
@@ -71,7 +92,7 @@ impl AudioRecorder {
     }
 }
 
-impl Drop for AudioRecorder {
+impl Drop for AudioPlayer {
     fn drop(&mut self) {
         self.stop();
     }

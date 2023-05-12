@@ -23,8 +23,11 @@ pub struct MessageRouter {
 }
 
 impl MessageRouter {
-    pub fn new(sender: MessageChannels, server_channel: Sender<Vec<u8>>) -> MessageRouter {
-        MessageRouter {
+    pub fn new(
+        sender: MessageChannels,
+        server_channel: Sender<Vec<u8>>,
+    ) -> Result<MessageRouter, Box<dyn Error>> {
+        Ok(MessageRouter {
             user_manager: UserManager::new(sender.message_channel.clone(), server_channel.clone()),
             channel_manager: ChannelManager::new(
                 sender.message_channel.clone(),
@@ -35,8 +38,8 @@ impl MessageRouter {
                 sender.message_channel.clone(),
                 server_channel.clone(),
             ),
-            voice_manager: VoiceManager::new(sender.message_channel, server_channel),
-        }
+            voice_manager: VoiceManager::new(sender.message_channel, server_channel)?,
+        })
     }
 
     fn handle_downcast<T: 'static>(&self, message_info: MessageInfo) -> Result<T, Box<dyn Error>> {
