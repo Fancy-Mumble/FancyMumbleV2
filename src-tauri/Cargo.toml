@@ -45,5 +45,10 @@ custom-protocol = [ "tauri/custom-protocol" ]
 [profile.release]
 debug = 1
 
+[profile.optimized]
+inherits = "release"
+lto = true
+codegen-units = 1
+
 [rust]
 debuginfo-level = 1

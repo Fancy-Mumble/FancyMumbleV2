@@ -1,5 +1,4 @@
-pub mod audio_player;
-pub mod audio_recorder;
+pub mod audio;
 pub mod certificate_store;
 pub mod file;
 pub mod messages;

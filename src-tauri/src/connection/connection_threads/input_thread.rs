@@ -22,10 +22,16 @@ impl InputThread for Connection {
                 let mut interval = time::interval(DEADMAN_INTERVAL);
                 {
                     let mut reader = reader_copy.lock().await;
-                    *reader = Some(StreamReader::new(MessageRouter::new(
-                        message_channels,
-                        back_channel,
-                    )));
+                    let message_reader = MessageRouter::new(message_channels, back_channel);
+
+                    match message_reader {
+                        Ok(message_reader) => {
+                            *reader = Some(StreamReader::new(message_reader));
+                        }
+                        Err(e) => {
+                            eprintln!("Failed to create message reader: {}", e);
+                        }
+                    }
                 }
 
                 while running.load(Ordering::Relaxed) {
