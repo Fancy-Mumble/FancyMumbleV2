@@ -20,10 +20,10 @@ pub enum ConnectionThread {
 impl ToString for ConnectionThread {
     fn to_string(&self) -> String {
         match self {
-            ConnectionThread::Ping => "PingThread".to_string(),
-            ConnectionThread::Output => "OutputThread".to_string(),
-            ConnectionThread::Input => "InputThread".to_string(),
-            ConnectionThread::Main => "MainThread".to_string(),
+            Self::Ping => "PingThread".to_string(),
+            Self::Output => "OutputThread".to_string(),
+            Self::Input => "InputThread".to_string(),
+            Self::Main => "MainThread".to_string(),
         }
     }
 }

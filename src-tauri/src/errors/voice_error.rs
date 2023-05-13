@@ -7,8 +7,8 @@ pub struct VoiceError {
 }
 
 impl VoiceError {
-    pub fn new<T: Display>(msg: T) -> VoiceError {
-        VoiceError {
+    pub fn new<T: Display>(msg: T) -> Self {
+        Self {
             details: msg.to_string(),
         }
     }

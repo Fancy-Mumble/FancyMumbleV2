@@ -29,7 +29,7 @@ impl InputThread for Connection {
                             *reader = Some(StreamReader::new(message_reader));
                         }
                         Err(e) => {
-                            eprintln!("Failed to create message reader: {}", e);
+                            eprintln!("Failed to create message reader: {e}");
                         }
                     }
                 }

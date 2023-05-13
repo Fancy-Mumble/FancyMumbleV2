@@ -7,9 +7,9 @@ use serde::Serialize;
 use tokio::sync::broadcast::Sender;
 use tracing::error;
 
-use crate::{protocol::serialize::message_container::FrontendMessage, utils::messages::mumble};
+use crate::{protocol::serialize::message_container::FrontendMessage, mumble};
 
-use super::user_manager::User;
+use super::user::User;
 
 #[derive(Debug, Clone, Serialize)]
 struct SenderInfo {
@@ -24,14 +24,14 @@ struct TextMessage {
     timestamp: u128,
 }
 
-pub struct TextMessageManager {
+pub struct Manager {
     message_log: Vec<TextMessage>,
     frontend_channel: Sender<String>,
 }
 
-impl TextMessageManager {
-    pub fn new(send_to: Sender<String>) -> TextMessageManager {
-        TextMessageManager {
+impl Manager {
+    pub fn new(send_to: Sender<String>) -> Self {
+        Self {
             message_log: Vec::new(),
             frontend_channel: send_to,
         }

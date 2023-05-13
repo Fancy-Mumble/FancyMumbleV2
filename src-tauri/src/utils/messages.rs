@@ -2,12 +2,7 @@ use byteorder::{BigEndian, ByteOrder};
 use prost::{DecodeError, Message};
 use serde::Serialize;
 use std::any::Any;
-
-pub mod mumble {
-    pub mod proto {
-        include!(concat!(env!("OUT_DIR"), "/mumble_proto.rs"));
-    }
-}
+use crate::mumble;
 
 #[derive(Debug)]
 pub struct MessageInfo {
@@ -36,7 +31,7 @@ macro_rules! message_builder {
             }
         })*
 
-        #[derive(Debug, Clone, Serialize, PartialEq)]
+        #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
         pub enum MessageTypes {
             $( $proto ),*
         }
@@ -86,7 +81,7 @@ message_builder! {
     26 => PluginDataTransmission
 }
 
-pub fn message_builder<T>(message: T) -> Vec<u8>
+pub fn message_builder<T>(message: &T) -> Vec<u8>
 where
     T: NetworkMessage + Message,
 {

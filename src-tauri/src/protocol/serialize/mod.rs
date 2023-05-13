@@ -2,7 +2,7 @@ pub mod message_container;
 
 use serde::ser::{Serialize, SerializeStruct};
 
-use crate::utils::messages::mumble::proto::{
+use crate::mumble::proto::{
     user_state, Acl, Authenticate, BanList, ChannelRemove, ChannelState, CodecVersion,
     ContextAction, ContextActionModify, CryptSetup, PermissionDenied, PermissionQuery, Ping,
     QueryUsers, Reject, RequestBlob, ServerConfig, ServerSync, SuggestConfig, TextMessage,

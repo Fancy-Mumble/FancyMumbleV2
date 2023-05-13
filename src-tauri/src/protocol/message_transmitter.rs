@@ -1,8 +1,8 @@
 use std::error::Error;
 use std::sync::{Arc, RwLock};
 
-use crate::connection::connection_threads::DEADMAN_INTERVAL;
-use crate::connection::connection_traits::{HandleMessage, Shutdown};
+use crate::connection::threads::DEADMAN_INTERVAL;
+use crate::connection::traits::{HandleMessage, Shutdown};
 use async_trait::async_trait;
 use tauri::Manager;
 use tokio::task::JoinHandle;
@@ -18,8 +18,8 @@ pub struct MessageTransmitter {
 }
 
 impl MessageTransmitter {
-    pub fn new(recv_channel: Receiver<String>, window: tauri::Window) -> MessageTransmitter {
-        MessageTransmitter {
+    pub fn new(recv_channel: Receiver<String>, window: tauri::Window) -> Self {
+        Self {
             recv_channel,
             window,
             transmitter_thread: None,

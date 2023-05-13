@@ -10,18 +10,18 @@ use std::{
 
 use tracing::{error, trace};
 
-pub struct AudioRecorder {
+pub struct Recorder {
     audio_thread: Option<thread::JoinHandle<()>>,
     _queue_rx: Receiver<Vec<u8>>,
     _queue_tx: Option<Sender<Vec<u8>>>,
     playing: Arc<AtomicBool>,
 }
 
-impl AudioRecorder {
-    pub fn new() -> AudioRecorder {
+impl Recorder {
+    pub fn new() -> Self {
         let (tx, rx) = mpsc::channel();
 
-        AudioRecorder {
+        Self {
             audio_thread: None,
             _queue_rx: rx,
             _queue_tx: Some(tx),
@@ -68,7 +68,7 @@ impl AudioRecorder {
     }
 }
 
-impl Drop for AudioRecorder {
+impl Drop for Recorder {
     fn drop(&mut self) {
         self.stop();
     }

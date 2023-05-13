@@ -1,8 +1,8 @@
-use crate::errors::voice_error::VoiceError;
+use crate::utils::audio;
+use crate::{errors::voice_error::VoiceError, connection::traits::Shutdown};
 use crate::protocol::serialize::message_container::FrontendMessage;
-use crate::utils::audio::audio_decoder::AudioDecoder;
-use crate::utils::audio::audio_player::AudioPlayer;
-use crate::utils::audio::audio_recorder::AudioRecorder;
+use crate::utils::audio::player::AudioPlayer;
+use async_trait::async_trait;
 use serde::Serialize;
 use std::{
     collections::{hash_map::Entry, HashMap},
@@ -20,35 +20,35 @@ struct AudioInfo {
     user_id: u32,
 }
 
-pub struct VoiceManager {
+pub struct Manager {
     frontend_channel: Sender<String>,
     _server_channel: Sender<Vec<u8>>,
     user_audio_info: HashMap<u32, AudioInfo>,
     audio_player: AudioPlayer,
-    decoder: AudioDecoder,
+    decoder: audio::decoder::Decoder,
 }
 
-impl VoiceManager {
+impl Manager {
     pub fn new(
         send_to: Sender<String>,
         server_channel: Sender<Vec<u8>>,
-    ) -> Result<VoiceManager, Box<dyn Error>> {
+    ) -> Result<Self, Box<dyn Error>> {
         let mut player = AudioPlayer::new();
         if let Err(error) = player.start() {
             error!("Failed to start audio player: {}", error);
         }
 
-        let mut recoder = AudioRecorder::new();
+        let mut recoder = audio::recorder::Recorder::new();
         if let Err(error) = recoder.start() {
             error!("Failed to start audio recorder: {}", error);
         }
 
-        Ok(VoiceManager {
+        Ok(Self {
             frontend_channel: send_to,
             _server_channel: server_channel,
             user_audio_info: HashMap::new(),
             audio_player: player,
-            decoder: AudioDecoder::new(SAMPLE_RATE, CHANNELS)?,
+            decoder: audio::decoder::Decoder::new(SAMPLE_RATE, CHANNELS)?,
         })
     }
 
@@ -72,7 +72,7 @@ impl VoiceManager {
             .audio_player
             .add_to_queue(audio_data.data, audio_data.user_id)
         {
-            return Err(VoiceError::new(format!("Failed to add audio to queue: {}", error)).into());
+            return Err(VoiceError::new(format!("Failed to add audio to queue: {error}")).into());
         }
 
         Ok(())
@@ -100,8 +100,11 @@ impl VoiceManager {
             }
         };
     }
+}
 
-    pub async fn shutdown(&mut self) -> Result<(), Box<dyn Error>> {
+#[async_trait]
+impl Shutdown for Manager {
+    async fn shutdown(&mut self) -> Result<(), Box<dyn Error>> {
         self.audio_player.stop();
 
         Ok(())

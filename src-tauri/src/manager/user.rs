@@ -11,9 +11,8 @@ use tracing::{debug, error, info, trace};
 use crate::{
     protocol::serialize::message_container::FrontendMessage,
     utils::messages::{
-        message_builder,
-        mumble::{self},
-    },
+        message_builder
+    }, mumble,
 };
 
 use super::Update;
@@ -40,7 +39,7 @@ pub struct User {
 }
 
 #[derive(Debug, Default, Serialize)]
-pub struct UserBlobData {
+pub struct BlobData {
     pub user_id: u32,
     pub data: String,
 }
@@ -66,16 +65,16 @@ impl Update<mumble::proto::UserState> for User {
     }
 }
 
-pub struct UserManager {
+pub struct Manager {
     users: HashMap<u32, User>,
     current_user_id: Option<u32>,
     frontend_channel: Sender<String>,
     server_channel: Sender<Vec<u8>>,
 }
 
-impl UserManager {
-    pub fn new(send_to: Sender<String>, server_channel: Sender<Vec<u8>>) -> UserManager {
-        UserManager {
+impl Manager {
+    pub fn new(send_to: Sender<String>, server_channel: Sender<Vec<u8>>) -> Self {
+        Self {
             users: HashMap::new(),
             current_user_id: None,
             frontend_channel: send_to,
@@ -96,15 +95,15 @@ impl UserManager {
         }
     }
 
-    fn notify(&self, session: &u32) {
-        if let Some(user) = self.users.get(session) {
+    fn notify(&self, session: u32) {
+        if let Some(user) = self.users.get(&session) {
             let msg = FrontendMessage::new("user_update", &user);
 
             self.send_to_frontend(&msg);
         }
     }
 
-    fn notify_remove(&self, session: &u32) {
+    fn notify_remove(&self, session: u32) {
         let msg = FrontendMessage::new("user_remove", session);
 
         self.send_to_frontend(&msg);
@@ -117,7 +116,7 @@ impl UserManager {
                 general_purpose::STANDARD.encode(&user.profile_picture)
             );
 
-            let user_image = UserBlobData {
+            let user_image = BlobData {
                 user_id: user.id,
                 data: base64,
             };
@@ -129,7 +128,7 @@ impl UserManager {
 
     fn notify_user_comment(&self, session: u32) {
         if let Some(user) = self.users.get(&session) {
-            let user_image = UserBlobData {
+            let user_image = BlobData {
                 user_id: user.id,
                 data: user.comment.clone(),
             };
@@ -165,7 +164,7 @@ impl UserManager {
                 session_texture: vec![user_id],
                 ..Default::default()
             };
-            self.server_channel.send(message_builder(blob_request))?;
+            self.server_channel.send(message_builder(&blob_request))?;
         }
 
         Ok(())
@@ -196,7 +195,7 @@ impl UserManager {
                 session_comment: vec![user_id],
                 ..Default::default()
             };
-            self.server_channel.send(message_builder(blob_request))?;
+            self.server_channel.send(message_builder(&blob_request))?;
         }
 
         Ok(())
@@ -237,7 +236,7 @@ impl UserManager {
             self.fill_user_comment(user.id, &comment_hash)?;
         }
 
-        self.notify(&session);
+        self.notify(session);
 
         if has_texture {
             debug!("Notifying user image: {}", session);
@@ -252,18 +251,18 @@ impl UserManager {
         Ok(())
     }
 
-    pub fn remove_user(&mut self, user_info: mumble::proto::UserRemove) {
+    pub fn remove_user(&mut self, user_info: &mumble::proto::UserRemove) {
         let session = user_info.session;
 
         self.users.remove(&session);
-        self.notify_remove(&session);
+        self.notify_remove(session);
     }
 
     pub fn get_user_by_id(&self, id: u32) -> Option<&User> {
         self.users.get(&id)
     }
 
-    pub fn notify_current_user(&mut self, sync_info: mumble::proto::ServerSync) {
+    pub fn notify_current_user(&mut self, sync_info: &mumble::proto::ServerSync) {
         if sync_info.session.is_some() {
             self.current_user_id = sync_info.session;
 

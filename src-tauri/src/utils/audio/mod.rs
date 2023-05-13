@@ -1,3 +1,3 @@
-pub mod audio_decoder;
-pub mod audio_player;
-pub mod audio_recorder;
+pub mod decoder;
+pub mod player;
+pub mod recorder;

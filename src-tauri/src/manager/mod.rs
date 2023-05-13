@@ -1,10 +1,10 @@
 use std::mem;
 
-pub mod channel_manager;
-pub mod connection_manager;
-pub mod text_message_manager;
-pub mod user_manager;
-pub mod voice_manager;
+pub mod channel;
+pub mod connection_state;
+pub mod text_message;
+pub mod user;
+pub mod voice;
 
 trait Update<New> {
     fn update_if_some<T: Default>(original: &mut T, other: &mut Option<T>) {

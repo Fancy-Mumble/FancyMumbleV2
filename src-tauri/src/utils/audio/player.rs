@@ -19,10 +19,10 @@ pub struct AudioPlayer {
 }
 
 impl AudioPlayer {
-    pub fn new() -> AudioPlayer {
+    pub fn new() -> Self {
         let (tx, rx) = mpsc::channel();
 
-        AudioPlayer {
+        Self {
             audio_thread: None,
             queue_rx: Some(rx),
             queue_tx: tx,

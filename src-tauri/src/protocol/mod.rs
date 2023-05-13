@@ -5,7 +5,7 @@ pub mod stream_reader;
 
 use std::cmp;
 
-use crate::utils::messages::{message_builder, mumble};
+use crate::{utils::messages::{message_builder}, mumble};
 use tauri::PackageInfo;
 use tokio::sync::broadcast::Sender;
 
@@ -36,14 +36,14 @@ fn from_components(major: u64, minor: u64, patch: u64) -> u64 {
 fn to_legacy_version(version: u64) -> u32 {
     // If any of the version components exceeds their allowed value range, they will
     // be truncated to the highest representable value
-    let major = (cmp::min(get_major(version) as u16, u16::MAX) as u32) << 16;
-    let minor = (cmp::min(get_minor(version) as u8, u8::MAX) as u32) << 8;
-    let patch = cmp::min(get_patch(version) as u8, u8::MAX) as u32;
+    let major = u32::from(cmp::min(get_major(version) as u16, u16::MAX)) << 16;
+    let minor = u32::from(cmp::min(get_minor(version) as u8, u8::MAX)) << 8;
+    let patch = u32::from(cmp::min(get_patch(version) as u8, u8::MAX));
 
     major | minor | patch
 }
 
-pub async fn init_connection(username: &str, channel: Sender<Vec<u8>>, package_info: PackageInfo) {
+pub fn init_connection(username: &str, channel: &Sender<Vec<u8>>, package_info: &PackageInfo) {
     let version = from_components(
         package_info.version.major + 2,
         package_info.version.minor,
@@ -69,18 +69,18 @@ pub async fn init_connection(username: &str, channel: Sender<Vec<u8>>, package_i
         fancy_version: Some(version),
     };
 
-    let buffer = message_builder(version);
+    let buffer = message_builder(&version);
     _ = channel.send(buffer);
 
     let auth = mumble::proto::Authenticate {
         opus: Some(true),
-        celt_versions: vec![-2147483632, -2147483637],
+        celt_versions: vec![-2_147_483_632, -2_147_483_637],
         password: None,
         tokens: vec![],
         username: Some(username.to_string()),
         client_type: Some(0), // 1 = BOT, 0 = User
     };
 
-    let buffer = message_builder(auth);
+    let buffer = message_builder(&auth);
     _ = channel.send(buffer);
 }

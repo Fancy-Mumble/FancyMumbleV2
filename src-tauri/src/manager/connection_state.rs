@@ -5,14 +5,14 @@ use crate::protocol::serialize::message_container::FrontendMessage;
 
 use tokio::sync::broadcast::Sender;
 
-pub struct ConnectionManager {
+pub struct Manager {
     frontend_channel: Sender<String>,
     _server_channel: Sender<Vec<u8>>,
 }
 
-impl ConnectionManager {
-    pub fn new(send_to: Sender<String>, server_channel: Sender<Vec<u8>>) -> ConnectionManager {
-        ConnectionManager {
+impl Manager {
+    pub fn new(send_to: Sender<String>, server_channel: Sender<Vec<u8>>) -> Self {
+        Self {
             frontend_channel: send_to,
             _server_channel: server_channel,
         }
