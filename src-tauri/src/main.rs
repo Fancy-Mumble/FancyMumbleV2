@@ -11,6 +11,9 @@ mod mumble;
 mod protocol;
 mod utils;
 
+#[cfg(test)]
+mod tests;
+
 use std::collections::HashMap;
 
 use commands::ConnectionState;

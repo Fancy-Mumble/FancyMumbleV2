@@ -38,6 +38,7 @@ rodio = "0.17.1"
 tempdir = "0.3"
 mockall = "0.11.4"
 tokio-test = "0.4.2"
+xshell = "0.2.3"
 
 [features]
 # by default Tauri runs in production mode
