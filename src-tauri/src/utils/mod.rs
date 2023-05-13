@@ -4,4 +4,5 @@ pub mod file;
 pub mod messages;
 pub mod varint;
 
+#[cfg(test)]
 mod tests;

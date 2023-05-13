@@ -413,4 +413,14 @@ mod tests {
                 .is_err()
         );
     }
+
+    #[test]
+    fn test_varint_builder_parsing() {
+        let builder_varint = Builder::from(vec![0xF7, 0, 0, 0, 0, 0, 0, 0, 42].as_slice())
+            .build()
+            .unwrap();
+
+        assert_eq!(42, builder_varint.parsed_value);
+        assert_eq!(9, builder_varint.parsed_bytes);
+    }
 }
