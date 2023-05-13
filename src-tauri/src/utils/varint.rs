@@ -44,8 +44,8 @@ impl Builder {
 pub struct Varint {
     //TODO: Implement trait into
     _bytes: Vec<u8>,
-    parsed_value: i128,
-    parsed_bytes: u32,
+    pub parsed_value: i128,
+    pub parsed_bytes: u32,
 }
 
 impl Varint {
