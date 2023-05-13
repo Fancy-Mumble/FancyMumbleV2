@@ -1,8 +1,6 @@
 use std::error::Error;
 
-use opus::Decoder;
-
-use crate::utils::varint::parse_varint;
+use crate::utils::varint::{self};
 
 pub struct DecodedMessage {
     pub user_id: u32,
@@ -10,39 +8,47 @@ pub struct DecodedMessage {
     pub data: Vec<i16>,
 }
 
-pub struct AudioDecoder {
-    decoder: Decoder,
+pub struct Decoder {
+    decoder: opus::Decoder,
     sample_rate: u32,
     channels: opus::Channels,
 }
 
-impl AudioDecoder {
-    pub fn new(sample_rate: u32, channels: opus::Channels) -> Result<AudioDecoder, Box<dyn Error>> {
-        let decoder = Decoder::new(sample_rate, channels)?;
-        Ok(AudioDecoder {
+impl Decoder {
+    pub fn new(sample_rate: u32, channels: opus::Channels) -> Result<Self, Box<dyn Error>> {
+        let decoder = opus::Decoder::new(sample_rate, channels)?;
+        Ok(Self {
             decoder,
             sample_rate,
             channels,
         })
     }
 
+    // we want a downcast, because we are reading from a stream
+    #[allow(clippy::cast_possible_truncation)]
     pub fn decode_audio(&mut self, audio_data: &[u8]) -> Result<DecodedMessage, Box<dyn Error>> {
         let audio_header = audio_data[0];
 
         let audio_type = (audio_header & 0xE0) >> 5;
         //let audio_target = audio_header & 0x1F;
         if audio_type != 4 {
-            return Err(format!("Received audio data with unknown type: {:?}", audio_type).into());
+            return Err(format!("Received audio data with unknown type: {audio_type:?}").into());
         }
         let mut position = 1;
 
-        let session_id = parse_varint(&audio_data[position..])?;
+        let session_id = varint::Builder::from(&audio_data[position..])
+            .build()?
+            .parsed_pair();
         position += session_id.1 as usize;
 
-        let sequence_number = parse_varint(&audio_data[position..])?;
+        let sequence_number = varint::Builder::from(&audio_data[position..])
+            .build()?
+            .parsed_pair();
         position += sequence_number.1 as usize;
 
-        let opus_header = parse_varint(&audio_data[position..])?;
+        let opus_header = varint::Builder::from(&audio_data[position..])
+            .build()?
+            .parsed_pair();
         position += opus_header.1 as usize;
 
         let talking = (opus_header.0 & 0x2000) <= 0;

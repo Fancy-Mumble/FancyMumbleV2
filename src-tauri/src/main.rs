@@ -9,6 +9,7 @@ mod errors;
 mod manager;
 mod protocol;
 mod utils;
+mod mumble;
 
 use std::collections::HashMap;
 

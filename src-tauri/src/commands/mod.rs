@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    connection::{connection_traits::Shutdown, Connection},
+    connection::{traits::Shutdown, Connection},
     protocol::message_transmitter::MessageTransmitter,
 };
 use tauri::State;
@@ -68,7 +68,7 @@ pub async fn send_message(
 ) -> Result<(), String> {
     let guard = state.connection.lock().await;
     if let Some(guard) = guard.as_ref() {
-        if let Err(e) = guard.send_message(channel_id, &chat_message).await {
+        if let Err(e) = guard.send_message(channel_id, &chat_message) {
             return Err(format!("{e:?}"));
         }
     }
@@ -85,11 +85,14 @@ pub async fn logout(state: State<'_, ConnectionState>) -> Result<(), String> {
         return Err("Called logout, but there is no connection!".to_string());
     }
 
-    for (name, thread) in state.message_handler.lock().await.iter_mut() {
-        if let Err(e) = thread.shutdown().await {
-            error!("Failed to shutdown thread {}: {}", name, e);
+    {
+        let mut lock_guard = state.message_handler.lock().await;
+        for (name, thread) in lock_guard.iter_mut() {
+            if let Err(e) = thread.shutdown().await {
+                error!("Failed to shutdown thread {}: {}", name, e);
+            }
+            trace!("Joined {}", name.to_string());
         }
-        trace!("Joined {}", name.to_string());
     }
 
     if let Err(e) = connection.as_mut().unwrap().shutdown().await {
@@ -108,7 +111,7 @@ pub async fn like_message(
 ) -> Result<(), String> {
     let guard = state.connection.lock().await;
     if let Some(guard) = guard.as_ref() {
-        if let Err(e) = guard.like_message(&message_id).await {
+        if let Err(e) = guard.like_message(&message_id) {
             return Err(format!("{e:?}"));
         }
     }
@@ -123,7 +126,7 @@ pub async fn join_channel(
 ) -> Result<(), String> {
     let guard = state.connection.lock().await;
     if let Some(guard) = guard.as_ref() {
-        if let Err(e) = guard.join_channel(channel_id).await {
+        if let Err(e) = guard.join_channel(channel_id) {
             return Err(format!("{e:?}"));
         }
     }
@@ -142,7 +145,7 @@ pub async fn set_user_image(
 
     if let Some(guard) = guard.as_ref() {
         if let Err(error) = guard.set_user_image(image_path, &image_type).await {
-            return Err(format!("{:?}", error));
+            return Err(format!("{error:?}"));
         }
     }
 
@@ -155,8 +158,8 @@ pub async fn change_user_state(state: State<'_, ConnectionState>) -> Result<(), 
     let guard = connection.lock().await;
 
     if let Some(guard) = guard.as_ref() {
-        if let Err(error) = guard.update_user_info().await {
-            return Err(format!("{:?}", error));
+        if let Err(error) = guard.update_user_info() {
+            return Err(format!("{error:?}"));
         }
     }
 

@@ -2,7 +2,7 @@ use std::sync::atomic::Ordering;
 
 use crate::{
     connection::Connection,
-    utils::messages::{message_builder, mumble},
+    utils::messages::{message_builder}, mumble,
 };
 use tokio::select;
 use tokio::time;
@@ -37,7 +37,7 @@ impl OutputThread for Connection {
                                 tree_id: Vec::new(),
                                 message: result.message,
                             };
-                            let buffer = message_builder(message);
+                            let buffer = message_builder(&message);
 
                             if let Err(error) = tx_out.send(buffer) {
                                 error!("Unable to send message: {}", error);

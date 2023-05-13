@@ -11,15 +11,14 @@ use crate::{
     protocol::serialize::message_container::FrontendMessage,
     utils::messages::{
         message_builder,
-        mumble::{self},
-    },
+    }, mumble,
 };
 
 use super::Update;
 use tokio::sync::broadcast::Sender;
 
 #[derive(Debug, Default, Serialize)]
-pub struct Channel {
+pub struct Data {
     pub channel_id: u32,
     pub parent: u32,
     pub name: String,
@@ -37,12 +36,12 @@ pub struct Channel {
 }
 
 #[derive(Debug, Default, Serialize)]
-pub struct ChannelBlobData {
+pub struct BlobData {
     pub channel_id: u32,
     pub data: String,
 }
 
-impl Update<mumble::proto::ChannelState> for Channel {
+impl Update<mumble::proto::ChannelState> for Data {
     fn update_from(&mut self, other: &mut mumble::proto::ChannelState) -> &Self {
         self.links = mem::take(&mut other.links);
         self.links_add = mem::take(&mut other.links_add);
@@ -66,15 +65,15 @@ impl Update<mumble::proto::ChannelState> for Channel {
     }
 }
 
-pub struct ChannelManager {
-    channels: HashMap<u32, Channel>,
+pub struct Manager {
+    channels: HashMap<u32, Data>,
     frontend_channel: Sender<String>,
     server_channel: Sender<Vec<u8>>,
 }
 
-impl ChannelManager {
-    pub fn new(send_to: Sender<String>, server_channel: Sender<Vec<u8>>) -> ChannelManager {
-        ChannelManager {
+impl Manager {
+    pub fn new(send_to: Sender<String>, server_channel: Sender<Vec<u8>>) -> Self {
+        Self {
             channels: HashMap::new(),
             frontend_channel: send_to,
             server_channel,
@@ -94,8 +93,8 @@ impl ChannelManager {
         }
     }
 
-    fn notify(&self, channel_id: &u32) {
-        if let Some(user) = self.channels.get(channel_id) {
+    fn notify(&self, channel_id: u32) {
+        if let Some(user) = self.channels.get(&channel_id) {
             let msg = FrontendMessage::new("channel_update", &user);
 
             self.send_to_frontend(&msg);
@@ -104,7 +103,7 @@ impl ChannelManager {
 
     fn fill_channel_description(
         &self,
-        channel_info: &Channel,
+        channel_info: &Data,
         description_hash: &Vec<u8>,
     ) -> Result<(), Box<dyn Error>> {
         let channel_id = channel_info.channel_id;
@@ -131,7 +130,7 @@ impl ChannelManager {
                 channel_description: vec![channel_id],
                 ..Default::default()
             };
-            self.server_channel.send(message_builder(blob_request))?;
+            self.server_channel.send(message_builder(&blob_request))?;
         }
 
         Ok(())
@@ -139,7 +138,7 @@ impl ChannelManager {
 
     fn notify_channel_description(&self, channel_id: u32) {
         if let Some(user) = self.channels.get(&channel_id) {
-            let channel_description = ChannelBlobData {
+            let channel_description = BlobData {
                 channel_id,
                 data: user.description.clone(),
             };
@@ -165,7 +164,7 @@ impl ChannelManager {
                 o.get_mut().update_from(channel_info);
             }
             Entry::Vacant(v) => {
-                let mut channel = Channel::default();
+                let mut channel = Data::default();
                 info!("Adding channel");
                 channel.update_from(channel_info);
                 v.insert(channel);
@@ -177,7 +176,7 @@ impl ChannelManager {
             self.fill_channel_description(channel, &description_hash)?;
         }
 
-        self.notify(&channel_id);
+        self.notify(channel_id);
 
         if has_description {
             self.notify_channel_description(channel_id);
@@ -186,10 +185,10 @@ impl ChannelManager {
         Ok(())
     }
 
-    pub fn remove_channel(&mut self, user_info: mumble::proto::ChannelRemove) {
+    pub fn remove_channel(&mut self, user_info: &mumble::proto::ChannelRemove) {
         let session = user_info.channel_id;
 
         self.channels.remove(&session);
-        self.notify(&session);
+        self.notify(session);
     }
 }

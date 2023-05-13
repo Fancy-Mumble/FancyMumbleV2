@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Run Clippy
-        run: cargo clippy --all-targets --all-features
+        run: cargo clippy --all-targets --all-features -- -W clippy::pedantic -W clippy::nursery -W clippy::unwrap_used
 
   create-release:
     permissions:

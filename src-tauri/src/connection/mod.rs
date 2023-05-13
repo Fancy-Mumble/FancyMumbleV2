@@ -1,20 +1,21 @@
-pub mod connection_threads;
-pub mod connection_traits;
-use crate::connection::connection_traits::Shutdown;
+pub mod threads;
+pub mod traits;
+use crate::connection::traits::Shutdown;
+use crate::mumble;
 use crate::protocol::init_connection;
 use crate::protocol::stream_reader::StreamReader;
 use crate::utils::certificate_store::get_client_certificate;
 use crate::utils::file::get_file_as_byte_vec;
-use crate::utils::messages::{message_builder, mumble};
+use crate::utils::messages::{message_builder};
 use async_trait::async_trait;
 use base64::engine::general_purpose;
 use base64::Engine;
-use connection_threads::{InputThread, MainThread, OutputThread, PingThread};
 use std::collections::HashMap;
 use std::error::Error;
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 use tauri::PackageInfo;
+use threads::{InputThread, MainThread, OutputThread, PingThread};
 use tokio::net::TcpStream;
 use tokio::sync::broadcast::{self, Receiver, Sender};
 use tokio::sync::Mutex;
@@ -22,7 +23,7 @@ use tokio::task::JoinHandle;
 use tokio_native_tls::native_tls::TlsConnector;
 use tracing::{info, trace};
 
-use self::connection_threads::ConnectionThread;
+use self::threads::ConnectionThread;
 
 const QUEUE_SIZE: usize = 256;
 const BUFFER_SIZE: usize = 8192;
@@ -64,7 +65,7 @@ impl Connection {
         server_port: u16,
         username: &str,
         package_info: PackageInfo,
-    ) -> Connection {
+    ) -> Self {
         let (tx_in, _): (Sender<Vec<u8>>, Receiver<Vec<u8>>) = broadcast::channel(QUEUE_SIZE);
         let (tx_out, _): (Sender<Vec<u8>>, Receiver<Vec<u8>>) = broadcast::channel(QUEUE_SIZE);
         let (tx_message_channel, _): (Sender<TextMessage>, Receiver<TextMessage>) =
@@ -72,7 +73,7 @@ impl Connection {
         let (message_channel, _): (Sender<String>, Receiver<String>) =
             broadcast::channel(QUEUE_SIZE);
 
-        Connection {
+        Self {
             package_info,
             server_data: ServerData {
                 username: username.to_string(),
@@ -99,7 +100,7 @@ impl Connection {
 
         let socket = TcpStream::connect(server_uri).await?;
         let cx = TlsConnector::builder()
-            .identity(get_client_certificate().await?)
+            .identity(get_client_certificate()?)
             .danger_accept_invalid_certs(true)
             .build()?;
         let cx = tokio_native_tls::TlsConnector::from(cx);
@@ -123,15 +124,14 @@ impl Connection {
         self.init_main_thread(stream).await?;
         init_connection(
             &self.server_data.username,
-            self.tx_out.clone(),
-            self.package_info.clone(),
-        )
-        .await;
+            &self.tx_out,
+            &self.package_info,
+        );
 
         Ok(())
     }
 
-    pub async fn send_message(
+    pub fn send_message(
         &self,
         channel_id: Option<u32>,
         message: &str,
@@ -149,14 +149,14 @@ impl Connection {
     }
 
     //TODO: Move to output Thread
-    pub async fn like_message(&self, message_id: &str) -> Result<(), Box<dyn Error>> {
+    pub fn like_message(&self, message_id: &str) -> Result<(), Box<dyn Error>> {
         let like_message = mumble::proto::PluginDataTransmission {
             sender_session: None,
             receiver_sessions: Vec::new(),
             data: Some(message_id.as_bytes().to_vec()),
             data_id: None,
         };
-        self.tx_out.send(message_builder(like_message))?;
+        self.tx_out.send(message_builder(&like_message))?;
 
         Ok(())
     }
@@ -177,7 +177,7 @@ impl Connection {
                     comment: img,
                     ..Default::default()
                 };
-                self.tx_out.send(message_builder(set_profile_background))?;
+                self.tx_out.send(message_builder(&set_profile_background))?;
             }
             "profile" => {
                 let image_vec = Some(image);
@@ -185,7 +185,7 @@ impl Connection {
                     texture: image_vec,
                     ..Default::default()
                 };
-                self.tx_out.send(message_builder(set_profile_background))?;
+                self.tx_out.send(message_builder(&set_profile_background))?;
             }
             _ => {}
         }
@@ -193,7 +193,7 @@ impl Connection {
         Ok(())
     }
 
-    pub async fn join_channel(&self, channel_id: u32) -> Result<(), Box<dyn Error>> {
+    pub fn join_channel(&self, channel_id: u32) -> Result<(), Box<dyn Error>> {
         let join_channel = mumble::proto::UserState {
             session: None,
             actor: None,
@@ -219,13 +219,13 @@ impl Connection {
             listening_channel_remove: Vec::new(),
             listening_volume_adjustment: Vec::new(),
         };
-        self.tx_out.send(message_builder(join_channel))?;
+        self.tx_out.send(message_builder(&join_channel))?;
 
         Ok(())
     }
 
-    pub async fn update_user_info(&self) -> Result<(), Box<dyn Error>> {
-        Ok(())
+    pub fn update_user_info(&self) -> Result<(), Box<dyn Error>> {
+        todo!()
     }
 }
 
@@ -240,7 +240,7 @@ impl Shutdown for Connection {
             reader.shutdown().await?;
         }
 
-        for (name, thread) in self.threads.iter_mut() {
+        for (name, thread) in &mut self.threads {
             thread.await?;
             trace!("Joined {}", name.to_string());
         }

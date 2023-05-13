@@ -7,8 +7,8 @@ pub struct ApplicationError {
 }
 
 impl ApplicationError {
-    pub fn new(msg: &str) -> ApplicationError {
-        ApplicationError {
+    pub fn new(msg: &str) -> Self {
+        Self {
             details: msg.to_string(),
         }
     }

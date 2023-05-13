@@ -7,8 +7,8 @@ pub struct FrontendMessage<T: Serialize + Clone> {
 }
 
 impl<T: Serialize + Clone> FrontendMessage<T> {
-    pub fn new(message_type: &str, data: T) -> FrontendMessage<T> {
-        FrontendMessage {
+    pub fn new(message_type: &str, data: T) -> Self {
+        Self {
             message_type: message_type.to_string(),
             data,
         }
