@@ -14,7 +14,8 @@ use crate::{
         user::{self},
         voice::{self},
     },
-    utils::messages::MessageInfo, mumble,
+    mumble,
+    utils::messages::MessageInfo,
 };
 
 pub struct MessageRouter {

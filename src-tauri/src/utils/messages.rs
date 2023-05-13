@@ -1,8 +1,8 @@
+use crate::mumble;
 use byteorder::{BigEndian, ByteOrder};
 use prost::{DecodeError, Message};
 use serde::Serialize;
 use std::any::Any;
-use crate::mumble;
 
 #[derive(Debug)]
 pub struct MessageInfo {
@@ -81,17 +81,20 @@ message_builder! {
     26 => PluginDataTransmission
 }
 
+// If our payload is larger than 32bits, something went wrong
+#[allow(clippy::cast_possible_truncation)]
 pub fn message_builder<T>(message: &T) -> Vec<u8>
 where
     T: NetworkMessage + Message,
 {
     let message_type = message.message_type();
     let payload = message.encode_to_vec();
-    let length = payload.len() as u32;
+    let length = payload.len();
+    assert!(length < u32::MAX as usize);
 
-    let mut new_buffer = vec![0; (length + 6) as usize];
+    let mut new_buffer = vec![0; length + 6];
     BigEndian::write_u16(&mut new_buffer, message_type);
-    BigEndian::write_u32(&mut new_buffer[2..], length);
+    BigEndian::write_u32(&mut new_buffer[2..], length as u32);
     new_buffer[6..].copy_from_slice(&payload);
 
     new_buffer

@@ -26,6 +26,8 @@ impl Decoder {
 
     // we want a downcast, because we are reading from a stream
     #[allow(clippy::cast_possible_truncation)]
+    // We are aware of the possible truncation, but we are not using the full range of u32
+    #[allow(clippy::cast_sign_loss)]
     pub fn decode_audio(&mut self, audio_data: &[u8]) -> Result<DecodedMessage, Box<dyn Error>> {
         let audio_header = audio_data[0];
 

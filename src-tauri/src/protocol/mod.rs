@@ -5,7 +5,7 @@ pub mod stream_reader;
 
 use std::cmp;
 
-use crate::{utils::messages::{message_builder}, mumble};
+use crate::{mumble, utils::messages::message_builder};
 use tauri::PackageInfo;
 use tokio::sync::broadcast::Sender;
 
@@ -33,6 +33,8 @@ fn from_components(major: u64, minor: u64, patch: u64) -> u64 {
     (major << OFFSET_MAJOR) | (minor << OFFSET_MINOR) | (patch << OFFSET_PATCH)
 }
 
+// The size of the version field in the legacy protocol is 32 bits, so we need to truncate
+#[allow(clippy::cast_possible_truncation)]
 fn to_legacy_version(version: u64) -> u32 {
     // If any of the version components exceeds their allowed value range, they will
     // be truncated to the highest representable value

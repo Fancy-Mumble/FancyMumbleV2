@@ -9,15 +9,15 @@ use serde::Serialize;
 use tracing::{debug, error, info, trace};
 
 use crate::{
-    protocol::serialize::message_container::FrontendMessage,
-    utils::messages::{
-        message_builder
-    }, mumble,
+    mumble, protocol::serialize::message_container::FrontendMessage,
+    utils::messages::message_builder,
 };
 
 use super::Update;
 use tokio::sync::broadcast::Sender;
 
+//for now we allow this, because we want to keep the struct as close to the protobuf as possible
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Default, Serialize)]
 pub struct User {
     pub id: u32,

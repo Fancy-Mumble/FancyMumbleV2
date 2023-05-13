@@ -6,7 +6,7 @@ use crate::protocol::init_connection;
 use crate::protocol::stream_reader::StreamReader;
 use crate::utils::certificate_store::get_client_certificate;
 use crate::utils::file::get_file_as_byte_vec;
-use crate::utils::messages::{message_builder};
+use crate::utils::messages::message_builder;
 use async_trait::async_trait;
 use base64::engine::general_purpose;
 use base64::Engine;
@@ -122,11 +122,7 @@ impl Connection {
         self.spawn_output_thread();
 
         self.init_main_thread(stream).await?;
-        init_connection(
-            &self.server_data.username,
-            &self.tx_out,
-            &self.package_info,
-        );
+        init_connection(&self.server_data.username, &self.tx_out, &self.package_info);
 
         Ok(())
     }
