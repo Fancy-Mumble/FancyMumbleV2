@@ -49,7 +49,6 @@ pub struct Varint {
 }
 
 impl Varint {
-
     pub fn parsed_pair(&self) -> (i128, u32) {
         (self.parsed_value, self.parsed_bytes)
     }

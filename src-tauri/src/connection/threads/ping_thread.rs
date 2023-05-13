@@ -1,6 +1,7 @@
 use crate::{
     connection::{Connection, PingThread},
-    utils::messages::{message_builder}, mumble,
+    mumble,
+    utils::messages::message_builder,
 };
 use std::{
     sync::atomic::Ordering,

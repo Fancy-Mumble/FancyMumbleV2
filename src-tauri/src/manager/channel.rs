@@ -8,10 +8,8 @@ use serde::Serialize;
 use tracing::{debug, error, info};
 
 use crate::{
-    protocol::serialize::message_container::FrontendMessage,
-    utils::messages::{
-        message_builder,
-    }, mumble,
+    mumble, protocol::serialize::message_container::FrontendMessage,
+    utils::messages::message_builder,
 };
 
 use super::Update;

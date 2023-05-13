@@ -1,9 +1,6 @@
 use std::sync::atomic::Ordering;
 
-use crate::{
-    connection::Connection,
-    utils::messages::{message_builder}, mumble,
-};
+use crate::{connection::Connection, mumble, utils::messages::message_builder};
 use tokio::select;
 use tokio::time;
 use tracing::{debug, error};

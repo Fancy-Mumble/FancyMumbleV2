@@ -11,14 +11,14 @@ use std::{
 
 use tracing::{error, trace};
 
-pub struct AudioPlayer {
+pub struct Player {
     audio_thread: Option<thread::JoinHandle<()>>,
     queue_rx: Option<Receiver<Vec<i16>>>,
     queue_tx: Sender<Vec<i16>>,
     playing: Arc<AtomicBool>,
 }
 
-impl AudioPlayer {
+impl Player {
     pub fn new() -> Self {
         let (tx, rx) = mpsc::channel();
 
@@ -92,7 +92,7 @@ impl AudioPlayer {
     }
 }
 
-impl Drop for AudioPlayer {
+impl Drop for Player {
     fn drop(&mut self) {
         self.stop();
     }

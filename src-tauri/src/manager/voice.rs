@@ -1,7 +1,7 @@
-use crate::utils::audio;
-use crate::{errors::voice_error::VoiceError, connection::traits::Shutdown};
 use crate::protocol::serialize::message_container::FrontendMessage;
-use crate::utils::audio::player::AudioPlayer;
+use crate::utils::audio;
+use crate::utils::audio::player::Player;
+use crate::{connection::traits::Shutdown, errors::voice_error::VoiceError};
 use async_trait::async_trait;
 use serde::Serialize;
 use std::{
@@ -24,7 +24,7 @@ pub struct Manager {
     frontend_channel: Sender<String>,
     _server_channel: Sender<Vec<u8>>,
     user_audio_info: HashMap<u32, AudioInfo>,
-    audio_player: AudioPlayer,
+    audio_player: Player,
     decoder: audio::decoder::Decoder,
 }
 
@@ -33,7 +33,7 @@ impl Manager {
         send_to: Sender<String>,
         server_channel: Sender<Vec<u8>>,
     ) -> Result<Self, Box<dyn Error>> {
-        let mut player = AudioPlayer::new();
+        let mut player = Player::new();
         if let Err(error) = player.start() {
             error!("Failed to start audio player: {}", error);
         }

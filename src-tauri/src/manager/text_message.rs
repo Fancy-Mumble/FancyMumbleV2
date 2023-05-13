@@ -7,7 +7,7 @@ use serde::Serialize;
 use tokio::sync::broadcast::Sender;
 use tracing::error;
 
-use crate::{protocol::serialize::message_container::FrontendMessage, mumble};
+use crate::{mumble, protocol::serialize::message_container::FrontendMessage};
 
 use super::user::User;
 
