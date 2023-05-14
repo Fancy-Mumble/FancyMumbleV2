@@ -105,8 +105,11 @@ impl Manager {
         description_hash: &Vec<u8>,
     ) -> Result<(), Box<dyn Error>> {
         let channel_id = channel_info.channel_id;
-        let cached_channel_description_hash =
-            &self.channels.get(&channel_id).unwrap().description_hash;
+        let cached_channel_description_hash = &self
+            .channels
+            .get(&channel_id)
+            .ok_or("`Channel should exist in this context")?
+            .description_hash;
 
         if description_hash == cached_channel_description_hash {
             debug!(
@@ -151,7 +154,11 @@ impl Manager {
         channel_info: &mut mumble::proto::ChannelState,
     ) -> Result<(), Box<dyn Error>> {
         let has_description = channel_info.description.is_some()
-            && !channel_info.description.as_ref().unwrap().is_empty();
+            && !channel_info
+                .description
+                .as_ref()
+                .ok_or("Channel description should not be empty in this context")?
+                .is_empty();
         let channel_id = channel_info.channel_id();
         let description = &mut channel_info.description_hash;
         let description_hash = mem::take(description).unwrap_or_default();

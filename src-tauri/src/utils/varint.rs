@@ -49,7 +49,7 @@ pub struct Varint {
 }
 
 impl Varint {
-    pub fn parsed_pair(&self) -> (i128, u32) {
+    pub const fn parsed_pair(&self) -> (i128, u32) {
         (self.parsed_value, self.parsed_bytes)
     }
 
@@ -114,7 +114,7 @@ impl Varint {
 
             // Negative recursive varint
             0b1111_1000..=0b1111_1011 => {
-                let value = Varint::parse(&bytes[1..])?;
+                let value = Self::parse(&bytes[1..])?;
                 (-value.0, value.1 + 1)
             }
 

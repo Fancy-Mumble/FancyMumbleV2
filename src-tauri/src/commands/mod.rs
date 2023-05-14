@@ -33,9 +33,9 @@ pub async fn connect_to_server(
     info!("Connecting to server: {server_host}:{server_port}");
 
     let mut guard = state.connection.lock().await;
-    if guard.is_some() {
+    if let Some(guard) = guard.as_mut() {
         // close old connection
-        if let Err(e) = guard.as_mut().unwrap().shutdown().await {
+        if let Err(e) = guard.shutdown().await {
             return Err(format!("{e:?}"));
         }
     }
@@ -54,6 +54,7 @@ pub async fn connect_to_server(
     let window = state.window.lock().await;
 
     let mut transmitter = MessageTransmitter::new(connection.get_message_channel(), window.clone());
+    drop(guard);
     transmitter.start_message_transmit_handler().await;
     add_message_handler(&state, "transmitter".to_string(), Box::new(transmitter)).await;
 
@@ -76,6 +77,7 @@ pub async fn send_message(
     Ok(())
 }
 
+#[allow(clippy::significant_drop_tightening)]
 #[tauri::command]
 pub async fn logout(state: State<'_, ConnectionState>) -> Result<(), String> {
     info!("Got logout request");
@@ -87,6 +89,7 @@ pub async fn logout(state: State<'_, ConnectionState>) -> Result<(), String> {
 
     {
         let mut lock_guard = state.message_handler.lock().await;
+        #[allow(clippy::significant_drop_in_scrutinee)]
         for (name, thread) in lock_guard.iter_mut() {
             if let Err(e) = thread.shutdown().await {
                 error!("Failed to shutdown thread {}: {}", name, e);
@@ -95,7 +98,12 @@ pub async fn logout(state: State<'_, ConnectionState>) -> Result<(), String> {
         }
     }
 
-    if let Err(e) = connection.as_mut().unwrap().shutdown().await {
+    if let Err(e) = connection
+        .as_mut()
+        .ok_or("No connection is available, but logout called")?
+        .shutdown()
+        .await
+    {
         return Err(format!("{e:?}"));
     }
 

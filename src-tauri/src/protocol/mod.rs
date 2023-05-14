@@ -17,19 +17,19 @@ const FIELD_MAJOR: u64 = FIELD_MASK << OFFSET_MAJOR;
 const FIELD_MINOR: u64 = FIELD_MASK << OFFSET_MINOR;
 const FIELD_PATCH: u64 = FIELD_MASK << OFFSET_PATCH;
 
-fn get_major(version: u64) -> u64 {
+const fn get_major(version: u64) -> u64 {
     (version & FIELD_MAJOR) >> OFFSET_MAJOR
 }
 
-fn get_minor(version: u64) -> u64 {
+const fn get_minor(version: u64) -> u64 {
     (version & FIELD_MINOR) >> OFFSET_MINOR
 }
 
-fn get_patch(version: u64) -> u64 {
+const fn get_patch(version: u64) -> u64 {
     (version & FIELD_PATCH) >> OFFSET_PATCH
 }
 
-fn from_components(major: u64, minor: u64, patch: u64) -> u64 {
+const fn from_components(major: u64, minor: u64, patch: u64) -> u64 {
     (major << OFFSET_MAJOR) | (minor << OFFSET_MINOR) | (patch << OFFSET_PATCH)
 }
 

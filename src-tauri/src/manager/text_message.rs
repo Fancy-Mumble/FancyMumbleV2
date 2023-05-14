@@ -38,14 +38,17 @@ impl Manager {
     }
 
     fn notify(&self, element: Option<usize>) {
-        let result = if let Some(inner_element) = element {
-            let text = &self.message_log[inner_element];
-            let msg = FrontendMessage::new("text_message", text);
-            serde_json::to_string(&msg)
-        } else {
-            let msg = FrontendMessage::new("text_message", &self.message_log);
-            serde_json::to_string(&msg)
-        };
+        let result = element.map_or_else(
+            || {
+                let msg = FrontendMessage::new("text_message", &self.message_log);
+                serde_json::to_string(&msg)
+            },
+            |inner_element| {
+                let text = &self.message_log[inner_element];
+                let msg = FrontendMessage::new("text_message", text);
+                serde_json::to_string(&msg)
+            },
+        );
 
         match result {
             Ok(json) => {

@@ -59,7 +59,7 @@ impl MessageRouter {
     }
 
     fn handle_text_message(&mut self, message: MessageInfo) -> Result<(), Box<dyn Error>> {
-        let text_message = MessageRouter::handle_downcast::<mumble::proto::TextMessage>(message)?;
+        let text_message = Self::handle_downcast::<mumble::proto::TextMessage>(message)?;
         match text_message.actor {
             Some(actor) => {
                 let actor = self
@@ -83,42 +83,39 @@ impl MessageRouter {
         match message.message_type {
             crate::utils::messages::MessageTypes::Version => {}
             crate::utils::messages::MessageTypes::UdpTunnel => {
-                let audio_data = MessageRouter::handle_downcast::<Vec<u8>>(message)?;
+                let audio_data = Self::handle_downcast::<Vec<u8>>(message)?;
                 self.voice_manager.notify_audio(&audio_data)?;
             }
             crate::utils::messages::MessageTypes::Authenticate => {}
             crate::utils::messages::MessageTypes::Ping => {}
             crate::utils::messages::MessageTypes::Reject => {
-                let reject = MessageRouter::handle_downcast::<mumble::proto::Reject>(message)?;
+                let reject = Self::handle_downcast::<mumble::proto::Reject>(message)?;
                 self.connection_manager.notify_disconnected(&reject.reason);
                 return Err(Box::new(ApplicationError::new(
                     format!("Received reject message: {:?}", reject.reason).as_str(),
                 )));
             }
             crate::utils::messages::MessageTypes::ServerSync => {
-                let server_sync =
-                    MessageRouter::handle_downcast::<mumble::proto::ServerSync>(message)?;
+                let server_sync = Self::handle_downcast::<mumble::proto::ServerSync>(message)?;
                 self.user_manager.notify_current_user(&server_sync);
                 self.connection_manager.notify_connected();
             }
             crate::utils::messages::MessageTypes::ChannelRemove => {
                 let removed_channel =
-                    MessageRouter::handle_downcast::<mumble::proto::ChannelRemove>(message)?;
+                    Self::handle_downcast::<mumble::proto::ChannelRemove>(message)?;
                 self.channel_manager.remove_channel(&removed_channel);
             }
             crate::utils::messages::MessageTypes::ChannelState => {
                 let mut changed_channel =
-                    MessageRouter::handle_downcast::<mumble::proto::ChannelState>(message)?;
+                    Self::handle_downcast::<mumble::proto::ChannelState>(message)?;
                 self.channel_manager.update_channel(&mut changed_channel)?;
             }
             crate::utils::messages::MessageTypes::UserRemove => {
-                let removed_user =
-                    MessageRouter::handle_downcast::<mumble::proto::UserRemove>(message)?;
+                let removed_user = Self::handle_downcast::<mumble::proto::UserRemove>(message)?;
                 self.user_manager.remove_user(&removed_user);
             }
             crate::utils::messages::MessageTypes::UserState => {
-                let mut changed_user =
-                    MessageRouter::handle_downcast::<mumble::proto::UserState>(message)?;
+                let mut changed_user = Self::handle_downcast::<mumble::proto::UserState>(message)?;
                 self.user_manager.update_user(&mut changed_user)?;
             }
             crate::utils::messages::MessageTypes::BanList => {}

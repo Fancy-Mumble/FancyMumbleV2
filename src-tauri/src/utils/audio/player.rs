@@ -36,7 +36,7 @@ impl Player {
             return Err("Audio thread already started".into());
         }
 
-        let audio_queue_ref = self.queue_rx.take().unwrap();
+        let audio_queue_ref = self.queue_rx.take().ok_or("failed to get audio queue")?;
         let playing_clone = self.playing.clone();
 
         self.audio_thread = Some(thread::spawn(move || {
@@ -48,13 +48,25 @@ impl Player {
                 return;
             }
 
-            let (_stream, handle) = stream.unwrap();
+            let (_stream, handle) = match stream {
+                Ok(s) => s,
+                Err(e) => {
+                    error!("Failed to create audio stream: {}", e);
+                    return;
+                }
+            };
             let sink = rodio::Sink::try_new(&handle);
             if let Err(e) = sink {
                 error!("Failed to create sink: {}", e);
                 return;
             }
-            let sink = sink.unwrap();
+            let sink = match sink {
+                Ok(s) => s,
+                Err(e) => {
+                    error!("Failed to create sink: {}", e);
+                    return;
+                }
+            };
 
             while playing_clone.load(Ordering::Relaxed) {
                 if let Ok(queue_value) = audio_queue_ref.recv_timeout(Duration::from_millis(2000)) {

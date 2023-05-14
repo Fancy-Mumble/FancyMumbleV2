@@ -27,7 +27,7 @@ impl MainThread for Connection {
         }
 
         let mut buffer = [0; BUFFER_SIZE];
-        let (reader, mut writer) = tokio::io::split(stream.unwrap());
+        let (reader, mut writer) = tokio::io::split(stream.ok_or("No stream found")?);
         let mut reader = BufReader::new(reader);
 
         let tx_in = self.tx_in.clone();

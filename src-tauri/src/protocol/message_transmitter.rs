@@ -43,7 +43,7 @@ impl MessageTransmitter {
         self.transmitter_thread = Some(tokio::spawn(async move {
             let mut interval = time::interval(DEADMAN_INTERVAL);
 
-            while *running_clone.read().unwrap() {
+            while *running_clone.read().expect("Failed to get running state") {
                 select! {
                     Ok(result) = channel.recv() => {
                         trace!("backend_update received");

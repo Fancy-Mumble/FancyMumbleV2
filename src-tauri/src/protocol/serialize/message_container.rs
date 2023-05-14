@@ -1,7 +1,7 @@
 use serde::Serialize;
 
 #[derive(Debug, Serialize)]
-pub struct FrontendMessage<T: Serialize + Clone> {
+pub struct FrontendMessage<T: Clone> {
     pub message_type: String,
     pub data: T,
 }
