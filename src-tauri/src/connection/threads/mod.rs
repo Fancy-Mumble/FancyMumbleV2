@@ -4,8 +4,10 @@ mod input_thread;
 mod main_thread;
 mod output_thread;
 mod ping_thread;
-use std::{error::Error, time::Duration};
+use std::time::Duration;
 use tokio::net::TcpStream;
+
+use crate::errors::AnyError;
 
 pub const DEADMAN_INTERVAL: Duration = Duration::from_millis(500);
 
@@ -45,5 +47,5 @@ pub trait MainThread {
     async fn init_main_thread(
         &mut self,
         stream: Option<tokio_native_tls::TlsStream<TcpStream>>,
-    ) -> Result<(), Box<dyn Error>>;
+    ) -> AnyError<()>;
 }

@@ -1,6 +1,5 @@
 use std::{
     collections::{hash_map::Entry, HashMap},
-    error::Error,
     mem,
 };
 
@@ -8,7 +7,7 @@ use serde::Serialize;
 use tracing::{debug, error, info};
 
 use crate::{
-    mumble, protocol::serialize::message_container::FrontendMessage,
+    errors::AnyError, mumble, protocol::serialize::message_container::FrontendMessage,
     utils::messages::message_builder,
 };
 
@@ -103,7 +102,7 @@ impl Manager {
         &self,
         channel_info: &Data,
         description_hash: &Vec<u8>,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> AnyError<()> {
         let channel_id = channel_info.channel_id;
         let cached_channel_description_hash = &self
             .channels
@@ -152,7 +151,7 @@ impl Manager {
     pub fn update_channel(
         &mut self,
         channel_info: &mut mumble::proto::ChannelState,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> AnyError<()> {
         let has_description = channel_info.description.is_some()
             && !channel_info
                 .description

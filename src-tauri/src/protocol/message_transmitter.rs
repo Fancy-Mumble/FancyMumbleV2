@@ -1,8 +1,8 @@
-use std::error::Error;
 use std::sync::{Arc, RwLock};
 
 use crate::connection::threads::DEADMAN_INTERVAL;
 use crate::connection::traits::{HandleMessage, Shutdown};
+use crate::errors::AnyError;
 use async_trait::async_trait;
 use tauri::Manager;
 use tokio::task::JoinHandle;
@@ -58,7 +58,7 @@ impl MessageTransmitter {
 
 #[async_trait]
 impl Shutdown for MessageTransmitter {
-    async fn shutdown(&mut self) -> Result<(), Box<dyn Error>> {
+    async fn shutdown(&mut self) -> AnyError<()> {
         trace!("Sending Shutdown Request");
         if let Ok(mut running) = self.running.write() {
             *running = false;

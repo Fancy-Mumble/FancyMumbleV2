@@ -1,6 +1,7 @@
-use std::error::Error;
-
-use crate::utils::varint::{self};
+use crate::{
+    errors::AnyError,
+    utils::varint::{self},
+};
 
 pub struct DecodedMessage {
     pub user_id: u32,
@@ -15,7 +16,7 @@ pub struct Decoder {
 }
 
 impl Decoder {
-    pub fn new(sample_rate: u32, channels: opus::Channels) -> Result<Self, Box<dyn Error>> {
+    pub fn new(sample_rate: u32, channels: opus::Channels) -> AnyError<Self> {
         let decoder = opus::Decoder::new(sample_rate, channels)?;
         Ok(Self {
             decoder,
@@ -28,7 +29,7 @@ impl Decoder {
     #[allow(clippy::cast_possible_truncation)]
     // We are aware of the possible truncation, but we are not using the full range of u32
     #[allow(clippy::cast_sign_loss)]
-    pub fn decode_audio(&mut self, audio_data: &[u8]) -> Result<DecodedMessage, Box<dyn Error>> {
+    pub fn decode_audio(&mut self, audio_data: &[u8]) -> AnyError<DecodedMessage> {
         let audio_header = audio_data[0];
 
         let audio_type = (audio_header & 0xE0) >> 5;

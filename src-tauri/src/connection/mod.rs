@@ -1,6 +1,7 @@
 pub mod threads;
 pub mod traits;
 use crate::connection::traits::Shutdown;
+use crate::errors::AnyError;
 use crate::mumble;
 use crate::protocol::init_connection;
 use crate::protocol::stream_reader::StreamReader;
@@ -11,7 +12,6 @@ use async_trait::async_trait;
 use base64::engine::general_purpose;
 use base64::Engine;
 use std::collections::HashMap;
-use std::error::Error;
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 use tauri::PackageInfo;
@@ -92,7 +92,7 @@ impl Connection {
 
     async fn setup_connection(
         &mut self,
-    ) -> Result<Option<tokio_native_tls::TlsStream<TcpStream>>, Box<dyn Error>> {
+    ) -> AnyError<Option<tokio_native_tls::TlsStream<TcpStream>>> {
         let server_uri = format!(
             "{}:{}",
             self.server_data.server_host, self.server_data.server_port
@@ -110,7 +110,7 @@ impl Connection {
         ))
     }
 
-    pub async fn connect(&mut self) -> Result<(), Box<dyn Error>> {
+    pub async fn connect(&mut self) -> AnyError<()> {
         {
             self.running
                 .store(true, std::sync::atomic::Ordering::Relaxed);
@@ -127,11 +127,7 @@ impl Connection {
         Ok(())
     }
 
-    pub fn send_message(
-        &self,
-        channel_id: Option<u32>,
-        message: &str,
-    ) -> Result<(), Box<dyn Error>> {
+    pub fn send_message(&self, channel_id: Option<u32>, message: &str) -> AnyError<()> {
         self.tx_message_channel.send(TextMessage {
             message: message.to_string(),
             channel_id,
@@ -145,7 +141,7 @@ impl Connection {
     }
 
     //TODO: Move to output Thread
-    pub fn like_message(&self, message_id: &str) -> Result<(), Box<dyn Error>> {
+    pub fn like_message(&self, message_id: &str) -> AnyError<()> {
         let like_message = mumble::proto::PluginDataTransmission {
             sender_session: None,
             receiver_sessions: Vec::new(),
@@ -157,11 +153,7 @@ impl Connection {
         Ok(())
     }
 
-    pub async fn set_user_image(
-        &self,
-        image_path: &str,
-        image_type: &str,
-    ) -> Result<(), Box<dyn Error>> {
+    pub async fn set_user_image(&self, image_path: &str, image_type: &str) -> AnyError<()> {
         let image = get_file_as_byte_vec(image_path).await?;
 
         match image_type {
@@ -189,7 +181,7 @@ impl Connection {
         Ok(())
     }
 
-    pub fn join_channel(&self, channel_id: u32) -> Result<(), Box<dyn Error>> {
+    pub fn join_channel(&self, channel_id: u32) -> AnyError<()> {
         let join_channel = mumble::proto::UserState {
             session: None,
             actor: None,
@@ -220,14 +212,14 @@ impl Connection {
         Ok(())
     }
 
-    pub fn update_user_info(&self) -> Result<(), Box<dyn Error>> {
+    pub fn update_user_info(&self) -> AnyError<()> {
         todo!()
     }
 }
 
 #[async_trait]
 impl Shutdown for Connection {
-    async fn shutdown(&mut self) -> Result<(), Box<dyn Error>> {
+    async fn shutdown(&mut self) -> AnyError<()> {
         info!("Sending Shutdown Request");
         self.running
             .store(false, std::sync::atomic::Ordering::Relaxed);

@@ -1,11 +1,11 @@
-use std::error::Error;
-
 use tokio::fs::{self, File};
 use tokio::io::AsyncReadExt;
 
+use crate::errors::AnyError;
+
 // we check that the file is not too large
 #[allow(clippy::cast_possible_truncation)]
-pub async fn get_file_as_byte_vec(filename: &str) -> Result<Vec<u8>, Box<dyn Error>> {
+pub async fn get_file_as_byte_vec(filename: &str) -> AnyError<Vec<u8>> {
     let mut f = File::open(&filename).await?;
     let metadata = fs::metadata(&filename).await?;
     let mut buffer = vec![0; metadata.len() as usize];

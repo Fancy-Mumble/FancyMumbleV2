@@ -1,8 +1,11 @@
 use byteorder::{BigEndian, ReadBytesExt};
-use std::{error::Error, io::Cursor};
+use std::io::Cursor;
 use tracing::error;
 
-use crate::utils::messages::{get_message, MessageInfo, MessageTypes};
+use crate::{
+    errors::AnyError,
+    utils::messages::{get_message, MessageInfo, MessageTypes},
+};
 
 use super::message_router::MessageRouter;
 
@@ -68,7 +71,7 @@ impl StreamReader {
         &self.stream_buffer[start..(n + start)]
     }
 
-    pub async fn shutdown(&mut self) -> Result<(), Box<dyn Error>> {
+    pub async fn shutdown(&mut self) -> AnyError<()> {
         self.stream_buffer.clear();
         self.message_handler.shutdown().await?;
 

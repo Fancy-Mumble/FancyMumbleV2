@@ -1,13 +1,10 @@
-use std::{
-    error::Error,
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::Serialize;
 use tokio::sync::broadcast::Sender;
 use tracing::error;
 
-use crate::{mumble, protocol::serialize::message_container::FrontendMessage};
+use crate::{errors::AnyError, mumble, protocol::serialize::message_container::FrontendMessage};
 
 use super::user::User;
 
@@ -71,7 +68,7 @@ impl Manager {
         &mut self,
         text_message: mumble::proto::TextMessage,
         user: &User,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> AnyError<()> {
         let message = TextMessage {
             sender: SenderInfo {
                 user_id: user.id,

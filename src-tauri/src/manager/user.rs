@@ -1,7 +1,6 @@
 use base64::{engine::general_purpose, Engine as _};
 use std::{
     collections::{hash_map::Entry, HashMap},
-    error::Error,
     mem,
 };
 
@@ -9,7 +8,7 @@ use serde::Serialize;
 use tracing::{debug, error, info, trace};
 
 use crate::{
-    mumble, protocol::serialize::message_container::FrontendMessage,
+    errors::AnyError, mumble, protocol::serialize::message_container::FrontendMessage,
     utils::messages::message_builder,
 };
 
@@ -138,7 +137,7 @@ impl Manager {
         }
     }
 
-    fn fill_user_images(&self, user_id: u32, texture_hash: &Vec<u8>) -> Result<(), Box<dyn Error>> {
+    fn fill_user_images(&self, user_id: u32, texture_hash: &Vec<u8>) -> AnyError<()> {
         let user = self.users.get(&user_id);
         if user.is_none() {
             return Err(format!("User {user_id} not found").into());
@@ -172,11 +171,7 @@ impl Manager {
         Ok(())
     }
 
-    fn fill_user_comment(
-        &self,
-        user_id: u32,
-        comment_hash: &Vec<u8>,
-    ) -> Result<(), Box<dyn Error>> {
+    fn fill_user_comment(&self, user_id: u32, comment_hash: &Vec<u8>) -> AnyError<()> {
         let cached_user_comment_hash = &self
             .users
             .get(&user_id)
@@ -207,10 +202,7 @@ impl Manager {
         Ok(())
     }
 
-    pub fn update_user(
-        &mut self,
-        user_info: &mut mumble::proto::UserState,
-    ) -> Result<(), Box<dyn Error>> {
+    pub fn update_user(&mut self, user_info: &mut mumble::proto::UserState) -> AnyError<()> {
         let has_texture = user_info.texture.is_some()
             && !user_info
                 .texture
