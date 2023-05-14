@@ -9,12 +9,66 @@ env:
   RUSTFLAGS: "-Dwarnings"
 
 jobs:
-  clippy-check:
+  clippy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Run Clippy
-        run: cargo clippy --all-targets --all-features -- -W clippy::pedantic -W clippy::nursery -W clippy::unwrap_used
+        with:
+          submodules: true
+
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libgtk-3-dev libwebkit2gtk-4.0-dev libayatana-appindicator3-dev librsvg2-dev libasound2-dev
+          version: 1.0
+
+      - name: Rust setup
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      - name: "Install tests"
+        working-directory: src-tauri
+        run: |
+          rustup component add clippy
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v1
+
+      - name: "Run clippy"
+        working-directory: src-tauri
+        run: |
+          cargo clippy --no-default-features --all-targets -- -W clippy::pedantic -W clippy::nursery -W clippy::unwrap_used -D warnings
+
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libgtk-3-dev libwebkit2gtk-4.0-dev libayatana-appindicator3-dev librsvg2-dev libasound2-dev
+          version: 1.0
+
+      - name: Rust setup
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v1
+
+      - name: "Run tests"
+        working-directory: src-tauri
+        run: |
+          cargo test --no-default-features
 
   create-release:
     permissions:
