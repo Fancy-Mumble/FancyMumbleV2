@@ -1,5 +1,4 @@
 use std::{
-    error::Error,
     sync::{
         atomic::{AtomicBool, Ordering},
         mpsc::{self, Receiver, Sender},
@@ -10,6 +9,8 @@ use std::{
 };
 
 use tracing::{error, trace};
+
+use crate::errors::AnyError;
 
 pub struct Player {
     audio_thread: Option<thread::JoinHandle<()>>,
@@ -30,7 +31,7 @@ impl Player {
         }
     }
 
-    pub fn start(&mut self) -> Result<(), Box<dyn Error>> {
+    pub fn start(&mut self) -> AnyError<()> {
         if self.playing.swap(true, Ordering::Relaxed) || self.audio_thread.is_some() {
             error!("Audio thread already started");
             return Err("Audio thread already started".into());
@@ -82,7 +83,7 @@ impl Player {
         Ok(())
     }
 
-    pub fn add_to_queue(&mut self, data: Vec<i16>, _user_id: u32) -> Result<(), Box<dyn Error>> {
+    pub fn add_to_queue(&mut self, data: Vec<i16>, _user_id: u32) -> AnyError<()> {
         if self.playing.load(Ordering::Relaxed) {
             //todo add user id to audio data
             self.queue_tx.send(data)?;

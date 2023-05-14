@@ -1,13 +1,11 @@
+use crate::errors::AnyError;
 use crate::protocol::serialize::message_container::FrontendMessage;
 use crate::utils::audio;
 use crate::utils::audio::player::Player;
 use crate::{connection::traits::Shutdown, errors::voice_error::VoiceError};
 use async_trait::async_trait;
 use serde::Serialize;
-use std::{
-    collections::{hash_map::Entry, HashMap},
-    error::Error,
-};
+use std::collections::{hash_map::Entry, HashMap};
 use tokio::sync::broadcast::Sender;
 use tracing::error;
 
@@ -29,10 +27,7 @@ pub struct Manager {
 }
 
 impl Manager {
-    pub fn new(
-        send_to: Sender<String>,
-        server_channel: Sender<Vec<u8>>,
-    ) -> Result<Self, Box<dyn Error>> {
+    pub fn new(send_to: Sender<String>, server_channel: Sender<Vec<u8>>) -> AnyError<Self> {
         let mut player = Player::new();
         if let Err(error) = player.start() {
             error!("Failed to start audio player: {}", error);
@@ -65,7 +60,7 @@ impl Manager {
         }
     }
 
-    pub fn notify_audio(&mut self, audio_data: &[u8]) -> Result<(), Box<dyn Error>> {
+    pub fn notify_audio(&mut self, audio_data: &[u8]) -> AnyError<()> {
         let audio_data = self.decoder.decode_audio(audio_data)?;
         self.send_taking_information(audio_data.user_id, audio_data.talking);
         if let Err(error) = self
@@ -104,7 +99,7 @@ impl Manager {
 
 #[async_trait]
 impl Shutdown for Manager {
-    async fn shutdown(&mut self) -> Result<(), Box<dyn Error>> {
+    async fn shutdown(&mut self) -> AnyError<()> {
         self.audio_player.stop();
 
         Ok(())

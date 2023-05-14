@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use crate::errors::voice_error::VoiceError;
+use crate::errors::{voice_error::VoiceError, AnyError};
 
 fn create_voice_eoi(on: &str) -> Box<dyn Error> {
     Box::new(VoiceError::new(format!("Unexpected end of input for {on}")))
@@ -28,7 +28,7 @@ impl From<&[u8]> for Builder {
 }
 
 impl Builder {
-    pub fn build(self) -> Result<Varint, Box<dyn Error>> {
+    pub fn build(self) -> AnyError<Varint> {
         Ok(Varint {
             _bytes: self.bytes.ok_or_else(|| VoiceError::new("No bytes"))?,
             parsed_value: self
@@ -53,7 +53,7 @@ impl Varint {
         (self.parsed_value, self.parsed_bytes)
     }
 
-    fn parse(bytes: &[u8]) -> Result<(i128, u32), Box<dyn Error>> {
+    fn parse(bytes: &[u8]) -> AnyError<(i128, u32)> {
         if bytes.is_empty() {
             return Err(Box::new(VoiceError::new("Unexpected end of input")));
         }

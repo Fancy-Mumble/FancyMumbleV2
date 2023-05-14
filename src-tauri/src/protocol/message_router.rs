@@ -7,7 +7,7 @@ use tracing::{error, trace};
 
 use crate::{
     connection::{traits::Shutdown, MessageChannels},
-    errors::application_error::ApplicationError,
+    errors::{application_error::ApplicationError, AnyError},
     manager::{
         channel::{self},
         connection_state, text_message,
@@ -27,10 +27,7 @@ pub struct MessageRouter {
 }
 
 impl MessageRouter {
-    pub fn new(
-        sender: MessageChannels,
-        server_channel: Sender<Vec<u8>>,
-    ) -> Result<Self, Box<dyn Error>> {
+    pub fn new(sender: MessageChannels, server_channel: Sender<Vec<u8>>) -> AnyError<Self> {
         Ok(Self {
             user_manager: user::Manager::new(
                 sender.message_channel.clone(),
@@ -49,7 +46,7 @@ impl MessageRouter {
         })
     }
 
-    fn handle_downcast<T: 'static>(message_info: MessageInfo) -> Result<T, Box<dyn Error>> {
+    fn handle_downcast<T: 'static>(message_info: MessageInfo) -> AnyError<T> {
         match message_info.message_data.downcast::<T>() {
             Ok(a) => Ok(*a),
             Err(e) => Err(Box::new(ApplicationError::new(
@@ -58,7 +55,7 @@ impl MessageRouter {
         }
     }
 
-    fn handle_text_message(&mut self, message: MessageInfo) -> Result<(), Box<dyn Error>> {
+    fn handle_text_message(&mut self, message: MessageInfo) -> AnyError<()> {
         let text_message = Self::handle_downcast::<mumble::proto::TextMessage>(message)?;
         match text_message.actor {
             Some(actor) => {
@@ -75,7 +72,7 @@ impl MessageRouter {
         Ok(())
     }
 
-    pub fn recv_message(&mut self, message: MessageInfo) -> Result<(), Box<dyn Error>> {
+    pub fn recv_message(&mut self, message: MessageInfo) -> AnyError<()> {
         if message.message_type != crate::utils::messages::MessageTypes::UdpTunnel {
             trace!("Received message: {:<100?}", message);
         }
@@ -142,7 +139,7 @@ impl MessageRouter {
         Ok(())
     }
 
-    pub async fn shutdown(&mut self) -> Result<(), Box<dyn Error>> {
+    pub async fn shutdown(&mut self) -> AnyError<()> {
         self.voice_manager.shutdown().await?;
 
         Ok(())

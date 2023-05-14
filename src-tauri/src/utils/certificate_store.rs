@@ -1,5 +1,3 @@
-use std::error::Error;
-
 use openssl::{
     asn1::Asn1Time,
     hash::MessageDigest,
@@ -12,12 +10,14 @@ use openssl::{
 };
 use tokio_native_tls::native_tls::{self, Identity};
 
+use crate::errors::AnyError;
+
 struct CertificateStore {
     certificate: Vec<u8>,
     private_key: Vec<u8>,
 }
 
-fn create_tls_certificate() -> Result<CertificateStore, Box<dyn Error>> {
+fn create_tls_certificate() -> AnyError<CertificateStore> {
     //TODO: Currently we always generate a new certificate. We should store the certificate and private key in a file and only generate a new one if the file does not exist.
     //TODO: We should also check if the certificate is still valid and generate a new one if it is not.
     //TODO: We currently always use fancy-mumble.com as the certificate's common name. We should use a client specified common name instead.
@@ -60,7 +60,7 @@ fn create_tls_certificate() -> Result<CertificateStore, Box<dyn Error>> {
     })
 }
 
-pub fn get_client_certificate() -> Result<Identity, Box<dyn Error>> {
+pub fn get_client_certificate() -> AnyError<Identity> {
     let cert_store = create_tls_certificate()?;
 
     let identity =
