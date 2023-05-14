@@ -55,6 +55,7 @@ pub async fn connect_to_server(
 
     let mut transmitter = MessageTransmitter::new(connection.get_message_channel(), window.clone());
     drop(guard);
+
     transmitter.start_message_transmit_handler().await;
     add_message_handler(&state, "transmitter".to_string(), Box::new(transmitter)).await;
 

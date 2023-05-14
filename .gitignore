@@ -106,3 +106,4 @@ dist-ssr
 *.sw?
 
 src-tauri/data
+src-tauri/src/proto/Mumble.proto

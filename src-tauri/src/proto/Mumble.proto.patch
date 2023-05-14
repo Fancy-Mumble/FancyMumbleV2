@@ -1,0 +1,9 @@
+index c3a23f2..d7ce213 100644
+--- "a/src/proto/Mumble.proto"
++++ "b/src/proto/Mumble.proto"
+@@ -15,3 +15,5 @@ message Version {
+     // New version number format.
+     // Necessary since patch level may exceed 255. (See https://github.com/mumble-voip/mumble/issues/5827)
+     optional uint64 version_v2 = 5;
++    // Fancy Mumble version string.
++    optional uint64 fancy_version = 6;
