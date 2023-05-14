@@ -49,7 +49,7 @@ fn main() {
         .setup(|app| {
             app.manage(ConnectionState {
                 connection: Mutex::new(None),
-                window: Mutex::new(app.get_window("main").unwrap()),
+                window: Mutex::new(app.get_window("main").expect("window not found")),
                 package_info: Mutex::new(app.package_info().clone()),
                 message_handler: Mutex::new(HashMap::new()),
             });

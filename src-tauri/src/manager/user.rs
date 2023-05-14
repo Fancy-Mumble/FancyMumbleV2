@@ -144,7 +144,9 @@ impl Manager {
             return Err(format!("User {user_id} not found").into());
         }
 
-        let cached_user_texture_hash = &user.unwrap().profile_picture_hash;
+        let cached_user_texture_hash = &user
+            .ok_or("texture hash should not be empty in this context")?
+            .profile_picture_hash;
 
         if texture_hash == cached_user_texture_hash {
             trace!(
@@ -175,7 +177,11 @@ impl Manager {
         user_id: u32,
         comment_hash: &Vec<u8>,
     ) -> Result<(), Box<dyn Error>> {
-        let cached_user_comment_hash = &self.users.get(&user_id).unwrap().comment_hash;
+        let cached_user_comment_hash = &self
+            .users
+            .get(&user_id)
+            .ok_or("Comment should not be empty in this context")?
+            .comment_hash;
 
         if comment_hash == cached_user_comment_hash {
             trace!(
@@ -205,14 +211,22 @@ impl Manager {
         &mut self,
         user_info: &mut mumble::proto::UserState,
     ) -> Result<(), Box<dyn Error>> {
-        let has_texture =
-            user_info.texture.is_some() && !user_info.texture.as_ref().unwrap().is_empty();
+        let has_texture = user_info.texture.is_some()
+            && !user_info
+                .texture
+                .as_ref()
+                .ok_or("User texture should not be empty in this context")?
+                .is_empty();
 
         let texture_hash = &mut user_info.texture_hash;
         let texture_hash = mem::take(texture_hash).unwrap_or_default();
 
-        let has_comment =
-            user_info.comment.is_some() && !user_info.comment.as_ref().unwrap().is_empty();
+        let has_comment = user_info.comment.is_some()
+            && !user_info
+                .comment
+                .as_ref()
+                .ok_or("User comment should not be empty in this conext")?
+                .is_empty();
         let session = user_info.session();
 
         let comment_hash = &mut user_info.comment_hash;

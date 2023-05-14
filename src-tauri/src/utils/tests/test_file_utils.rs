@@ -8,22 +8,34 @@ mod tests {
 
     #[test]
     fn test_file_read() {
-        let tmp_dir = TempDir::new("test_dir").unwrap();
+        let tmp_dir = TempDir::new("test_dir").expect("Failed to create temp dir");
         let file_path = tmp_dir.path().join("my-temporary-note.txt");
         let os_path = file_path.clone();
 
-        let mut tmp_file = File::create(file_path).unwrap();
+        let mut tmp_file = File::create(file_path).expect("Failed to create temp file");
         let slice = &[0x00, 0x01, 0x02, 0x03];
-        tmp_file.write_vectored(&[IoSlice::new(slice)]).unwrap();
+        let written = tmp_file
+            .write_vectored(&[IoSlice::new(slice)])
+            .expect("Failed to write to temp file");
 
-        let result = aw!(get_file_as_byte_vec(os_path.as_os_str().to_str().unwrap()));
+        assert!(
+            (written == slice.len()),
+            "Failed to write all bytes to temp file"
+        );
+
+        let result = aw!(get_file_as_byte_vec(
+            os_path
+                .as_os_str()
+                .to_str()
+                .expect("Failed to get os path as str")
+        ));
         assert!(result.is_ok());
 
-        let result = result.unwrap();
+        let result = result.expect("Failed to get file as byte vec");
         assert!(result.len() == 4);
         assert!(result == slice);
 
         drop(tmp_file);
-        tmp_dir.close().unwrap();
+        tmp_dir.close().expect("Failed to close temp dir");
     }
 }

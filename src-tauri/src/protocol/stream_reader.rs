@@ -12,7 +12,7 @@ pub struct StreamReader {
 }
 
 impl StreamReader {
-    pub fn new(message_handler: MessageRouter) -> Self {
+    pub const fn new(message_handler: MessageRouter) -> Self {
         Self {
             stream_buffer: Vec::<u8>::new(),
             message_handler,
