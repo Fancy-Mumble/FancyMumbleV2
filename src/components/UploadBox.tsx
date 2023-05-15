@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { open } from '@tauri-apps/api/dialog';
-const { listen } = await import('@tauri-apps/api/event')
+import { listen } from '@tauri-apps/api/event';
 import './styles/UploadBox.css'
 import { useEffect, useState } from "react";
 
