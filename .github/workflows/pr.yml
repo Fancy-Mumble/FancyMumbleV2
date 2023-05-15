@@ -4,6 +4,7 @@ on:
     types: [opened, synchronize, reopened, closed]
     branches:
       - "master"
+      - "develop"
 
 env:
   app_name: Fancy Mumble
@@ -30,6 +31,21 @@ jobs:
   #       with:
   #         working-directory: src-tauri
   #         args: --tests
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: install audit
+        working-directory: src-tauri
+        run: cargo install --force cargo-audit
+      - name: lockfile
+        working-directory: src-tauri
+        run: cargo generate-lockfile
+      - name: audit
+        working-directory: src-tauri
+        run: cargo audit
 
   clippy:
     runs-on: ubuntu-latest
