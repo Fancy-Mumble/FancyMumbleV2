@@ -3,7 +3,8 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:
-      - "master"
+      - master
+      - develop
 
 env:
   app_name: Fancy Mumble
