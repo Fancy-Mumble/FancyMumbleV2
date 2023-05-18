@@ -66,6 +66,7 @@ MPL-2.0
 Unlicense OR MIT
 Unlicense/MIT
 Zlib OR Apache-2.0 OR MIT
+Zlib
 null"
         .lines()
         .filter(|it| !it.is_empty())
