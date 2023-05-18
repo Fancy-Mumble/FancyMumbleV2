@@ -4,11 +4,11 @@ mod tests {
         fs::File,
         io::{IoSlice, Write},
     };
-    use tempdir::TempDir;
+    use tempfile::tempdir;
 
     #[test]
     fn test_file_read() {
-        let tmp_dir = TempDir::new("test_dir").expect("Failed to create temp dir");
+        let tmp_dir = tempdir().expect("Failed to create temp dir");
         let file_path = tmp_dir.path().join("my-temporary-note.txt");
         let os_path = file_path.clone();
 
@@ -32,8 +32,8 @@ mod tests {
         assert!(result.is_ok());
 
         let result = result.expect("Failed to get file as byte vec");
-        assert!(result.len() == 4);
-        assert!(result == slice);
+        assert_eq!(result.len(), 4);
+        assert_eq!(result, slice);
 
         drop(tmp_file);
         tmp_dir.close().expect("Failed to close temp dir");
