@@ -23,7 +23,9 @@ pub struct ImageFormat {
 pub async fn get_file_as_byte_vec(filename: &str) -> AnyError<Vec<u8>> {
     let mut f = BufReader::new(File::open(&filename).await?);
     let metadata = fs::metadata(&filename).await?;
-    let mut buffer = vec![0; metadata.len() as usize];
+    let mut buffer = vec![];
+    buffer.reserve(metadata.len() as usize);
+
     if buffer.len() > u32::MAX as usize {
         return Err(Box::new(std::io::Error::new(
             std::io::ErrorKind::Other,
@@ -58,8 +60,7 @@ pub fn read_image_as_thumbnail(filename: &str, max_size: u32) -> AnyError<ImageI
 
     let image = image.into_bytes();
 
-    image::codecs::jpeg::JpegEncoder::new_with_quality(buf_writer, 80)
-        .encode(&image, width, height, color_type)?;
+    image::codecs::jpeg::JpegEncoder::new(buf_writer).encode(&image, width, height, color_type)?;
 
     Ok(ImageInfo {
         data: output,
