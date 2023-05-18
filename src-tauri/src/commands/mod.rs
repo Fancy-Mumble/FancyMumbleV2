@@ -153,7 +153,7 @@ pub async fn set_user_image(
     let guard = connection.lock().await;
 
     if let Some(guard) = guard.as_ref() {
-        if let Err(error) = guard.set_user_image(image_path, &image_type).await {
+        if let Err(error) = guard.set_user_image(image_path, &image_type) {
             return Err(format!("{error:?}"));
         }
     }

@@ -6,7 +6,7 @@ use crate::mumble;
 use crate::protocol::init_connection;
 use crate::protocol::stream_reader::StreamReader;
 use crate::utils::certificate_store::get_client_certificate;
-use crate::utils::file::get_file_as_byte_vec;
+use crate::utils::file::read_image_as_thumbnail;
 use crate::utils::messages::message_builder;
 use async_trait::async_trait;
 use base64::engine::general_purpose;
@@ -153,13 +153,20 @@ impl Connection {
         Ok(())
     }
 
-    pub async fn set_user_image(&self, image_path: &str, image_type: &str) -> AnyError<()> {
-        let image = get_file_as_byte_vec(image_path).await?;
+    pub fn set_user_image(&self, image_path: &str, image_type: &str) -> AnyError<()> {
+        let image = read_image_as_thumbnail(image_path, 512)?;
+        let image_data = image.data;
+        if image_data.len() > 1024 * 8192 {
+            return Err("Image is too big".into());
+        }
 
         match image_type {
             "background" => {
-                let background = general_purpose::STANDARD.encode(image);
-                let img = Some(format!("<img src='data:image/png;base64,{background}' />"));
+                let mime_type = image.format;
+                let background = general_purpose::STANDARD.encode(image_data);
+                let img: Option<String> = Some(format!(
+                    "<img src='data:image/{mime_type};base64,{background}' />"
+                ));
 
                 let set_profile_background = mumble::proto::UserState {
                     comment: img,
@@ -168,7 +175,7 @@ impl Connection {
                 self.tx_out.send(message_builder(&set_profile_background))?;
             }
             "profile" => {
-                let image_vec = Some(image);
+                let image_vec = Some(image_data);
                 let set_profile_background = mumble::proto::UserState {
                     texture: image_vec,
                     ..Default::default()
