@@ -12,7 +12,7 @@ use tokio::net::TcpStream;
 use tokio::{select, time};
 use tracing::{error, trace};
 
-const MAX_SEND_SIZE: usize = 8192;
+pub const MAX_SEND_SIZE: usize = 8192;
 
 #[async_trait]
 impl MainThread for Connection {
@@ -55,6 +55,7 @@ impl MainThread for Connection {
                             }
 
                             let chunks = result.chunks(cmp::max(1, result.len() / MAX_SEND_SIZE));
+
                             for chunk in chunks {
                                 if let Err(e) = writer.write(chunk).await {
                                     error!("Error while writing to socket: {:?}", e);
