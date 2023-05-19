@@ -12,6 +12,10 @@ import { getProfileImage } from "../helper/UserInfoHelper";
 import { TextMessage, deleteChatMessage } from "../store/features/users/chatMessageSlice";
 import ClearIcon from '@mui/icons-material/Clear';
 import { useDispatch } from "react-redux";
+import UserInfo from "./UserInfo";
+import React from "react";
+import { RootState } from "../store/store";
+import { useSelector } from "react-redux";
 
 
 interface ChatMessageProps {
@@ -69,9 +73,12 @@ const useStyles = makeStyles((theme: any) => ({
 }));
 
 function ChatMessage(props: ChatMessageProps) {
+    const userList = useSelector((state: RootState) => state.reducer.userInfo);
     const dispatch = useDispatch();
     const classes = useStyles();
     const followUpMessage = props.prevCommentBy === props.message.sender.user_id;
+    const [userInfoAnchor, setUserInfoAnchor]: any = React.useState(null);
+    const user = userList.users.find(e => e.id === props.message.sender.user_id);
 
     function parseMessage(message: string | undefined) {
         if (message && message.includes('<')) {
@@ -111,10 +118,27 @@ function ChatMessage(props: ChatMessageProps) {
         dispatch(deleteChatMessage(messageId));
     }
 
+    function showUserInfo() {
+        if (userInfoAnchor) {
+            return (
+                <UserInfo
+                    anchorEl={userInfoAnchor}
+                    onClose={() => setUserInfoAnchor(null)}
+                    userInfo={user}
+                />
+            )
+        }
+    }
+
     return (
         <Grid container className={classes.root} style={{ marginBottom: (followUpMessage ? 0 : '16px') }}>
             <Grid item>
-                <Avatar src={getProfileImage(props.message.sender.user_id)} className={classes.avatar} style={{ visibility: (followUpMessage ? 'hidden' : 'visible') }} />
+                <Avatar
+                    src={getProfileImage(props.message.sender.user_id)}
+                    className={classes.avatar} style={{ visibility: (followUpMessage ? 'hidden' : 'visible') }}
+                    onClick={e => { setUserInfoAnchor(e.currentTarget); }}
+                />
+                {showUserInfo()}
             </Grid>
             <Grid item xs={10} className={classes.messageContainer}>
                 <Grid item className={classes.messageContainerInner}>

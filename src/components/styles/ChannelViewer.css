@@ -6,3 +6,20 @@
 .silent-avatar {
     border: 2px solid #000;
 }
+
+.user-list-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 2px;
+}
+
+.user-name-item {
+    display: flex;
+    flex-grow: 1;
+    align-items: center;
+}
+
+.user-state-item {
+    align-items: center;
+}

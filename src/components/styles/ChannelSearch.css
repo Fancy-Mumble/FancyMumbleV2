@@ -1,0 +1,30 @@
+.search-channel {
+    height: calc(100% - 30vh);
+    width: 80vw;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    max-height: 100%;
+    /*border-radius: 10px;*/
+}
+
+.search-channel {
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+    scrollbar-width: none;  /* Firefox */
+}
+.search-channel::-webkit-scrollbar { 
+    display: none;   /* Safari and Chrome */
+}
+
+.inner-search-channel {
+    position: sticky;
+    top:  0;
+    z-index: 10;
+    backdrop-filter: blur(30px);
+    background: rgb(10 10 10 / 50%);
+}
+
+.search-channel-list {
+    backdrop-filter: blur(10px);
+    background-color: rgba(19, 19, 19, 0.724);
+}

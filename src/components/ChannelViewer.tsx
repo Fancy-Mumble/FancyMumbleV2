@@ -36,7 +36,6 @@ function ChannelViewer() {
     function displayUserInfo(user: UsersState): ReactNode {
         return (
             <span>
-                {user.name}
                 {user.self_mute ? (<MicOffIcon fontSize="small" />) : (<span />)}
                 {user.self_deaf ? (<VolumeOffIcon fontSize="small" />) : (<span />)}
                 {user.mute ? (<MicOffIcon color="error" fontSize="small" />) : (<span />)}
@@ -70,10 +69,13 @@ function ChannelViewer() {
                             {users.map((user) => (
                                 <Box key={`user-${user.id}`}>
                                     <ListItem key={user.id} sx={{ py: 0, minHeight: 32 }}>
-                                        <ListItemAvatar sx={{ width: 24, height: 24, minWidth: 0, marginRight: 1}}>
-                                            <Avatar sx={{ width: 24, height: 24 }} src={user.profile_picture} className={isTalking(user.id) ? 'talking-avatar' : 'silent-avatar'} />
+                                        <ListItemAvatar sx={{ width: 24, height: 24, minWidth: 0, marginRight: 1 }}>
+                                            <Avatar sx={{ width: 24, height: 24 }} src={user.profile_picture} className={(isTalking(user.id) ? 'talking-avatar' : 'silent-avatar')} />
                                         </ListItemAvatar>
-                                        <ListItemText primary={displayUserInfo(user)} primaryTypographyProps={{ fontSize: 14, fontWeight: 'medium' }} />
+                                        <ListItemText primaryTypographyProps={{ fontSize: 14, fontWeight: 'medium', display: 'flex', flexGrow: 1 }} className="user-list-item">
+                                            <span className="user-name-item">{user.name}</span>
+                                            <span className="user-state-item">{displayUserInfo(user)}</span>
+                                        </ListItemText>
                                     </ListItem>
                                 </Box>
                             ))
