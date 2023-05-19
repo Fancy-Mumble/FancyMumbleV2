@@ -9,6 +9,7 @@ import { invoke } from "@tauri-apps/api";
 
 function CurrentUserInfo() {
     const userInfo = useSelector((state: RootState) => state.reducer.userInfo);
+    const userBackground = getBackgroundFromComment(userInfo.currentUser);
 
     function muteToggleUser() {
         if (userInfo.currentUser) {
@@ -20,7 +21,7 @@ function CurrentUserInfo() {
 
     return (
         <Box style={{
-            background: getBackgroundFromComment(userInfo.currentUser),
+            background: userBackground,
             display: 'flex',
             padding: '0 10px',
             backgroundSize: 'cover',

@@ -49,9 +49,17 @@ export const userSlice = createSlice({
   reducers: {
     updateUserComment: (state, action: PayloadAction<UserDataUpdate>) => {
       updateUserData(state.users, action.payload, "comment");
+
+      if (state.currentUser?.id === action.payload.user_id) {
+        state.currentUser.comment = action.payload.data;
+      }
     },
     updateUserImage: (state, action: PayloadAction<UserDataUpdate>) => {
       updateUserData(state.users, action.payload, "profile_picture");
+
+      if (state.currentUser?.id === action.payload.user_id) {
+        state.currentUser.profile_picture = action.payload.data;
+      }
     },
     deleteUser: (state, action: PayloadAction<number>) => {
       let userId = action.payload;
@@ -73,7 +81,7 @@ export const userSlice = createSlice({
         state.users.push(action.payload);
       }
 
-      if(state.currentUser?.id === userId) {
+      if (state.currentUser?.id === userId) {
         state.currentUser = action.payload;
       }
     },
@@ -86,7 +94,7 @@ export const userSlice = createSlice({
     updateConnected: (state, action: PayloadAction<boolean>) => {
       state.connected = action.payload;
     },
-    updateUserTalkingInfo(state, action: PayloadAction<{user_id: number, talking: boolean}>) {
+    updateUserTalkingInfo(state, action: PayloadAction<{ user_id: number, talking: boolean }>) {
       let userIndex = state.users.findIndex(e => e.id === action.payload.user_id);
       if (userIndex !== -1) {
         state.users[userIndex].talking = action.payload.talking;
