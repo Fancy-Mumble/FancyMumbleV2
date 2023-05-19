@@ -3,7 +3,7 @@ import { UsersState } from "../store/features/users/userSlice";
 import { useSelector } from "react-redux";
 import { RootState } from "../store/store";
 
-export function getBackgroundFromComment(user: UsersState | undefined) {
+export function getBackgroundFromComment(user: UsersState | undefined, withUrl: boolean = true) {
     let defaultColor = "#0057b7";
 
     if (!user) {
@@ -16,7 +16,7 @@ export function getBackgroundFromComment(user: UsersState | undefined) {
     const images = Array.from(document.querySelectorAll('img')).map(img => img.src);
 
     if (user.comment) {
-        return "url(" + images[images.length - 1] + ")";
+        return withUrl ? "url(" + images[images.length - 1] + ")" : images[images.length - 1];
     } else {
         return defaultColor;
     }
