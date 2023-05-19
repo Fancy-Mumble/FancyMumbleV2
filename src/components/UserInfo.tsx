@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { getBackgroundFromComment, getProfileImage } from "../helper/UserInfoHelper";
 import SendIcon from '@mui/icons-material/Send';
 import "./styles/UserInfo.css";
+import dayjs from "dayjs";
 
 interface UserInfoProps {
     anchorEl: HTMLElement | null;
@@ -13,6 +14,9 @@ interface UserInfoProps {
 
 function UserInfo(props: UserInfoProps) {
     const background = getBackgroundFromComment(props.userInfo, false);
+
+    let mutedText = props.userInfo?.mutedSince ? dayjs(props.userInfo?.mutedSince).fromNow() : '';
+    let deafenedText = props.userInfo?.deafenedSince ? dayjs(props.userInfo?.deafenedSince).fromNow() : '';
 
     function generateCardMedia() {
         if (!background.startsWith("#")) {
@@ -31,13 +35,27 @@ function UserInfo(props: UserInfoProps) {
         }
     }
 
+    function showStatusBox(statusText: string, status: string) {
+        if (status) {
+            return (
+                <Box className="user-info-item">
+                    <span className="user-text-title">{statusText}</span><span>{status}</span>
+                </Box>
+            )
+        }
+    }
+
     return (
         <Popover
             open={Boolean(props.anchorEl)}
             anchorEl={props.anchorEl}
             onClose={props.onClose}
             anchorOrigin={{
-                vertical: 'bottom',
+                vertical: 'center',
+                horizontal: 'right',
+            }}
+            transformOrigin={{
+                vertical: 'center',
                 horizontal: 'left',
             }}
         >
@@ -48,16 +66,21 @@ function UserInfo(props: UserInfoProps) {
                         <Avatar
                             alt={props.userInfo?.name}
                             src={getProfileImage(props.userInfo?.id || 0)}
-                            sx={{ width: 50, height: 50, marginTop: '-25px', border: '2px solid #000' }}
+                            sx={{ width: 80, height: 80, marginTop: '-40px', border: '2px solid #000' }}
                         />
                     </Box>
-                    <Paper elevation={0} sx={{ padding: '10px', margin: '20px 0 0 0' }}>
-                        <Typography gutterBottom variant="h5" component="div">
+                    <Paper elevation={0} sx={{ padding: '10px', margin: '-30px 0 0 0' }}>
+                        <Typography gutterBottom variant="h5" component="div" sx={{ textAlign: 'end' }}>
                             {props.userInfo?.name}
-                            <Typography variant="body2" component="span">
-                                {props.userInfo?.id}
-                            </Typography>
                         </Typography>
+                        <Divider sx={{ margin: '10px 0' }} />
+                        <Box className="user-info-list">
+                            <Box className="user-info-item">
+                                <span className="user-text-title">User ID</span><span>#{props.userInfo?.id}</span>
+                            </Box>
+                            {showStatusBox("Muted", mutedText)}
+                            {showStatusBox("Muted", deafenedText)}
+                        </Box>
                         <Paper
                             component="form"
                             sx={{ p: '2px 4px', display: 'flex', alignItems: 'center' }}

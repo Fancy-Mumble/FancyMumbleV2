@@ -15,6 +15,8 @@ export interface UsersState {
   self_mute: boolean,
   suppress: boolean,
   talking: boolean,
+  mutedSince: Date | undefined,
+  deafenedSince: Date | undefined,
 }
 
 interface UserDataUpdate {
@@ -71,11 +73,16 @@ export const userSlice = createSlice({
       let userId = action.payload.id;
       let userIndex = state.users.findIndex(e => e.id === userId);
       if (userIndex !== -1) {
+        let muted_since = action.payload.self_mute && state.users[userIndex].self_mute !== action.payload.self_mute ? new Date() : undefined;
+        let deafened_since = action.payload.self_deaf && state.users[userIndex].self_deaf !== action.payload.self_deaf ? new Date() : undefined;
         let profilePicture = state.users[userIndex].profile_picture;
         let comment = state.users[userIndex].comment;
+
         state.users[userIndex] = action.payload;
         state.users[userIndex].comment = comment;
         state.users[userIndex].profile_picture = profilePicture;
+        state.users[userIndex].mutedSince = muted_since;
+        state.users[userIndex].deafenedSince = deafened_since;
       } else {
         action.payload.talking = false;
         state.users.push(action.payload);
