@@ -5,7 +5,7 @@ use crate::errors::AnyError;
 use crate::mumble;
 use crate::protocol::init_connection;
 use crate::protocol::stream_reader::StreamReader;
-use crate::utils::certificate_store::get_client_certificate;
+use crate::utils::certificate_store::CertificateBuilder;
 use crate::utils::file::read_image_as_thumbnail;
 use crate::utils::messages::message_builder;
 use async_trait::async_trait;
@@ -98,9 +98,14 @@ impl Connection {
             self.server_data.server_host, self.server_data.server_port
         );
 
+        let mut certificate_store = CertificateBuilder::new()
+            .load_or_generate_new(true)
+            .store_to_project_dir(true)
+            .build()?;
+
         let socket = TcpStream::connect(server_uri).await?;
         let cx = TlsConnector::builder()
-            .identity(get_client_certificate()?)
+            .identity(certificate_store.get_client_certificate()?)
             .danger_accept_invalid_certs(true)
             .build()?;
         let cx = tokio_native_tls::TlsConnector::from(cx);
