@@ -1,7 +1,7 @@
 import { Avatar, Box, Grid, IconButton, Link, Tooltip, Typography } from "@mui/material"
 import { makeStyles } from '@mui/styles';
 import dayjs from "dayjs";
-import 'dayjs/locale/de';
+import 'dayjs/locale/en';
 import 'dayjs/plugin/isToday';
 import 'dayjs/plugin/isYesterday';
 import { grey } from "@mui/material/colors";

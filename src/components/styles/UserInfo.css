@@ -1,2 +1,18 @@
-.user-info-avatar {
+.user-text-title {
+    flex-grow: 1;
+}
+
+.user-info-list {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    margin: 20px 0;
+}
+
+.user-info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 5px 0;
 }
