@@ -6,7 +6,7 @@ import { RootState } from "../store/store";
 export function getBackgroundFromComment(user: UsersState | undefined, withUrl: boolean = true) {
     let defaultColor = "#0057b7";
 
-    if (!user) {
+    if (!user || !user.comment) {
         return defaultColor;
     }
 
@@ -15,11 +15,9 @@ export function getBackgroundFromComment(user: UsersState | undefined, withUrl: 
     const document = parser.parseFromString(cleanMessage, "text/html");
     const images = Array.from(document.querySelectorAll('img')).map(img => img.src);
 
-    if (user.comment) {
-        return withUrl ? "url(" + images[images.length - 1] + ")" : images[images.length - 1];
-    } else {
-        return defaultColor;
-    }
+    const lastImage = images[images.length - 1];
+    return withUrl ? "url(" + lastImage + ")" : lastImage;
+
 }
 
 export function getProfileImage(user_id: number) {

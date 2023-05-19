@@ -1,19 +1,30 @@
 use base64::{engine::general_purpose, Engine as _};
 use std::{
     collections::{hash_map::Entry, HashMap},
-    mem,
+    error::Error,
 };
 
 use serde::Serialize;
 use tracing::{debug, error, info, trace};
 
 use crate::{
-    errors::AnyError, mumble, protocol::serialize::message_container::FrontendMessage,
-    utils::messages::message_builder,
+    errors::AnyError,
+    mumble,
+    protocol::serialize::message_container::FrontendMessage,
+    utils::{
+        file::{read_data_from_cache, store_data_to_cache},
+        messages::message_builder,
+    },
 };
 
 use super::Update;
 use tokio::sync::broadcast::Sender;
+
+#[derive(Debug, Clone, Copy, Serialize)]
+enum HashableUserFields {
+    ProfilePicture,
+    Comment,
+}
 
 //for now we allow this, because we want to keep the struct as close to the protobuf as possible
 #[allow(clippy::struct_excessive_bools)]
@@ -56,9 +67,9 @@ impl Update<mumble::proto::UserState> for User {
         Self::update_if_some(&mut self.priority_speaker, &mut other.priority_speaker);
         Self::update_if_some(&mut self.recording, &mut other.recording);
         Self::update_if_some(&mut self.profile_picture, &mut other.texture);
-        //Self::update_if_some(&mut self.profile_picture_hash, other.texture_hash);
+        //Self::update_if_some(&mut self.profile_picture_hash, &mut other.texture_hash);
         Self::update_if_some(&mut self.comment, &mut other.comment);
-        //Self::update_if_some(&mut self.comment_hash, other.comment_hash);
+        //Self::update_if_some(&mut self.comment_hash, &mut other.comment_hash);
 
         self
     }
@@ -108,8 +119,10 @@ impl Manager {
         self.send_to_frontend(&msg);
     }
 
-    fn notify_user_image(&self, session: u32) {
+    fn notify_user_image(&self, session: u32) -> AnyError<()> {
         if let Some(user) = self.users.get(&session) {
+            store_data_to_cache(&user.profile_picture_hash, &user.profile_picture)?;
+
             let base64 = format!(
                 "data:image/png;base64,{}",
                 general_purpose::STANDARD.encode(&user.profile_picture)
@@ -123,10 +136,14 @@ impl Manager {
 
             self.send_to_frontend(&msg);
         }
+
+        Ok(())
     }
 
-    fn notify_user_comment(&self, session: u32) {
+    fn notify_user_comment(&self, session: u32) -> AnyError<()> {
         if let Some(user) = self.users.get(&session) {
+            store_data_to_cache(&user.comment_hash, user.comment.as_bytes())?;
+
             let user_image = BlobData {
                 user_id: user.id,
                 data: user.comment.clone(),
@@ -135,17 +152,12 @@ impl Manager {
 
             self.send_to_frontend(&msg);
         }
+
+        Ok(())
     }
 
-    fn fill_user_images(&self, user_id: u32, texture_hash: &Vec<u8>) -> AnyError<()> {
-        let user = self.users.get(&user_id);
-        if user.is_none() {
-            return Err(format!("User {user_id} not found").into());
-        }
-
-        let cached_user_texture_hash = &user
-            .ok_or("texture hash should not be empty in this context")?
-            .profile_picture_hash;
+    fn fill_user_images(&self, user: &User, texture_hash: &Vec<u8>) -> AnyError<()> {
+        let cached_user_texture_hash = &user.profile_picture_hash;
 
         if texture_hash == cached_user_texture_hash {
             trace!(
@@ -155,14 +167,14 @@ impl Manager {
             );
             return Ok(());
         }
-        trace!("User image is not up to date for user {}", user_id);
+        trace!("User image is not up to date for user {}", user.id);
 
         let no_texture_hash_available = cached_user_texture_hash.is_empty();
         let texture_hash_in_current_message = !texture_hash.is_empty();
 
         if no_texture_hash_available && texture_hash_in_current_message {
             let blob_request = mumble::proto::RequestBlob {
-                session_texture: vec![user_id],
+                session_texture: vec![user.id],
                 ..Default::default()
             };
             self.server_channel.send(message_builder(&blob_request))?;
@@ -171,12 +183,8 @@ impl Manager {
         Ok(())
     }
 
-    fn fill_user_comment(&self, user_id: u32, comment_hash: &Vec<u8>) -> AnyError<()> {
-        let cached_user_comment_hash = &self
-            .users
-            .get(&user_id)
-            .ok_or("Comment should not be empty in this context")?
-            .comment_hash;
+    fn fill_user_comment(&self, user: &User, comment_hash: &Vec<u8>) -> AnyError<()> {
+        let cached_user_comment_hash = &user.comment_hash;
 
         if comment_hash == cached_user_comment_hash {
             trace!(
@@ -186,14 +194,14 @@ impl Manager {
             );
             return Ok(());
         }
-        trace!("User comment is not up to date for user {user_id}");
+        trace!("User comment is not up to date for user {}", user.id);
 
         let no_comment_available = cached_user_comment_hash.is_empty();
         let comment_in_current_message = !comment_hash.is_empty();
 
         if no_comment_available && comment_in_current_message {
             let blob_request = mumble::proto::RequestBlob {
-                session_comment: vec![user_id],
+                session_comment: vec![user.id],
                 ..Default::default()
             };
             self.server_channel.send(message_builder(&blob_request))?;
@@ -203,26 +211,32 @@ impl Manager {
     }
 
     pub fn update_user(&mut self, user_info: &mut mumble::proto::UserState) -> AnyError<()> {
-        let has_texture = user_info.texture.is_some()
-            && !user_info
-                .texture
-                .as_ref()
-                .ok_or("User texture should not be empty in this context")?
-                .is_empty();
-
-        let texture_hash = &mut user_info.texture_hash;
-        let texture_hash = mem::take(texture_hash).unwrap_or_default();
-
-        let has_comment = user_info.comment.is_some()
-            && !user_info
-                .comment
-                .as_ref()
-                .ok_or("User comment should not be empty in this conext")?
-                .is_empty();
+        let texture_hash = user_info.texture_hash.clone().unwrap_or_default();
+        let comment_hash = user_info.comment_hash.clone().unwrap_or_default();
         let session = user_info.session();
 
-        let comment_hash = &mut user_info.comment_hash;
-        let comment_hash = mem::take(comment_hash).unwrap_or_default();
+        let updated_from_cache: Vec<bool> = [
+            (HashableUserFields::Comment, &comment_hash),
+            (HashableUserFields::ProfilePicture, &texture_hash),
+        ]
+        .iter()
+        .filter(|(_, hash)| !hash.is_empty())
+        .map(|(field, hash)| (field, read_data_from_cache(hash)))
+        .filter_map(|(field, hash)| hash.ok().map(|d| (field, d)))
+        .map(|(field, hash)| match field {
+            HashableUserFields::Comment => {
+                user_info.comment = hash.map(|d| String::from_utf8_lossy(&d).to_string());
+                true
+            }
+            HashableUserFields::ProfilePicture => {
+                user_info.texture = hash;
+                true
+            }
+        })
+        .collect();
+
+        let has_texture = has_texture(user_info)?;
+        let has_comment = has_comment(user_info)?;
 
         match self.users.entry(session) {
             Entry::Occupied(mut o) => {
@@ -238,20 +252,32 @@ impl Manager {
         };
 
         if let Some(user) = self.users.get(&session) {
-            self.fill_user_images(user.id, &texture_hash)?;
-            self.fill_user_comment(user.id, &comment_hash)?;
+            if updated_from_cache.len() < 2 || updated_from_cache.iter().all(|b| !*b) {
+                self.fill_user_images(user, &texture_hash)?;
+                self.fill_user_comment(user, &comment_hash)?;
+            }
+        }
+
+        if let Some(user) = self.users.get_mut(&session) {
+            if !texture_hash.is_empty() {
+                user.profile_picture_hash = texture_hash;
+            }
+
+            if !comment_hash.is_empty() {
+                user.comment_hash = comment_hash;
+            }
         }
 
         self.notify(session);
 
         if has_texture {
             debug!("Notifying user image: {}", session);
-            self.notify_user_image(session);
+            self.notify_user_image(session)?;
         }
 
         if has_comment {
             debug!("Notifying user comment: {}", session);
-            self.notify_user_comment(session);
+            self.notify_user_comment(session)?;
         }
 
         Ok(())
@@ -276,4 +302,24 @@ impl Manager {
             self.send_to_frontend(&message);
         }
     }
+}
+
+fn has_texture(user_info: &mut mumble::proto::UserState) -> Result<bool, Box<dyn Error>> {
+    let has_texture = user_info.texture.is_some()
+        && !user_info
+            .texture
+            .as_ref()
+            .ok_or("User texture should not be empty in this context")?
+            .is_empty();
+    Ok(has_texture)
+}
+
+fn has_comment(user_info: &mut mumble::proto::UserState) -> Result<bool, Box<dyn Error>> {
+    let has_comment = user_info.comment.is_some()
+        && !user_info
+            .comment
+            .as_ref()
+            .ok_or("User comment should not be empty in this conext")?
+            .is_empty();
+    Ok(has_comment)
 }

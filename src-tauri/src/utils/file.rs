@@ -1,12 +1,16 @@
 use std::fmt::Display;
+use std::io::{Read, Write};
 
 use image::codecs::gif::GifDecoder;
 use image::{AnimationDecoder, GenericImageView};
 use tokio::fs::{self, File};
 use tokio::io::{AsyncReadExt, BufReader};
-use tracing::debug;
+use tracing::{debug, info};
 
+use crate::errors::application_error::ApplicationError;
 use crate::errors::AnyError;
+
+use super::constants::get_project_dirs;
 
 pub struct ImageInfo {
     pub data: Vec<u8>,
@@ -111,4 +115,53 @@ impl From<image::ImageFormat> for ImageFormat {
     fn from(format: image::ImageFormat) -> Self {
         Self { format }
     }
+}
+
+fn get_cache_path_from_hash(hash: &[u8]) -> AnyError<std::path::PathBuf> {
+    let project_dir =
+        get_project_dirs().ok_or_else(|| ApplicationError::new("Unable to obtain project dir"))?;
+    let hash_string = hash.iter().map(|x| format!("{x:x}")).collect::<String>();
+
+    let path = project_dir
+        .cache_dir()
+        .join("image_cache")
+        .join(hash_string);
+
+    Ok(path)
+}
+
+pub fn read_data_from_cache(hash: &[u8]) -> AnyError<Option<Vec<u8>>> {
+    let path = get_cache_path_from_hash(hash)?;
+    info!("Reading from cache: {:?}", path);
+
+    if path.exists() {
+        let mut file = std::fs::File::open(path)?;
+        let mut buffer = Vec::new();
+        file.read_to_end(&mut buffer)?;
+        Ok(Some(buffer))
+    } else {
+        Err(Box::new(ApplicationError::new("File does not exist")))
+    }
+}
+
+pub fn store_data_to_cache(hash: &[u8], data: &[u8]) -> AnyError<()> {
+    if hash.is_empty() {
+        return Err(Box::new(ApplicationError::new("Hash is empty")));
+    }
+
+    let path = get_cache_path_from_hash(hash)?;
+
+    if !path.exists() {
+        std::fs::create_dir_all(
+            path.parent()
+                .ok_or_else(|| ApplicationError::new("Unable to find path"))?,
+        )
+        .map_err(|_| ApplicationError::new("Unable to create directory"))?;
+    }
+
+    let mut file = std::fs::File::create(path.clone()).map_err(|_| {
+        ApplicationError::new(format!("Unable to create cache file: {path:?}").as_str())
+    })?;
+    file.write_all(data)?;
+    Ok(())
 }

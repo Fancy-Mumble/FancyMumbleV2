@@ -30,7 +30,7 @@ function UploadBox(props: UploadBoxProps) {
             multiple: false,
             filters: [{
                 name: 'Image',
-                extensions: ['png', 'jpeg', 'gif']
+                extensions: ['png', 'jpeg', 'gif', 'webp', 'jpg']
             }]
         });
         if (!selected || Array.isArray(selected)) return;

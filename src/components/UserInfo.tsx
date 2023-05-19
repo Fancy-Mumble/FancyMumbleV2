@@ -51,7 +51,7 @@ function UserInfo(props: UserInfoProps) {
                             sx={{ width: 50, height: 50, marginTop: '-25px', border: '2px solid #000' }}
                         />
                     </Box>
-                    <Paper elevation={0} sx={{ padding: '10px', margin: '2px' }}>
+                    <Paper elevation={0} sx={{ padding: '10px', margin: '20px 0 0 0' }}>
                         <Typography gutterBottom variant="h5" component="div">
                             {props.userInfo?.name}
                             <Typography variant="body2" component="span">

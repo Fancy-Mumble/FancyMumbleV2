@@ -38,6 +38,7 @@ os_info = "3"
 opus = "0.3.0"
 rodio = "0.17.1"
 image = "0.24.6"
+directories = "5.0.1"
 
 [dev-dependencies]
 tempfile = "3.5.0"
