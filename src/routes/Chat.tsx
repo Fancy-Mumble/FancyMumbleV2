@@ -34,8 +34,11 @@ function Chat() {
         invoke('send_message', { chatMessage: data, channelId: userInfo.currentUser?.channel_id });
         console.log("customChatMessage", data);
         pushChatMessage({
-            actor: 0,
-            sender: { user_id: 0, user_name: "test" },
+            actor: userInfo.currentUser?.id || 0,
+            sender: {
+                user_id: userInfo.currentUser?.id || 0,
+                user_name: userInfo.currentUser?.name || 'unknown'
+            },
             channel_id: [0],
             tree_id: [0],
             message: data,

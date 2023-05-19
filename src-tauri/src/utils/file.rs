@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
-use image::imageops::FilterType;
-use image::GenericImageView;
+use image::codecs::gif::GifDecoder;
+use image::{AnimationDecoder, GenericImageView};
 use tokio::fs::{self, File};
 use tokio::io::{AsyncReadExt, BufReader};
 use tracing::debug;
@@ -52,21 +52,35 @@ pub async fn get_file_as_byte_vec(filename: &str) -> AnyError<Vec<u8>> {
 pub fn read_image_as_thumbnail(filename: &str, max_size: u32) -> AnyError<ImageInfo> {
     let mut output = Vec::new();
     let buf_writer = std::io::BufWriter::new(&mut output);
-    let image = image::open(filename)?;
+    let image_type = image::ImageFormat::from_path(filename)?;
 
-    let image = image.resize(max_size, max_size, FilterType::Lanczos3);
-    let (width, height) = image.dimensions();
-    let color_type = image.color();
+    if image_type == image::ImageFormat::Gif {
+        let file = std::fs::File::open(filename)?;
+        let reader = std::io::BufReader::new(file);
+        let gif_decoder = GifDecoder::new(reader)?;
 
-    let image = image.into_bytes();
+        let frame_iter = gif_decoder.into_frames().filter_map(Result::ok);
+        {
+            let mut encoder = image::codecs::gif::GifEncoder::new(buf_writer);
+            encoder.set_repeat(image::codecs::gif::Repeat::Infinite)?;
+            encoder.encode_frames(frame_iter)?;
+        }
+    } else {
+        let mut image = image::open(filename)?;
+        image = image.thumbnail(max_size, max_size);
 
-    image::codecs::jpeg::JpegEncoder::new(buf_writer).encode(&image, width, height, color_type)?;
+        let (width, height) = image.dimensions();
+        let color_type = image.color();
+
+        let image = image.into_bytes();
+
+        image::codecs::jpeg::JpegEncoder::new(buf_writer)
+            .encode(&image, width, height, color_type)?;
+    }
 
     Ok(ImageInfo {
         data: output,
-        format: ImageFormat {
-            format: image::ImageFormat::Jpeg,
-        },
+        format: ImageFormat { format: image_type },
     })
 }
 

@@ -8,7 +8,7 @@ import './styles/Titlebar.css';
 
 function Titlebar() {
     return (
-        <Paper data-tauri-drag-region sx={{ width: '100%', display: 'flex', justifyContent: 'end'}}>
+        <Paper data-tauri-drag-region sx={{ width: '100%', display: 'flex', justifyContent: 'end', zIndex: 9999}}>
             <IconButton size="small" onClick={(e) => appWindow.minimize()} className="titlebar-button" >
                 <MinimizeIcon/>
             </IconButton >
