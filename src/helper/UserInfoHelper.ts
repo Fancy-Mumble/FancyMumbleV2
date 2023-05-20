@@ -14,6 +14,9 @@ export function getBackgroundFromComment(user: UsersState | undefined, withUrl: 
     const parser = new DOMParser();
     const document = parser.parseFromString(cleanMessage, "text/html");
     const images = Array.from(document.querySelectorAll('img')).map(img => img.src);
+    if(images.length === 0) {
+        return defaultColor;
+    }
 
     const lastImage = images[images.length - 1];
     return withUrl ? "url(" + lastImage + ")" : lastImage;

@@ -51,7 +51,7 @@ function ChannelSearch() {
 
 
     return (
-        <Box sx={{ background: 'transparent', padding: '4px 0', maxWidth: '150px', paddingLeft: '10px' }}>
+        <Box sx={{ background: 'transparent', padding: '4px 0', paddingLeft: '10px' }}>
             <Paper
                 component="form"
                 sx={{ p: '2px 4px', display: 'flex', alignItems: 'center', backdropFilter: 'blur(10px)', background: 'rgba(0, 0, 0, 0.5)' }}

@@ -138,7 +138,8 @@ function ChatMessage(props: ChatMessageProps) {
                     className={classes.avatar} style={{ visibility: (followUpMessage ? 'hidden' : 'visible') }}
                     onClick={e => { setUserInfoAnchor(e.currentTarget); }}
                 />
-                {showUserInfo()}
+                {/*This is wrong, we create this for every chat message :O*/}
+                {/*showUserInfo()*/}
             </Grid>
             <Grid item xs={10} className={classes.messageContainer}>
                 <Grid item className={classes.messageContainerInner}>

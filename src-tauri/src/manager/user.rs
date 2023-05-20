@@ -17,7 +17,7 @@ use crate::{
 use super::Update;
 use tokio::sync::broadcast::Sender;
 
-#[derive(Debug, Clone, Copy, Serialize)]
+#[derive(Debug, Clone, Copy, Serialize, PartialEq)]
 enum HashUserFields {
     ProfilePicture,
     Comment,
@@ -230,61 +230,22 @@ impl Manager {
         let comment_hash = user_info.comment_hash.clone().unwrap_or_default();
         let session = user_info.session();
 
-        let updated_from_cache: Vec<_> = [
-            (HashUserFields::Comment, &comment_hash),
-            (HashUserFields::ProfilePicture, &texture_hash),
-        ]
-        .iter()
-        .filter(|(_, hash)| !hash.is_empty())
-        .map(|(field, hash)| (field, read_data_from_cache(hash)))
-        .filter_map(|(field, hash)| hash.ok().map(|d| (field, d)))
-        .map(|(field, hash)| match field {
-            HashUserFields::Comment => {
-                user_info.comment = hash.map(|d| String::from_utf8_lossy(&d).to_string());
-                HashUserFields::Comment
-            }
-            HashUserFields::ProfilePicture => {
-                user_info.texture = hash;
-                HashUserFields::ProfilePicture
-            }
-        })
-        .collect();
+        let updated_from_cache =
+            update_user_comment_and_pfp_from_cache(&comment_hash, &texture_hash, user_info);
 
         let has_texture = has_texture(user_info)?;
         let has_comment = has_comment(user_info)?;
 
-        match self.users.entry(session) {
-            Entry::Occupied(mut o) => {
-                info!("Updating user: {:?}", o.get().name);
-                o.get_mut().update_from(user_info);
-            }
-            Entry::Vacant(v) => {
-                let mut user = User::default();
-                info!("Adding user: {:?}", user_info.name);
-                user.update_from(user_info);
-                v.insert(user);
-            }
-        };
+        self.insert_or_update_user(session, user_info);
 
-        if let Some(user) = self.users.get(&session) {
-            updated_from_cache
-                .iter()
-                .map(|field| match field {
-                    HashUserFields::Comment => self.fill_user_comment(user, &comment_hash),
-                    HashUserFields::ProfilePicture => self.fill_user_images(user, &texture_hash),
-                })
-                .collect::<Result<Vec<_>, _>>()?;
-        }
+        self.request_user_comment_and_pfp(
+            session,
+            &updated_from_cache,
+            &comment_hash,
+            &texture_hash,
+        )?;
 
-        if let Some(user) = self.users.get_mut(&session) {
-            if !texture_hash.is_empty() {
-                user.profile_picture_hash = texture_hash;
-            }
-
-            if !comment_hash.is_empty() {
-                user.comment_hash = comment_hash;
-            }
-        }
+        self.update_user_hashes(session, texture_hash, comment_hash);
 
         self.notify_update(session);
 
@@ -299,6 +260,53 @@ impl Manager {
         }
 
         Ok(())
+    }
+
+    fn update_user_hashes(&mut self, session: u32, texture_hash: Vec<u8>, comment_hash: Vec<u8>) {
+        if let Some(user) = self.users.get_mut(&session) {
+            if !texture_hash.is_empty() {
+                user.profile_picture_hash = texture_hash;
+            }
+
+            if !comment_hash.is_empty() {
+                user.comment_hash = comment_hash;
+            }
+        }
+    }
+
+    fn request_user_comment_and_pfp(
+        &mut self,
+        session: u32,
+        updated_from_cache: &[HashUserFields],
+        comment_hash: &Vec<u8>,
+        texture_hash: &Vec<u8>,
+    ) -> AnyError<()> {
+        if let Some(user) = self.users.get(&session) {
+            if !updated_from_cache.contains(&HashUserFields::Comment) {
+                self.fill_user_comment(user, comment_hash)?;
+            }
+
+            if !updated_from_cache.contains(&HashUserFields::ProfilePicture) {
+                self.fill_user_images(user, texture_hash)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn insert_or_update_user(&mut self, session: u32, user_info: &mut mumble::proto::UserState) {
+        match self.users.entry(session) {
+            Entry::Occupied(mut o) => {
+                info!("Updating user: {:?}", o.get().name);
+                o.get_mut().update_from(user_info);
+            }
+            Entry::Vacant(v) => {
+                let mut user = User::default();
+                info!("Adding user: {:?}", user_info.name);
+                user.update_from(user_info);
+                v.insert(user);
+            }
+        };
     }
 
     pub fn remove_user(&mut self, user_info: &mumble::proto::UserRemove) {
@@ -320,6 +328,32 @@ impl Manager {
             self.send_to_frontend(&message);
         }
     }
+}
+
+fn update_user_comment_and_pfp_from_cache(
+    comment_hash: &Vec<u8>,
+    texture_hash: &Vec<u8>,
+    user_info: &mut mumble::proto::UserState,
+) -> Vec<HashUserFields> {
+    [
+        (HashUserFields::Comment, comment_hash),
+        (HashUserFields::ProfilePicture, texture_hash),
+    ]
+    .iter()
+    .filter(|(_, hash)| !hash.is_empty())
+    .map(|(field, hash)| (field, read_data_from_cache(hash)))
+    .filter_map(|(field, hash)| hash.ok().map(|d| (field, d)))
+    .map(|(field, hash)| match field {
+        HashUserFields::Comment => {
+            user_info.comment = hash.map(|d| String::from_utf8_lossy(&d).to_string());
+            HashUserFields::Comment
+        }
+        HashUserFields::ProfilePicture => {
+            user_info.texture = hash;
+            HashUserFields::ProfilePicture
+        }
+    })
+    .collect::<Vec<_>>()
 }
 
 fn has_texture(user_info: &mut mumble::proto::UserState) -> AnyError<bool> {
