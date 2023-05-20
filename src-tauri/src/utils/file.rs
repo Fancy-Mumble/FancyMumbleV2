@@ -144,9 +144,11 @@ pub fn read_data_from_cache(hash: &[u8]) -> AnyError<Option<Vec<u8>>> {
     }
 }
 
-pub fn store_data_to_cache(hash: &[u8], data: &[u8]) -> AnyError<()> {
+pub fn store_data_in_cache(hash: &[u8], data: &[u8]) -> AnyError<()> {
     if hash.is_empty() {
-        return Err(Box::new(ApplicationError::new("Hash is empty")));
+        return Err(Box::new(ApplicationError::new(
+            "We are unable to update cache, because hash is empty",
+        )));
     }
 
     let path = get_cache_path_from_hash(hash)?;

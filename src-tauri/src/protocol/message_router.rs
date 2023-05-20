@@ -3,7 +3,7 @@
 use std::error::Error;
 
 use tokio::sync::broadcast::Sender;
-use tracing::{error, trace};
+use tracing::{error, trace, warn};
 
 use crate::{
     connection::{traits::Shutdown, MessageChannels},
@@ -119,7 +119,11 @@ impl MessageRouter {
             crate::utils::messages::MessageTypes::TextMessage => {
                 self.handle_text_message(message)?;
             }
-            crate::utils::messages::MessageTypes::PermissionDenied => {}
+            crate::utils::messages::MessageTypes::PermissionDenied => {
+                let permission_denied =
+                    Self::handle_downcast::<mumble::proto::PermissionDenied>(message)?;
+                warn!("Permission denied: {:?}", permission_denied);
+            }
             crate::utils::messages::MessageTypes::Acl => {}
             crate::utils::messages::MessageTypes::QueryUsers => {}
             crate::utils::messages::MessageTypes::CryptSetup => {}

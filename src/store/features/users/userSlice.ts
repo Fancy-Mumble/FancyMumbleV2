@@ -1,6 +1,21 @@
 import { createSlice } from '@reduxjs/toolkit'
 import type { PayloadAction } from '@reduxjs/toolkit'
 
+
+export interface UpdateableUserState {
+  id: number
+  channel_id?: number,
+  comment?: string,
+  deaf?: boolean,
+  mute?: boolean,
+  name?: string,
+  priority_speaker?: boolean,
+  profile_picture?: string,
+  recording?: boolean,
+  self_deaf?: boolean,
+  self_mute?: boolean,
+  suppress?: boolean,
+}
 export interface UsersState {
   channel_id: number,
   comment: string,
@@ -92,6 +107,22 @@ export const userSlice = createSlice({
         state.currentUser = action.payload;
       }
     },
+    updateUserFromUpdateable: (state, action: PayloadAction<UpdateableUserState>) => {
+      let currentUser = state.users.find(e => e.id === action.payload.id);
+      if (currentUser) {
+        if(action.payload.channel_id) currentUser.channel_id = action.payload.channel_id;
+        if(action.payload.comment) currentUser.comment = action.payload.comment;
+        if(action.payload.deaf) currentUser.deaf = action.payload.deaf;
+        if(action.payload.mute) currentUser.mute = action.payload.mute;
+        if(action.payload.name) currentUser.name = action.payload.name;
+        if(action.payload.priority_speaker) currentUser.priority_speaker = action.payload.priority_speaker;
+        if(action.payload.profile_picture) currentUser.profile_picture = action.payload.profile_picture;
+        if(action.payload.recording) currentUser.recording = action.payload.recording;
+        if(action.payload.self_deaf) currentUser.self_deaf = action.payload.self_deaf;
+        if(action.payload.self_mute) currentUser.self_mute = action.payload.self_mute;
+        if(action.payload.suppress) currentUser.suppress = action.payload.suppress;
+      }
+    },
     updateCurrentUserById: (state, action: PayloadAction<number>) => {
       let currentUser = state.users.find(e => e.id === action.payload);
       if (currentUser) {
@@ -111,6 +142,6 @@ export const userSlice = createSlice({
 })
 
 // Action creators are generated for each case reducer function
-export const { updateUser, deleteUser, updateUserComment, updateUserImage, updateCurrentUserById, updateConnected, updateUserTalkingInfo } = userSlice.actions
+export const { updateUser, deleteUser, updateUserComment, updateUserImage, updateCurrentUserById, updateConnected, updateUserTalkingInfo, updateUserFromUpdateable } = userSlice.actions
 
 export default userSlice.reducer
