@@ -1,7 +1,8 @@
-use std::collections::HashMap;
+use std::{borrow::BorrowMut, collections::HashMap};
 
 use crate::{
     connection::{traits::Shutdown, Connection},
+    manager::user::UpdateableUserState,
     protocol::message_transmitter::MessageTransmitter,
 };
 use tauri::State;
@@ -162,12 +163,16 @@ pub async fn set_user_image(
 }
 
 #[tauri::command]
-pub async fn change_user_state(state: State<'_, ConnectionState>) -> Result<(), String> {
+pub async fn change_user_state(
+    mut user_state: UpdateableUserState,
+    state: State<'_, ConnectionState>,
+) -> Result<(), String> {
     let connection = &state.connection;
     let guard = connection.lock().await;
+    trace!("Got change user state change request");
 
     if let Some(guard) = guard.as_ref() {
-        if let Err(error) = guard.update_user_info() {
+        if let Err(error) = guard.update_user_info(user_state.borrow_mut()) {
             return Err(format!("{error:?}"));
         }
     }

@@ -2,6 +2,7 @@ pub mod threads;
 pub mod traits;
 use crate::connection::traits::Shutdown;
 use crate::errors::AnyError;
+use crate::manager::user::UpdateableUserState;
 use crate::mumble;
 use crate::protocol::init_connection;
 use crate::protocol::stream_reader::StreamReader;
@@ -224,8 +225,35 @@ impl Connection {
         Ok(())
     }
 
-    pub fn update_user_info(&self) -> AnyError<()> {
-        todo!()
+    pub fn update_user_info(&self, user: &mut UpdateableUserState) -> AnyError<()> {
+        let updated_state = mumble::proto::UserState {
+            session: None,
+            actor: None,
+            name: std::mem::take(&mut user.name),
+            user_id: None, /*Some(user.id)*/
+            channel_id: user.channel_id,
+            mute: user.mute,
+            deaf: user.deaf,
+            suppress: user.suppress,
+            self_mute: user.self_mute,
+            self_deaf: user.self_deaf,
+            texture: None,
+            plugin_context: None,
+            plugin_identity: None,
+            comment: None,
+            hash: None,
+            comment_hash: None,
+            texture_hash: None,
+            priority_speaker: user.priority_speaker,
+            recording: user.recording,
+            temporary_access_tokens: Vec::new(),
+            listening_channel_add: Vec::new(),
+            listening_channel_remove: Vec::new(),
+            listening_volume_adjustment: Vec::new(),
+        };
+        self.tx_out.send(message_builder(&updated_state))?;
+
+        Ok(())
     }
 }
 

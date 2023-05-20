@@ -1,10 +1,7 @@
 use base64::{engine::general_purpose, Engine as _};
-use std::{
-    collections::{hash_map::Entry, HashMap},
-    error::Error,
-};
+use std::collections::{hash_map::Entry, HashMap};
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tracing::{debug, error, info, trace};
 
 use crate::{
@@ -12,7 +9,7 @@ use crate::{
     mumble,
     protocol::serialize::message_container::FrontendMessage,
     utils::{
-        file::{read_data_from_cache, store_data_to_cache},
+        file::{read_data_from_cache, store_data_in_cache},
         messages::message_builder,
     },
 };
@@ -21,14 +18,14 @@ use super::Update;
 use tokio::sync::broadcast::Sender;
 
 #[derive(Debug, Clone, Copy, Serialize)]
-enum HashableUserFields {
+enum HashUserFields {
     ProfilePicture,
     Comment,
 }
 
 //for now we allow this, because we want to keep the struct as close to the protobuf as possible
 #[allow(clippy::struct_excessive_bools)]
-#[derive(Debug, Default, Serialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct User {
     pub id: u32,
     pub name: String,
@@ -48,6 +45,25 @@ pub struct User {
     comment: String,
 }
 
+#[allow(clippy::struct_excessive_bools)]
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct UpdateableUserState {
+    pub id: u32,
+    pub name: Option<String>,
+    pub channel_id: Option<u32>,
+    pub mute: Option<bool>,
+    pub deaf: Option<bool>,
+    pub suppress: Option<bool>,
+    pub self_mute: Option<bool>,
+    pub self_deaf: Option<bool>,
+    pub priority_speaker: Option<bool>,
+    pub recording: Option<bool>,
+    pub profile_picture_hash: Option<Vec<u8>>,
+    pub profile_picture: Option<Vec<u8>>,
+    pub comment_hash: Option<Vec<u8>>,
+    pub comment: Option<String>,
+}
+
 #[derive(Debug, Default, Serialize)]
 pub struct BlobData {
     pub user_id: u32,
@@ -56,6 +72,7 @@ pub struct BlobData {
 
 impl Update<mumble::proto::UserState> for User {
     fn update_from(&mut self, other: &mut mumble::proto::UserState) -> &Self {
+        // update everything except for hash fields
         Self::update_if_some(&mut self.id, &mut other.session);
         Self::update_if_some(&mut self.name, &mut other.name);
         Self::update_if_some(&mut self.channel_id, &mut other.channel_id);
@@ -67,9 +84,7 @@ impl Update<mumble::proto::UserState> for User {
         Self::update_if_some(&mut self.priority_speaker, &mut other.priority_speaker);
         Self::update_if_some(&mut self.recording, &mut other.recording);
         Self::update_if_some(&mut self.profile_picture, &mut other.texture);
-        //Self::update_if_some(&mut self.profile_picture_hash, &mut other.texture_hash);
         Self::update_if_some(&mut self.comment, &mut other.comment);
-        //Self::update_if_some(&mut self.comment_hash, &mut other.comment_hash);
 
         self
     }
@@ -105,7 +120,7 @@ impl Manager {
         }
     }
 
-    fn notify(&self, session: u32) {
+    fn notify_update(&self, session: u32) {
         if let Some(user) = self.users.get(&session) {
             let msg = FrontendMessage::new("user_update", &user);
 
@@ -121,7 +136,7 @@ impl Manager {
 
     fn notify_user_image(&self, session: u32) -> AnyError<()> {
         if let Some(user) = self.users.get(&session) {
-            store_data_to_cache(&user.profile_picture_hash, &user.profile_picture)?;
+            store_data_in_cache(&user.profile_picture_hash, &user.profile_picture)?;
 
             let base64 = format!(
                 "data:image/png;base64,{}",
@@ -142,7 +157,7 @@ impl Manager {
 
     fn notify_user_comment(&self, session: u32) -> AnyError<()> {
         if let Some(user) = self.users.get(&session) {
-            store_data_to_cache(&user.comment_hash, user.comment.as_bytes())?;
+            store_data_in_cache(&user.comment_hash, user.comment.as_bytes())?;
 
             let user_image = BlobData {
                 user_id: user.id,
@@ -215,22 +230,22 @@ impl Manager {
         let comment_hash = user_info.comment_hash.clone().unwrap_or_default();
         let session = user_info.session();
 
-        let updated_from_cache: Vec<bool> = [
-            (HashableUserFields::Comment, &comment_hash),
-            (HashableUserFields::ProfilePicture, &texture_hash),
+        let updated_from_cache: Vec<_> = [
+            (HashUserFields::Comment, &comment_hash),
+            (HashUserFields::ProfilePicture, &texture_hash),
         ]
         .iter()
         .filter(|(_, hash)| !hash.is_empty())
         .map(|(field, hash)| (field, read_data_from_cache(hash)))
         .filter_map(|(field, hash)| hash.ok().map(|d| (field, d)))
         .map(|(field, hash)| match field {
-            HashableUserFields::Comment => {
+            HashUserFields::Comment => {
                 user_info.comment = hash.map(|d| String::from_utf8_lossy(&d).to_string());
-                true
+                HashUserFields::Comment
             }
-            HashableUserFields::ProfilePicture => {
+            HashUserFields::ProfilePicture => {
                 user_info.texture = hash;
-                true
+                HashUserFields::ProfilePicture
             }
         })
         .collect();
@@ -252,10 +267,13 @@ impl Manager {
         };
 
         if let Some(user) = self.users.get(&session) {
-            if updated_from_cache.len() < 2 || updated_from_cache.iter().all(|b| !*b) {
-                self.fill_user_images(user, &texture_hash)?;
-                self.fill_user_comment(user, &comment_hash)?;
-            }
+            updated_from_cache
+                .iter()
+                .map(|field| match field {
+                    HashUserFields::Comment => self.fill_user_comment(user, &comment_hash),
+                    HashUserFields::ProfilePicture => self.fill_user_images(user, &texture_hash),
+                })
+                .collect::<Result<Vec<_>, _>>()?;
         }
 
         if let Some(user) = self.users.get_mut(&session) {
@@ -268,7 +286,7 @@ impl Manager {
             }
         }
 
-        self.notify(session);
+        self.notify_update(session);
 
         if has_texture {
             debug!("Notifying user image: {}", session);
@@ -304,7 +322,7 @@ impl Manager {
     }
 }
 
-fn has_texture(user_info: &mut mumble::proto::UserState) -> Result<bool, Box<dyn Error>> {
+fn has_texture(user_info: &mut mumble::proto::UserState) -> AnyError<bool> {
     let has_texture = user_info.texture.is_some()
         && !user_info
             .texture
@@ -314,7 +332,7 @@ fn has_texture(user_info: &mut mumble::proto::UserState) -> Result<bool, Box<dyn
     Ok(has_texture)
 }
 
-fn has_comment(user_info: &mut mumble::proto::UserState) -> Result<bool, Box<dyn Error>> {
+fn has_comment(user_info: &mut mumble::proto::UserState) -> AnyError<bool> {
     let has_comment = user_info.comment.is_some()
         && !user_info
             .comment
