@@ -79,7 +79,7 @@ function UserInfo(props: UserInfoProps) {
                                 <span className="user-text-title">User ID</span><span>#{props.userInfo?.id}</span>
                             </Box>
                             {showStatusBox("Muted", mutedText)}
-                            {showStatusBox("Muted", deafenedText)}
+                            {showStatusBox("Deafened", deafenedText)}
                         </Box>
                         <Paper
                             component="form"
