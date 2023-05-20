@@ -6,7 +6,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    line-height: 0px !important;;
+    line-height: unset !important;
 }
 
 .join-button {

@@ -33,21 +33,21 @@ function Sidebar(props: SidebarProps) {
     }
 
     return (
-        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', alignContent: 'center' }} className="sidebar">
-            <Box sx={{ flex: 1, overflowY: 'auto', width: '100%' }} >
+        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', alignContent: 'center', width: '250px' }} className="sidebar">
+            <Box sx={{ flex: 1, overflowY: 'auto', width: '100%', display: 'flex', flexDirection: 'column' }} >
                 <CurrentUserInfo />
                 <ChannelViewer />
-            </Box>
-            <Box m={3}>
-                <ButtonGroup variant="text">
-                    <LoadingButton loading={logoutInProgress} onClick={triggerLogout} color="error"><LogoutIcon /></LoadingButton >
-                    <Button color="inherit">
-                        <InfoIcon />
-                    </Button>
-                    <Button onClick={openSettings} color="inherit">
-                        <SettingsIcon />
-                    </Button>
-                </ButtonGroup>
+                <Box m={3} sx={{ display: 'flex', justifyContent: 'center' }}>
+                    <ButtonGroup variant="text">
+                        <LoadingButton loading={logoutInProgress} onClick={triggerLogout} color="error"><LogoutIcon /></LoadingButton >
+                        <Button color="inherit">
+                            <InfoIcon />
+                        </Button>
+                        <Button onClick={openSettings} color="inherit">
+                            <SettingsIcon />
+                        </Button>
+                    </ButtonGroup>
+                </Box>
             </Box>
         </Box >
     )

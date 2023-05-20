@@ -69,44 +69,46 @@ function ChannelViewer() {
     }
 
     return (
-        <List subheader={<li />}>
-            {
-                Array.from(getChannelUserMapping()).map(([channel, users]) => (
-                    <li key={`channel-${channel.channel_id}`}>
-                        <ul style={{ padding: 0 }}>
-                            <ListSubheader className="subheader-flex" sx={{ padding: '0' }} onClick={e => joinChannel(channel.channel_id)}>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '5px' }}>
-                                    {channel.name}
-                                    <ListItemIcon className="join-button" style={{ cursor: 'pointer', filter: 'drop-shadow(1px 1px 1px #000)' }}>
-                                        <ArrowForwardIosIcon />
-                                    </ListItemIcon>
-                                </Box>
-                            </ListSubheader>
-                            {users.map((user) => (
-                                <Box key={`user-${user.id}`}>
-                                    <ListItem key={user.id} sx={{ py: 0, minHeight: 32 }}>
-                                        <ListItemAvatar sx={{ width: 24, height: 24, minWidth: 0, marginRight: 1 }}>
-                                            <Avatar
-                                                sx={{ width: 24, height: 24 }}
-                                                src={user.profile_picture}
-                                                className={(isTalking(user.id) ? 'talking-avatar' : 'silent-avatar')}
-                                                onClick={e => { setUserInfoAnchor(e.currentTarget); setSelectedUser(user) }}
-                                            />
-                                        </ListItemAvatar>
-                                        <ListItemText primaryTypographyProps={{ fontSize: 14, fontWeight: 'medium', display: 'flex', flexGrow: 1 }} className="user-list-item">
-                                            <span className="user-name-item">{user.name}</span>
-                                            <span className="user-state-item">{displayUserInfo(user)}</span>
-                                        </ListItemText>
-                                    </ListItem>
-                                </Box>
-                            ))
-                            }
-                            {showUserInfo(selectedUser)}
-                        </ul>
-                    </li>
-                ))
-            }
-        </List>
+        <Box sx={{ overflowY: 'auto', display: 'flex', flexGrow: 1 }}>
+            {showUserInfo(selectedUser)}
+            <List subheader={<li />} sx={{width: '100%'}}>
+                {
+                    Array.from(getChannelUserMapping()).map(([channel, users]) => (
+                        <li key={`channel-${channel.channel_id}`}>
+                            <ul style={{ padding: 0 }}>
+                                <ListSubheader className="subheader-flex" sx={{ padding: '0' }} onClick={e => joinChannel(channel.channel_id)}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '5px' }}>
+                                        <Box sx={{textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', flexGrow: 1, width: '1px'}} title={channel.name}>{channel.name}</Box>
+                                        <ListItemIcon className="join-button" style={{ cursor: 'pointer', filter: 'drop-shadow(1px 1px 1px #000)' }}>
+                                            <ArrowForwardIosIcon />
+                                        </ListItemIcon>
+                                    </Box>
+                                </ListSubheader>
+                                {users.map((user) => (
+                                    <Box key={`user-${user.id}`}>
+                                        <ListItem key={user.id} sx={{ py: 0, minHeight: 32 }}>
+                                            <ListItemAvatar sx={{ width: 24, height: 24, minWidth: 0, marginRight: 1 }}>
+                                                <Avatar
+                                                    sx={{ width: 24, height: 24 }}
+                                                    src={user.profile_picture}
+                                                    className={(isTalking(user.id) ? 'talking-avatar' : 'silent-avatar')}
+                                                    onClick={e => { setUserInfoAnchor(e.currentTarget); setSelectedUser(user) }}
+                                                />
+                                            </ListItemAvatar>
+                                            <ListItemText primaryTypographyProps={{ fontSize: 14, fontWeight: 'medium', display: 'flex', flexGrow: 1 }} className="user-list-item">
+                                                <span className="user-name-item">{user.name}</span>
+                                                <span className="user-state-item">{displayUserInfo(user)}</span>
+                                            </ListItemText>
+                                        </ListItem>
+                                    </Box>
+                                ))
+                                }
+                            </ul>
+                        </li>
+                    ))
+                }
+            </List>
+        </Box>
     )
 }
 

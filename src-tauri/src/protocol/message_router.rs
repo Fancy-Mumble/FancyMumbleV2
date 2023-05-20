@@ -131,7 +131,16 @@ impl MessageRouter {
             crate::utils::messages::MessageTypes::ContextAction => {}
             crate::utils::messages::MessageTypes::UserList => {}
             crate::utils::messages::MessageTypes::VoiceTarget => {}
-            crate::utils::messages::MessageTypes::PermissionQuery => {}
+            crate::utils::messages::MessageTypes::PermissionQuery => {
+                let permission_query =
+                    Self::handle_downcast::<mumble::proto::PermissionQuery>(message)?;
+                warn!("Permission query: {:?}", permission_query);
+
+                if permission_query.flush() {
+                    //TODO: We currently don't support ACLs, so we just disconnect the user
+                    //self.shutdown().await?;
+                }
+            }
             crate::utils::messages::MessageTypes::CodecVersion => {}
             crate::utils::messages::MessageTypes::UserStats => {}
             crate::utils::messages::MessageTypes::RequestBlob => {}
