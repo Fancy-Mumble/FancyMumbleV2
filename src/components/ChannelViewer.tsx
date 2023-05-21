@@ -39,12 +39,12 @@ function ChannelViewer() {
 
     function displayUserInfo(user: UsersState): ReactNode {
         return (
-            <span>
+            <Box sx={{display: 'flex'}}>
                 {user.self_mute ? (<MicOffIcon fontSize="small" />) : (<span />)}
                 {user.self_deaf ? (<VolumeOffIcon fontSize="small" />) : (<span />)}
                 {user.mute ? (<MicOffIcon color="error" fontSize="small" />) : (<span />)}
                 {user.deaf ? (<VolumeOffIcon color="error" fontSize="small" />) : (<span />)}
-            </span>
+            </Box>
         )
     }
 
@@ -71,14 +71,14 @@ function ChannelViewer() {
     return (
         <Box sx={{ overflowY: 'auto', display: 'flex', flexGrow: 1 }}>
             {showUserInfo(selectedUser)}
-            <List subheader={<li />} sx={{width: '100%'}}>
+            <List subheader={<li />} sx={{ width: '100%' }}>
                 {
                     Array.from(getChannelUserMapping()).map(([channel, users]) => (
                         <li key={`channel-${channel.channel_id}`}>
                             <ul style={{ padding: 0 }}>
                                 <ListSubheader className="subheader-flex" sx={{ padding: '0' }} onClick={e => joinChannel(channel.channel_id)}>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '5px' }}>
-                                        <Box sx={{textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', flexGrow: 1, width: '1px'}} title={channel.name}>{channel.name}</Box>
+                                        <Box sx={{ textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', flexGrow: 1, width: '1px' }} title={channel.name}>{channel.name}</Box>
                                         <ListItemIcon className="join-button" style={{ cursor: 'pointer', filter: 'drop-shadow(1px 1px 1px #000)' }}>
                                             <ArrowForwardIosIcon />
                                         </ListItemIcon>
@@ -86,7 +86,7 @@ function ChannelViewer() {
                                 </ListSubheader>
                                 {users.map((user) => (
                                     <Box key={`user-${user.id}`}>
-                                        <ListItem key={user.id} sx={{ py: 0, minHeight: 32 }}>
+                                        <ListItem key={user.id} sx={{ py: 0, minHeight: 32, maxWidth: '100%' }}>
                                             <ListItemAvatar sx={{ width: 24, height: 24, minWidth: 0, marginRight: 1 }}>
                                                 <Avatar
                                                     sx={{ width: 24, height: 24 }}
@@ -95,9 +95,9 @@ function ChannelViewer() {
                                                     onClick={e => { setUserInfoAnchor(e.currentTarget); setSelectedUser(user) }}
                                                 />
                                             </ListItemAvatar>
-                                            <ListItemText primaryTypographyProps={{ fontSize: 14, fontWeight: 'medium', display: 'flex', flexGrow: 1 }} className="user-list-item">
-                                                <span className="user-name-item">{user.name}</span>
-                                                <span className="user-state-item">{displayUserInfo(user)}</span>
+                                            <ListItemText primaryTypographyProps={{ fontSize: 14, fontWeight: 'medium', display: 'flex', flexGrow: 1, maxWidth: '100%' }} className="user-list-item">
+                                                <Box sx={{ textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', display: 'flex', flexGrow: 1, alignItems: 'center' }}><span className="user-name-item">{user.name}</span></Box>
+                                                <Box className="user-state-item">{displayUserInfo(user)}</Box>
                                             </ListItemText>
                                         </ListItem>
                                     </Box>

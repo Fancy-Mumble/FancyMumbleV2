@@ -83,8 +83,11 @@ function ChatMessage(props: ChatMessageProps) {
     function parseMessage(message: string | undefined) {
         if (message && message.includes('<')) {
             let messageParser = new IncomingMessageParser(message)
-                .parseForImages()
-                .parseForLinks()
+                .parseForMarkdown()
+                .parseDOM((dom) => dom
+                    .parseForImages()
+                    .parseForLinks()
+                )
                 .build();
 
             return (
@@ -168,4 +171,4 @@ function ChatMessage(props: ChatMessageProps) {
 
 }
 
-export default ChatMessage;
+export const MemoChatMessage = React.memo(ChatMessage);

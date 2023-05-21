@@ -48,7 +48,11 @@ function Chat() {
     }
 
     function sendChatMessage(e: any) {
-        let message = new OutgoingMessageParser(chatMessage).parseLinks().parseCommands().build();
+        let message = new OutgoingMessageParser(chatMessage)
+            .parseLinks()
+            .parseCommands()
+            .parseMarkdown()
+            .build();
         customChatMessage(message)
     }
 
@@ -109,6 +113,7 @@ function Chat() {
                                 onKeyDown={keyDownHandler}
                                 value={chatMessage}
                                 onPaste={pasteEvent}
+                                multiline
                             />
                             <IconButton onClick={showGifPreview}>
                                 <GifIcon />

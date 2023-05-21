@@ -658,6 +658,11 @@
     "@types/tough-cookie" "*"
     parse5 "^7.0.0"
 
+"@types/marked@^5.0.0":
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/@types/marked/-/marked-5.0.0.tgz#3235b9133054e6586eedabfb77aa7d4a4bafbfcf"
+  integrity sha512-YcZe50jhltsCq7rc9MNZC/4QB/OnA2Pd6hrOSTOFajtabN+38slqgDDCeE/0F83SjkKBQcsZUj7VLWR0H5cKRA==
+
 "@types/node@*":
   version "18.15.11"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-18.15.11.tgz#b3b790f09cb1696cffcec605de025b088fa4225f"
@@ -952,6 +957,11 @@ has@^1.0.3:
   dependencies:
     function-bind "^1.1.1"
 
+highlight.js@^11.8.0:
+  version "11.8.0"
+  resolved "https://registry.yarnpkg.com/highlight.js/-/highlight.js-11.8.0.tgz#966518ea83257bae2e7c9a48596231856555bb65"
+  integrity sha512-MedQhoqVdr0U6SSnWPzfiadUcDHfN/Wzq25AkXiQv9oiOO/sG0S7XkvpFIqWBl9Yq1UYyYOOVORs5UW2XlPyzg==
+
 hoist-non-react-statics@^3.3.0, hoist-non-react-statics@^3.3.1, hoist-non-react-statics@^3.3.2:
   version "3.3.2"
   resolved "https://registry.yarnpkg.com/hoist-non-react-statics/-/hoist-non-react-statics-3.3.2.tgz#ece0acaf71d62c2969c2ec59feff42a4b1a85b45"
@@ -1109,6 +1119,16 @@ magic-string@^0.27.0:
   integrity sha512-8UnnX2PeRAPZuN12svgR9j7M1uWMovg/CEnIwIG0LFkXSJJe4PdfUGiTGl8V9bsBHFUtfVINcSyYxd7q+kx9fA==
   dependencies:
     "@jridgewell/sourcemap-codec" "^1.4.13"
+
+marked-highlight@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/marked-highlight/-/marked-highlight-2.0.0.tgz#e7f4944afc5997a134a88c6aada742dd226e550c"
+  integrity sha512-UjpDrs8TJh7dWdKzdnkt/aXdQEQ1FW5Jy6tRTjvWdUgsev2srAAgh8l04JoQUyzD3qP8UDrhHAa6seHUyPXg/w==
+
+marked@^5.0.2:
+  version "5.0.2"
+  resolved "https://registry.yarnpkg.com/marked/-/marked-5.0.2.tgz#ac79e78ea7ed9ad31de70b85e274595d9029e534"
+  integrity sha512-TXksm9GwqXCRNbFUZmMtqNLvy3K2cQHuWmyBDLOrY1e6i9UvZpOTJXoz7fBjYkJkaUFzV9hBFxMuZSyQt8R6KQ==
 
 ms@2.1.2:
   version "2.1.2"
