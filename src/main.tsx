@@ -10,12 +10,25 @@ import isToday from 'dayjs/plugin/isToday';
 import isYesterday from 'dayjs/plugin/isYesterday';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import Loader from './components/Loader';
+import hljs from 'highlight.js';
+import { marked } from 'marked';
+import { markedHighlight } from 'marked-highlight';
+
+import 'highlight.js/styles/base16/equilibrium-gray-dark.css';
 
 const darkTheme = createTheme({
   palette: {
     mode: 'dark',
   },
 });
+
+marked.use(markedHighlight({
+  langPrefix: 'hljs language-',
+  highlight(code, lang) {
+      const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+      return hljs.highlight(code, { language }).value;
+  }
+}));
 
 dayjs.extend(isToday);
 dayjs.extend(isYesterday);

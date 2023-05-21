@@ -1,4 +1,5 @@
 import DOMPurify from "dompurify";
+import { marked } from "marked";
 
 class OutgoingMessageParser {
     private message: string;
@@ -8,7 +9,7 @@ class OutgoingMessageParser {
     }
 
     parseLinks() {
-        const regex = /(?<!\S)((?:https?:\/\/)?(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-zA-Z0-9()]{2,20}\b[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)/;
+        const regex = /(?<!\S)((?:https?:\/\/)(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-zA-Z0-9()]{2,20}\b[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)/;
         this.message = this.message.replace(regex, '<a href="$1" target="_blank">$1</a>');
         console.log(this.message);
 
@@ -24,7 +25,7 @@ class OutgoingMessageParser {
         switch (foundCommand[0]) {
             case "@dice":
                 let diceRoll = Math.floor(Math.random() * 6) + 1;
-                this.message = this.message.replace(commandRegex, "The dice rolled: " + diceRoll);
+                this.message = this.message.replace(commandRegex, "The dice rolled: \n # " + diceRoll);
                 break;
             case "@coin":
                 let coinFlip = Math.floor(Math.random() * 2) + 1;
@@ -35,8 +36,14 @@ class OutgoingMessageParser {
         return this;
     }
 
+    parseMarkdown() {
+        this.message = marked.parse(this.message);
+
+        return this;
+    }
+
     public build() {
-        return this.message;
+        return DOMPurify.sanitize(this.message);
     }
 }
 

@@ -1,6 +1,6 @@
 import { Box, Card, CardContent, List } from "@mui/material";
 import React from "react";
-import ChatMessage from "./ChatMessage";
+import { MemoChatMessage } from "./ChatMessage";
 import { useSelector } from "react-redux";
 import { RootState } from "../store/store";
 import { TextMessage } from "../store/features/users/chatMessageSlice";
@@ -58,7 +58,7 @@ class ChatMessageContainer extends React.Component<ChatMessageContainerProps, Ch
 					{this.props.messages.map((el, index, array) => {
 						let prevCommentBy = index - 1 >= 0 ? array[index - 1].sender.user_id : undefined;
 
-						return (<ChatMessage messageId={el.timestamp} key={el.timestamp} message={el} prevCommentBy={prevCommentBy} />)
+						return (<MemoChatMessage messageId={el.timestamp} key={el.timestamp} message={el} prevCommentBy={prevCommentBy} />)
 					}
 					)}
 				</List>
