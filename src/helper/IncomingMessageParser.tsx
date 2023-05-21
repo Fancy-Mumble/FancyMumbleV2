@@ -1,14 +1,15 @@
 import { Box } from "@mui/material";
 import DOMPurify from "dompurify";
+import { marked } from "marked";
+import { markedHighlight } from "marked-highlight";
 
-class IncomingMessageParser {
+
+class DOMMessageParser {
     private document: Document;
-    //private elements: Array<JSX.Element> = [];
 
     constructor(input: string) {
-        let cleanMessage = DOMPurify.sanitize(input);
         const parser = new DOMParser();
-        this.document = parser.parseFromString(cleanMessage, "text/html");
+        this.document = parser.parseFromString(input, "text/html");
     }
 
     parseForImages() {
@@ -27,8 +28,33 @@ class IncomingMessageParser {
         return this;
     }
 
+    build() {
+        return this.document.documentElement.innerHTML;
+    }
+}
+
+class IncomingMessageParser {
+    private input: string;
+
+    constructor(input: string) {
+        this.input = DOMPurify.sanitize(input);
+    }
+
+    parseDOM(dom: (value: DOMMessageParser) => DOMMessageParser) {
+        this.input = dom(new DOMMessageParser(this.input)).build();
+
+        return this;
+    }
+
+    parseForMarkdown() {
+        this.input = marked.parse(this.input);
+        this.input = DOMPurify.sanitize(this.input);
+
+        return this;
+    }
+
     public build() {
-        return (<Box dangerouslySetInnerHTML={{__html: this.document.documentElement.innerHTML}}></Box>);
+        return (<Box dangerouslySetInnerHTML={{ __html: this.input }}></Box>);
     }
 }
 

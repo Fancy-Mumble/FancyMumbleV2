@@ -12,14 +12,23 @@
     flex-direction: row;
     align-items: center;
     padding: 2px;
+    max-width: 100%;
 }
 
 .user-name-item {
     display: flex;
     flex-grow: 1;
     align-items: center;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    max-width: 100%;
+    display: block;
 }
 
 .user-state-item {
+    display: flex !important;
     align-items: center;
+    white-space: nowrap;
 }
