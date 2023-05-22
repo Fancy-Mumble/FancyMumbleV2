@@ -33,7 +33,7 @@ class DOMMessageParser {
     }
 }
 
-class IncomingMessageParser {
+class MessageParser {
     private input: string;
 
     constructor(input: string) {
@@ -46,7 +46,34 @@ class IncomingMessageParser {
         return this;
     }
 
-    parseForMarkdown() {
+    parseLinks() {
+        const regex = /(?<!\S)((?:https?:\/\/)(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-zA-Z0-9()]{2,20}\b[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)/;
+        this.input = this.input.replace(regex, '<a href="$1" target="_blank">$1</a>');
+
+        return this;
+    }
+
+    parseCommands() {
+        const commandRegex = /^@[A-Za-z]+/
+        let foundCommand = this.input.match(commandRegex);
+        if (!foundCommand) return this;
+
+        //TODO: Move this to the backend
+        switch (foundCommand[0]) {
+            case "@dice":
+                let diceRoll = Math.floor(Math.random() * 6) + 1;
+                this.input = this.input.replace(commandRegex, "The dice rolled: \n # " + diceRoll);
+                break;
+            case "@coin":
+                let coinFlip = Math.floor(Math.random() * 2) + 1;
+                this.input = this.input.replace(commandRegex, "Coin flip: " + (coinFlip === 1 ? "Heads" : "Tails"));
+                break;
+        }
+
+        return this;
+    }
+
+    parseMarkdown() {
         this.input = marked.parse(this.input);
         this.input = DOMPurify.sanitize(this.input);
 
@@ -56,6 +83,10 @@ class IncomingMessageParser {
     public build() {
         return (<Box dangerouslySetInnerHTML={{ __html: this.input }}></Box>);
     }
+
+    public buildString() {
+        return this.input;
+    }
 }
 
-export default IncomingMessageParser;
+export default MessageParser;
