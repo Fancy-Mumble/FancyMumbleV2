@@ -5,7 +5,7 @@ import 'dayjs/locale/en';
 import 'dayjs/plugin/isToday';
 import 'dayjs/plugin/isYesterday';
 import { grey } from "@mui/material/colors";
-import IncomingMessageParser from "../helper/IncomingMessageParser";
+import MessageParser from "../helper/MessageParser";
 import ThumbUpOffAltIcon from '@mui/icons-material/ThumbUpOffAlt';
 import { invoke } from "@tauri-apps/api";
 import { getProfileImage } from "../helper/UserInfoHelper";
@@ -16,6 +16,7 @@ import UserInfo from "./UserInfo";
 import React from "react";
 import { RootState } from "../store/store";
 import { useSelector } from "react-redux";
+import "./styles/ChatMessage.css";
 
 
 interface ChatMessageProps {
@@ -24,66 +25,17 @@ interface ChatMessageProps {
     messageId: number,
 }
 
-const useStyles = makeStyles((theme: any) => ({
-    root: {
-        display: 'flex',
-        marginBottom: theme.spacing(2),
-    },
-    avatar: {
-        marginRight: theme.spacing(2),
-        margin: theme.spacing(1),
-    },
-    messageContainer: {
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-    },
-    messageContainerInner: {
-        flexDirection: 'column',
-        display: 'flex',
-        alignItems: 'flex-start'
-    },
-    message: {
-        padding: theme.spacing(1),
-        borderRadius: theme.shape.borderRadius,
-        backgroundColor: theme.palette.background.paper,
-        wordBreak: 'break-word',
-    },
-    messageMetadata: {
-        display: 'flex',
-        justifyContent: 'flex-start',
-        alignItems: 'center',
-        width: '100%'
-
-    },
-    sender: {
-        alignSelf: 'flex-end',
-    },
-    receiver: {
-        alignSelf: 'flex-start',
-    },
-    metadata: {
-        fontSize: '0.8rem',
-        color: grey[700],
-    },
-    userInfo: {
-        color: grey[700],
-        textDecoration: 'none',
-    },
-}));
-
 function ChatMessage(props: ChatMessageProps) {
     const userList = useSelector((state: RootState) => state.reducer.userInfo);
     const dispatch = useDispatch();
-    const classes = useStyles();
     const followUpMessage = props.prevCommentBy === props.message.sender.user_id;
     const [userInfoAnchor, setUserInfoAnchor]: any = React.useState(null);
     const user = userList.users.find(e => e.id === props.message.sender.user_id);
 
     function parseMessage(message: string | undefined) {
         if (message && message.includes('<')) {
-            let messageParser = new IncomingMessageParser(message)
-                .parseForMarkdown()
+            let messageParser = new MessageParser(message)
+                .parseMarkdown()
                 .parseDOM((dom) => dom
                     .parseForImages()
                     .parseForLinks()
@@ -134,25 +86,25 @@ function ChatMessage(props: ChatMessageProps) {
     }
 
     return (
-        <Grid container className={classes.root} style={{ marginBottom: (followUpMessage ? 0 : '16px') }}>
+        <Grid container className="message-root" style={{ marginBottom: (followUpMessage ? 0 : '16px') }}>
             <Grid item>
                 <Avatar
                     src={getProfileImage(props.message.sender.user_id)}
-                    className={classes.avatar} style={{ visibility: (followUpMessage ? 'hidden' : 'visible') }}
+                    className="avatar" style={{ visibility: (followUpMessage ? 'hidden' : 'visible') }}
                     onClick={e => { setUserInfoAnchor(e.currentTarget); }}
                 />
                 {/*This is wrong, we create this for every chat message :O*/}
                 {/*showUserInfo()*/}
             </Grid>
-            <Grid item xs={10} className={classes.messageContainer}>
-                <Grid item className={classes.messageContainerInner}>
-                    <Box className={`${classes.message} ${false ? classes.sender : classes.receiver}`}>
+            <Grid item xs={10} className="message-container">
+                <Grid item className="message-container-inner">
+                    <Box className={`message ${false ? "sender" : "receiver"}`}>
                         {parseMessage(props.message.message)}
                     </Box>
                 </Grid>
-                <Grid item className={classes.messageMetadata}>
-                    <Typography variant="subtitle2" color="textSecondary" className={classes.metadata}>
-                        <Link className={classes.userInfo} href="#">{props.message.sender.user_name}</Link> - {generateDate(props.message.timestamp)}
+                <Grid item className="message-metadata">
+                    <Typography variant="subtitle2" className="metadata">
+                        <Link className="user-info" href="#">{props.message.sender.user_name}</Link> - {generateDate(props.message.timestamp)}
                     </Typography>
                     <Tooltip title="Like">
                         <IconButton aria-label="Example" size="small" onClick={e => likeMessage("abc")}>
