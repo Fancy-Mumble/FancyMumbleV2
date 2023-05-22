@@ -12,7 +12,7 @@ import { RootState } from '../store/store';
 import { useDispatch, useSelector } from 'react-redux';
 import { TextMessage, addChatMessage } from '../store/features/users/chatMessageSlice';
 import { formatBytes } from '../helper/Fomat';
-import OutgoingMessageParser from '../helper/OutgoingMessageParser';
+import MessageParser from '../helper/MessageParser';
 
 function Chat() {
     const [chatMessage, setChatMessage] = useState("");
@@ -48,12 +48,12 @@ function Chat() {
     }
 
     function sendChatMessage(e: any) {
-        let message = new OutgoingMessageParser(chatMessage)
+        let message = new MessageParser(chatMessage)
             .parseLinks()
             .parseCommands()
             .parseMarkdown()
-            .build();
-        customChatMessage(message)
+            .buildString();
+        customChatMessage(message);
     }
 
     function keyDownHandler(e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) {
