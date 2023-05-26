@@ -39,7 +39,7 @@ interface UserDataUpdate {
   data: any
 }
 
-interface UserInfoState {
+export interface UserInfoState {
   currentUser: UsersState | undefined,
   users: UsersState[],
   connected: boolean,
