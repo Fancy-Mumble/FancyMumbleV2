@@ -3,6 +3,7 @@ use std::sync::atomic::Ordering;
 use crate::{connection::Connection, mumble, utils::messages::message_builder};
 use tokio::select;
 use tokio::time;
+use tracing::trace;
 use tracing::{debug, error};
 
 use super::{ConnectionThread, OutputThread, DEADMAN_INTERVAL};
@@ -29,11 +30,12 @@ impl OutputThread for Connection {
                             debug!("Sending text message to channel: {:?}", result.channel_id);
                             let message = mumble::proto::TextMessage {
                                 actor: None,
-                                session: Vec::new(),
-                                channel_id: vec![result.channel_id.unwrap_or(0)],
+                                session: result.reciever.iter().copied().collect(),
+                                channel_id: result.channel_id.iter().copied().collect(),
                                 tree_id: Vec::new(),
                                 message: result.message,
                             };
+                            trace!("Sending message: {:?}", message);
                             let buffer = message_builder(&message);
 
                             if let Err(error) = tx_out.send(buffer) {

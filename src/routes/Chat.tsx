@@ -13,6 +13,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { TextMessage, addChatMessage } from '../store/features/users/chatMessageSlice';
 import { formatBytes } from '../helper/Fomat';
 import MessageParser from '../helper/MessageParser';
+import { UserInfoState, UsersState } from '../store/features/users/userSlice';
+import { ChatMessageHandler } from '../helper/ChatMessage';
 
 function Chat() {
     const [chatMessage, setChatMessage] = useState("");
@@ -26,40 +28,12 @@ function Chat() {
 
     const currentChannel = channelInfo.find(e => e.channel_id === userInfo.currentUser?.channel_id)?.name;
 
-    function pushChatMessage(message: TextMessage) {
-        dispatch(addChatMessage(message));
-    }
-
-    function customChatMessage(data: string) {
-        invoke('send_message', { chatMessage: data, channelId: userInfo.currentUser?.channel_id });
-        console.log("customChatMessage", data);
-        pushChatMessage({
-            actor: userInfo.currentUser?.id || 0,
-            sender: {
-                user_id: userInfo.currentUser?.id || 0,
-                user_name: userInfo.currentUser?.name || 'unknown'
-            },
-            channel_id: [0],
-            tree_id: [0],
-            message: data,
-            timestamp: Date.now()
-        })
-        setChatMessage("");
-    }
-
-    function sendChatMessage(e: any) {
-        let message = new MessageParser(chatMessage)
-            .parseLinks()
-            .parseCommands()
-            .parseMarkdown()
-            .buildString();
-        customChatMessage(message);
-    }
+    const chatMessageHandler = new ChatMessageHandler(dispatch, setChatMessage);
 
     function keyDownHandler(e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) {
         if (e && e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            sendChatMessage({});
+            chatMessageHandler.sendChatMessage(chatMessage, userInfo.currentUser);
         }
     }
 
@@ -81,11 +55,11 @@ function Chat() {
                 reader.readAsDataURL(file);
                 reader.onload = function () {
                     if (reader.result && (reader.result as string).length > 0x7fffff) {
-                        customChatMessage("[[ Image too large ( " + formatBytes((reader.result as string).length) + " out of " + formatBytes(0x7fffff) + ") ]]");
+                        chatMessageHandler.sendCustomChatMessage("[[ Image too large ( " + formatBytes((reader.result as string).length) + " out of " + formatBytes(0x7fffff) + ") ]]", userInfo.currentUser);
                         return;
                     }
                     let img = '<img src="' + reader.result + '" />';
-                    customChatMessage(img);
+                    chatMessageHandler.sendCustomChatMessage(img, userInfo.currentUser);
                 };
             }
         }
@@ -119,7 +93,7 @@ function Chat() {
                                 <GifIcon />
                             </IconButton>
                             <Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />
-                            <IconButton sx={{ p: '10px' }} aria-label="Send Message" onClick={sendChatMessage}>
+                            <IconButton sx={{ p: '10px' }} aria-label="Send Message" onClick={() => chatMessageHandler.sendChatMessage(chatMessage, userInfo.currentUser)}>
                                 <SendIcon />
                             </IconButton>
                         </Paper>

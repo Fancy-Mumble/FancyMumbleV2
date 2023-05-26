@@ -44,6 +44,7 @@ pub struct MessageChannels {
 pub struct TextMessage {
     message: String,
     channel_id: Option<u32>,
+    reciever: Option<u32>,
 }
 
 pub struct Connection {
@@ -133,10 +134,16 @@ impl Connection {
         Ok(())
     }
 
-    pub fn send_message(&self, channel_id: Option<u32>, message: &str) -> AnyError<()> {
+    pub fn send_message(
+        &self,
+        channel_id: Option<u32>,
+        reciever: Option<u32>,
+        message: &str,
+    ) -> AnyError<()> {
         self.tx_message_channel.send(TextMessage {
             message: message.to_string(),
             channel_id,
+            reciever,
         })?;
 
         Ok(())
