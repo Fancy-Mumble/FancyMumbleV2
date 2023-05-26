@@ -1,10 +1,14 @@
 import { Typography, Popover, Card, Avatar, CardMedia, CardContent, Paper, IconButton, InputBase, Divider, Box } from "@mui/material";
 import { UsersState } from "../store/features/users/userSlice";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { getBackgroundFromComment, getProfileImage } from "../helper/UserInfoHelper";
 import SendIcon from '@mui/icons-material/Send';
 import "./styles/UserInfo.css";
 import dayjs from "dayjs";
+import MessageParser from "../helper/MessageParser";
+import { ChatMessageHandler } from "../helper/ChatMessage";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "../store/store";
 
 interface UserInfoProps {
     anchorEl: HTMLElement | null;
@@ -13,7 +17,12 @@ interface UserInfoProps {
 }
 
 function UserInfo(props: UserInfoProps) {
+    const currentUser = useSelector((state: RootState) => state.reducer.userInfo.currentUser);
     const background = getBackgroundFromComment(props.userInfo, false);
+    const [chatMessage, setChatMessage] = useState("");
+
+    const dispatch = useDispatch();
+    const chatMessageHandler = new ChatMessageHandler(dispatch, setChatMessage);
 
     let mutedText = props.userInfo?.mutedSince ? dayjs(props.userInfo?.mutedSince).fromNow() : '';
     let deafenedText = props.userInfo?.deafenedSince ? dayjs(props.userInfo?.deafenedSince).fromNow() : '';
@@ -42,6 +51,13 @@ function UserInfo(props: UserInfoProps) {
                     <span className="user-text-title">{statusText}</span><span>{status}</span>
                 </Box>
             )
+        }
+    }
+
+    function keyDownHandler(e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) {
+        if (e && e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            chatMessageHandler.sendPrivateMessage(chatMessage, currentUser, props.userInfo?.id || 0);
         }
     }
 
@@ -88,8 +104,12 @@ function UserInfo(props: UserInfoProps) {
                         >
                             <InputBase
                                 sx={{ ml: 1, flex: 1 }}
-                                placeholder={"Send a message to " + props.userInfo?.name}
+                                placeholder={"write " + props.userInfo?.name + "..."}
                                 inputProps={{ 'aria-label': 'search google maps' }}
+                                onChange={e => setChatMessage(e.target.value)}
+                                onKeyDown={keyDownHandler}
+                                value={chatMessage}
+                                multiline
                             />
                             <Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />
                             <IconButton color="primary" sx={{ p: '10px' }} aria-label="directions">

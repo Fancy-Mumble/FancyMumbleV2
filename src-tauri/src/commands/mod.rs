@@ -67,11 +67,12 @@ pub async fn connect_to_server(
 pub async fn send_message(
     chat_message: String,
     channel_id: Option<u32>,
+    reciever: Option<u32>,
     state: State<'_, ConnectionState>,
 ) -> Result<(), String> {
     let guard = state.connection.lock().await;
     if let Some(guard) = guard.as_ref() {
-        if let Err(e) = guard.send_message(channel_id, &chat_message) {
+        if let Err(e) = guard.send_message(channel_id, reciever, &chat_message) {
             return Err(format!("{e:?}"));
         }
     }
