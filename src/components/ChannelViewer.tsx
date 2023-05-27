@@ -34,7 +34,7 @@ function ChannelViewer() {
     }
 
     function joinChannel(channelId: number) {
-        invoke('join_channel', { channelId: channelId });
+        invoke('change_user_state', { userState: { channel_id: channelId  }});
     }
 
     function displayUserInfo(user: UsersState): ReactNode {

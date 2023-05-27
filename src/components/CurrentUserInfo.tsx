@@ -10,6 +10,7 @@ import MicOffIcon from '@mui/icons-material/MicOff';
 import './styles/CurrentUserInfo.css'
 import { invoke } from "@tauri-apps/api";
 import { UpdateableUserState, UsersState, updateUser, updateUserFromUpdateable } from "../store/features/users/userSlice";
+import "./styles/common.css"
 
 function CurrentUserInfo() {
     const dispatch = useDispatch();
@@ -58,7 +59,8 @@ function CurrentUserInfo() {
             display: 'flex',
             padding: '0 10px',
             backgroundSize: 'cover',
-        }}>
+        }}
+        className={userBackground ? "" : "animated-background"}>
             <Box sx={{
                 display: 'flex',
                 flexDirection: 'column',

@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../store/store";
 
 export function getBackgroundFromComment(user: UsersState | undefined, withUrl: boolean = true) {
-    let defaultColor = "#0057b7";
+    let defaultColor = undefined;
 
     if (!user || !user.comment) {
         return defaultColor;
@@ -21,6 +21,16 @@ export function getBackgroundFromComment(user: UsersState | undefined, withUrl: 
     const lastImage = images[images.length - 1];
     return withUrl ? "url(" + lastImage + ")" : lastImage;
 
+}
+
+export function getTextFromcomment(user: UsersState | undefined) {
+    if (!user || !user.comment) {
+        return "";
+    }
+
+    let cleanMessage = DOMPurify.sanitize(user.comment, {ALLOWED_TAGS: ['b', 'ul', 'li', 'i', 'br', 'span', 'div', 'p']});
+
+    return cleanMessage;
 }
 
 export function getProfileImage(user_id: number) {

@@ -24,7 +24,7 @@ use tracing::Level;
 use tracing_subscriber::fmt;
 
 use crate::commands::{
-    change_user_state, connect_to_server, join_channel, like_message, logout, send_message,
+    change_user_state, connect_to_server, get_audio_devices, like_message, logout, send_message,
     set_user_image,
 };
 
@@ -61,9 +61,9 @@ fn main() {
             send_message,
             logout,
             like_message,
-            join_channel,
             set_user_image,
-            change_user_state
+            change_user_state,
+            get_audio_devices
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
