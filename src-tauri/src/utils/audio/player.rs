@@ -33,7 +33,6 @@ impl Player {
 
     pub fn start(&mut self) -> AnyError<()> {
         if self.playing.swap(true, Ordering::Relaxed) || self.audio_thread.is_some() {
-            error!("Audio thread already started");
             return Err("Audio thread already started".into());
         }
 

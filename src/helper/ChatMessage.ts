@@ -32,7 +32,7 @@ export class ChatMessageHandler {
         this.setChatMessage("");
     }
 
-    public sendPrivateMessage(data: string, userInfo: UsersState | undefined, reciever: number) {
+    public sendPrivateMessage(data: string, reciever: number) {
         invoke('send_message', { chatMessage: data, reciever: reciever });
         this.setChatMessage("");
     }

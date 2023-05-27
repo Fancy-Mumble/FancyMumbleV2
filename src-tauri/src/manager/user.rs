@@ -48,7 +48,7 @@ pub struct User {
 #[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct UpdateableUserState {
-    pub id: u32,
+    pub id: Option<u32>,
     pub name: Option<String>,
     pub channel_id: Option<u32>,
     pub mute: Option<bool>,
