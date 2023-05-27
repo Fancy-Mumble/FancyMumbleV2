@@ -131,21 +131,6 @@ pub async fn like_message(
 }
 
 #[tauri::command]
-pub async fn join_channel(
-    channel_id: u32,
-    state: State<'_, ConnectionState>,
-) -> Result<(), String> {
-    let guard = state.connection.lock().await;
-    if let Some(guard) = guard.as_ref() {
-        if let Err(e) = guard.join_channel(channel_id) {
-            return Err(format!("{e:?}"));
-        }
-    }
-
-    Ok(())
-}
-
-#[tauri::command]
 pub async fn set_user_image(
     image_path: &str,
     image_type: String,
@@ -179,4 +164,14 @@ pub async fn change_user_state(
     }
 
     Ok(())
+}
+
+#[tauri::command]
+pub async fn get_audio_devices(state: State<'_, ConnectionState>) -> Result<Vec<String>, String> {
+    let connection = &state.connection;
+    let guard = connection.lock().await;
+
+    if let Some(guard) = guard.as_ref() {}
+
+    Err("Failed to get audio devices".to_string())
 }

@@ -201,37 +201,6 @@ impl Connection {
         Ok(())
     }
 
-    pub fn join_channel(&self, channel_id: u32) -> AnyError<()> {
-        let join_channel = mumble::proto::UserState {
-            session: None,
-            actor: None,
-            name: None,
-            user_id: None,
-            channel_id: Some(channel_id),
-            mute: None,
-            deaf: None,
-            suppress: None,
-            self_mute: None,
-            self_deaf: None,
-            texture: None,
-            plugin_context: None,
-            plugin_identity: None,
-            comment: None,
-            hash: None,
-            comment_hash: None,
-            texture_hash: None,
-            priority_speaker: None,
-            recording: None,
-            temporary_access_tokens: Vec::new(),
-            listening_channel_add: Vec::new(),
-            listening_channel_remove: Vec::new(),
-            listening_volume_adjustment: Vec::new(),
-        };
-        self.tx_out.send(message_builder(&join_channel))?;
-
-        Ok(())
-    }
-
     pub fn update_user_info(&self, user: &mut UpdateableUserState) -> AnyError<()> {
         let updated_state = mumble::proto::UserState {
             session: None,

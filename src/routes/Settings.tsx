@@ -6,6 +6,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import KeyIcon from '@mui/icons-material/Key';
 import SecurityIcon from '@mui/icons-material/Security';
 import Profile from "../components/settings/Profile";
+import AudioSettings from "../components/settings/Audio";
 
 function Settings() {
     const navigate = useNavigate();
@@ -63,7 +64,7 @@ function Settings() {
             </Box>
             <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
                 <Box sx={{ p: 3 }}>
-                    {selectedIndex === 0 && <div>Audio</div>}
+                    {selectedIndex === 0 && <AudioSettings />}
                     {selectedIndex === 1 && <Profile />}
                     {selectedIndex === 2 && <div>Additional Features</div>}
                     {selectedIndex === 3 && <div>Privacy</div>}

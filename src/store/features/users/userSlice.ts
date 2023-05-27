@@ -3,7 +3,7 @@ import type { PayloadAction } from '@reduxjs/toolkit'
 
 
 export interface UpdateableUserState {
-  id: number
+  id?: number
   channel_id?: number,
   comment?: string,
   deaf?: boolean,

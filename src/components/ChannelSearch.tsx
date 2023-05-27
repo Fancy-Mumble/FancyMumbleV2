@@ -3,7 +3,6 @@ import SearchIcon from '@mui/icons-material/Search';
 import React from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../store/store";
-import { getChannelImageFromDescription } from "../helper/ChannelInfoHelper";
 import { invoke } from "@tauri-apps/api";
 import './styles/ChannelSearch.css';
 import Fuse from 'fuse.js';
@@ -46,7 +45,7 @@ function ChannelSearch() {
 
     const joinChannel = (channelId: number) => (event: any) => {
         event?.stopPropagation();
-        invoke('join_channel', { channelId: channelId });
+        invoke('change_user_state', { userState: { channel_id: channelId  }});
     }
 
 

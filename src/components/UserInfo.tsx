@@ -1,7 +1,7 @@
 import { Typography, Popover, Card, Avatar, CardMedia, CardContent, Paper, IconButton, InputBase, Divider, Box } from "@mui/material";
 import { UsersState } from "../store/features/users/userSlice";
 import React, { useEffect, useState } from "react";
-import { getBackgroundFromComment, getProfileImage } from "../helper/UserInfoHelper";
+import { getBackgroundFromComment, getProfileImage, getTextFromcomment } from "../helper/UserInfoHelper";
 import SendIcon from '@mui/icons-material/Send';
 import "./styles/UserInfo.css";
 import dayjs from "dayjs";
@@ -9,6 +9,7 @@ import MessageParser from "../helper/MessageParser";
 import { ChatMessageHandler } from "../helper/ChatMessage";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../store/store";
+import "./styles/common.css"
 
 interface UserInfoProps {
     anchorEl: HTMLElement | null;
@@ -17,8 +18,8 @@ interface UserInfoProps {
 }
 
 function UserInfo(props: UserInfoProps) {
-    const currentUser = useSelector((state: RootState) => state.reducer.userInfo.currentUser);
     const background = getBackgroundFromComment(props.userInfo, false);
+    const profileText = getTextFromcomment(props.userInfo);
     const [chatMessage, setChatMessage] = useState("");
 
     const dispatch = useDispatch();
@@ -28,7 +29,7 @@ function UserInfo(props: UserInfoProps) {
     let deafenedText = props.userInfo?.deafenedSince ? dayjs(props.userInfo?.deafenedSince).fromNow() : '';
 
     function generateCardMedia() {
-        if (!background.startsWith("#")) {
+        if (background) {
             return (
                 <CardMedia
                     component="img"
@@ -39,7 +40,7 @@ function UserInfo(props: UserInfoProps) {
             );
         } else {
             return (
-                <Box sx={{ bgcolor: 'primary.main', width: '100%', height: 100 }} />
+                <Box sx={{ width: '100%', height: 100 }} className="animated-background" />
             );
         }
     }
@@ -57,7 +58,7 @@ function UserInfo(props: UserInfoProps) {
     function keyDownHandler(e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) {
         if (e && e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            chatMessageHandler.sendPrivateMessage(chatMessage, currentUser, props.userInfo?.id || 0);
+            chatMessageHandler.sendPrivateMessage(chatMessage, props.userInfo?.id || 0);
         }
     }
 
@@ -97,6 +98,10 @@ function UserInfo(props: UserInfoProps) {
                             {showStatusBox("Muted", mutedText)}
                             {showStatusBox("Deafened", deafenedText)}
                         </Box>
+                        <Divider sx={{ margin: '10px 0' }} />
+                        <Box className="user-info-text">
+                            <Box className="user-profile-content" dangerouslySetInnerHTML={{__html: profileText}}></Box>
+                        </Box>
                         <Paper
                             component="form"
                             sx={{ p: '2px 4px', display: 'flex', alignItems: 'center' }}
@@ -109,7 +114,6 @@ function UserInfo(props: UserInfoProps) {
                                 onChange={e => setChatMessage(e.target.value)}
                                 onKeyDown={keyDownHandler}
                                 value={chatMessage}
-                                multiline
                             />
                             <Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />
                             <IconButton color="primary" sx={{ p: '10px' }} aria-label="directions">
