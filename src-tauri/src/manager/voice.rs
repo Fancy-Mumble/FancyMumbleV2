@@ -2,6 +2,7 @@ use crate::errors::AnyError;
 use crate::protocol::serialize::message_container::FrontendMessage;
 use crate::utils::audio;
 use crate::utils::audio::player::Player;
+use crate::utils::audio::recorder::Recorder;
 use crate::{connection::traits::Shutdown, errors::voice_error::VoiceError};
 use async_trait::async_trait;
 use serde::Serialize;
@@ -23,6 +24,7 @@ pub struct Manager {
     _server_channel: Sender<Vec<u8>>,
     user_audio_info: HashMap<u32, AudioInfo>,
     audio_player: Player,
+    recoder: Recorder,
     decoder: audio::decoder::Decoder,
 }
 
@@ -33,7 +35,7 @@ impl Manager {
             error!("Failed to start audio player: {}", error);
         }
 
-        let mut recoder = audio::recorder::Recorder::new();
+        let mut recoder = audio::recorder::Recorder::new(SAMPLE_RATE, CHANNELS);
         if let Err(error) = recoder.start() {
             error!("Failed to start audio recorder: {}", error);
         }
@@ -43,6 +45,7 @@ impl Manager {
             _server_channel: server_channel,
             user_audio_info: HashMap::new(),
             audio_player: player,
+            recoder,
             decoder: audio::decoder::Decoder::new(SAMPLE_RATE, CHANNELS)?,
         })
     }

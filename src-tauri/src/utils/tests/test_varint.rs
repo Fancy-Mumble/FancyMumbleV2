@@ -414,4 +414,109 @@ mod tests {
         assert_eq!(42, builder_varint.parsed_value);
         assert_eq!(9, builder_varint.parsed_bytes);
     }
+
+    #[test]
+    fn test_7bit_positive_integer_parse() {
+        assert_eq!(
+            &vec![127],
+            Builder::from(127)
+                .build()
+                .expect(BUILD_FAILED_STR)
+                .parsed_vec()
+        );
+        assert_eq!(
+            &vec![0],
+            Builder::from(9)
+                .build()
+                .expect(BUILD_FAILED_STR)
+                .parsed_vec()
+        );
+        assert_eq!(
+            &vec![42],
+            Builder::from(42)
+                .build()
+                .expect(BUILD_FAILED_STR)
+                .parsed_vec()
+        );
+    }
+
+    #[test]
+    fn test_14bit_positive_integer_encode() {
+        assert_eq!(
+            &vec![0xBF, 0xFF],
+            Builder::from(16383)
+                .build()
+                .expect(BUILD_FAILED_STR)
+                .parsed_vec()
+        );
+        assert_eq!(
+            &vec![0x80, 128],
+            Builder::from(128)
+                .build()
+                .expect(BUILD_FAILED_STR)
+                .parsed_vec()
+        );
+        assert_eq!(
+            &vec![0x80, 255],
+            Builder::from(255)
+                .build()
+                .expect(BUILD_FAILED_STR)
+                .parsed_vec()
+        );
+    }
+
+    #[test]
+    fn test_21bit_positive_integer_parse() {
+        assert_eq!(
+            &vec![0xDF, 0xFF, 0xFF],
+            Builder::from(0x001F_FFFF)
+                .build()
+                .expect(BUILD_FAILED_STR)
+                .parsed_vec()
+        );
+        assert_eq!(
+            &vec![0xC0, 0x40, 0],
+            Builder::from(16_384)
+                .build()
+                .expect(BUILD_FAILED_STR)
+                .parsed_vec()
+        );
+    }
+
+    #[test]
+    fn test_28bit_positive_integer_parse() {
+        assert_eq!(
+            &vec![0xEF, 0xFF, 0xFF, 0xFF],
+            Builder::from(0x0FFF_FFFF)
+                .build()
+                .expect(BUILD_FAILED_STR)
+                .parsed_vec()
+        );
+        assert_eq!(
+            &vec![0xE0, 0x20, 0, 0],
+            Builder::from(2_097_152)
+                .build()
+                .expect(BUILD_FAILED_STR)
+                .parsed_vec()
+        );
+    }
+
+    #[test]
+    fn test_32bit_positive_integer_parse() {
+        assert_eq!(
+            &vec![0xF0, 0xFF, 0xFF, 0xFF, 0xFF],
+            Builder::from(0xFFFF_FFFF)
+                .build()
+                .expect(BUILD_FAILED_STR)
+                .parsed_vec()
+        );
+
+        assert_eq!(
+            &vec![0xF0, 0x10, 0, 0, 0],
+            Builder::from(268_435_456)
+                .build()
+                .expect(BUILD_FAILED_STR)
+                .parsed_vec()
+        );
+    }
 }
