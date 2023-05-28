@@ -1,7 +1,6 @@
 import { Box } from "@mui/material";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
-import { markedHighlight } from "marked-highlight";
 
 
 class DOMMessageParser {

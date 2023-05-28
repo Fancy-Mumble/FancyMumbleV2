@@ -2,8 +2,10 @@ use std::{borrow::BorrowMut, collections::HashMap};
 
 use crate::{
     connection::{traits::Shutdown, Connection},
+    errors::string_convertion::ErrorString,
     manager::user::UpdateableUserState,
     protocol::message_transmitter::MessageTransmitter,
+    utils::audio::device_manager::AudioDeviceManager,
 };
 use tauri::State;
 use tokio::sync::Mutex;
@@ -14,6 +16,7 @@ pub struct ConnectionState {
     pub window: Mutex<tauri::Window>,
     pub package_info: Mutex<tauri::PackageInfo>,
     pub message_handler: Mutex<HashMap<String, Box<dyn Shutdown + Send>>>,
+    pub device_manager: Mutex<Option<AudioDeviceManager>>,
 }
 
 async fn add_message_handler(
@@ -167,11 +170,21 @@ pub async fn change_user_state(
 }
 
 #[tauri::command]
-pub async fn get_audio_devices(state: State<'_, ConnectionState>) -> Result<Vec<String>, String> {
-    let connection = &state.connection;
-    let guard = connection.lock().await;
+pub async fn get_audio_devices(
+    state: State<'_, ConnectionState>,
+) -> Result<Vec<String>, ErrorString> {
+    let device_manager = &state.device_manager;
+    let mut guard = device_manager.lock().await;
 
-    if let Some(guard) = guard.as_ref() {}
+    if guard.is_none() {
+        *guard = Some(AudioDeviceManager::new());
+    }
 
-    Err("Failed to get audio devices".to_string())
+    if let Some(guard) = guard.as_mut() {
+        if let Ok(mut devices) = guard.get_audio_device() {
+            return Ok(devices.drain().map(|d| d.1).collect());
+        }
+    }
+
+    Err(ErrorString("Failed to get audio devices".to_string()))
 }
