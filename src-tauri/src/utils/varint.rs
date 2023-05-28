@@ -27,10 +27,23 @@ impl From<&[u8]> for Builder {
     }
 }
 
+impl From<i128> for Builder {
+    fn from(value: i128) -> Self {
+        let bytes = Varint::encode(value);
+        let size = bytes.as_ref().map(|b| b.len() as u32);
+
+        Self {
+            bytes,
+            parsed_value: Some(value),
+            parsed_bytes: size,
+        }
+    }
+}
+
 impl Builder {
     pub fn build(self) -> AnyError<Varint> {
         Ok(Varint {
-            _bytes: self.bytes.ok_or_else(|| VoiceError::new("No bytes"))?,
+            bytes: self.bytes.ok_or_else(|| VoiceError::new("No bytes"))?,
             parsed_value: self
                 .parsed_value
                 .ok_or_else(|| VoiceError::new("No parsed value"))?,
@@ -42,8 +55,7 @@ impl Builder {
 }
 
 pub struct Varint {
-    //TODO: Implement trait into
-    _bytes: Vec<u8>,
+    bytes: Vec<u8>,
     pub parsed_value: i128,
     pub parsed_bytes: u32,
 }
@@ -51,6 +63,10 @@ pub struct Varint {
 impl Varint {
     pub const fn parsed_pair(&self) -> (i128, u32) {
         (self.parsed_value, self.parsed_bytes)
+    }
+
+    pub const fn parsed_vec(&self) -> &Vec<u8> {
+        &self.bytes
     }
 
     fn parse(bytes: &[u8]) -> AnyError<(i128, u32)> {
@@ -123,5 +139,59 @@ impl Varint {
         };
 
         Ok(value)
+    }
+
+    fn encode(value: i128) -> Option<Vec<u8>> {
+        let mut bytes = Vec::new();
+
+        match value {
+            0..=127 => {
+                bytes.push(value as u8);
+            }
+            128..=16_383 => {
+                let byte1 = ((value >> 8) & 0b0011_1111) as u8 | 0b1000_0000;
+                let byte2 = (value & 0xFF) as u8;
+                bytes.push(byte1);
+                bytes.push(byte2);
+            }
+            16_384..=2_097_151 => {
+                let byte1 = ((value >> 16) & 0b0001_1111) as u8 | 0b1100_0000;
+                let byte2 = ((value >> 8) & 0xFF) as u8;
+                let byte3 = (value & 0xFF) as u8;
+                bytes.push(byte1);
+                bytes.push(byte2);
+                bytes.push(byte3);
+            }
+            2_097_152..=268_435_455 => {
+                let byte1 = ((value >> 24) & 0b0000_1111) as u8 | 0b1110_0000;
+                let byte2 = ((value >> 16) & 0xFF) as u8;
+                let byte3 = ((value >> 8) & 0xFF) as u8;
+                let byte4 = (value & 0xFF) as u8;
+                bytes.push(byte1);
+                bytes.push(byte2);
+                bytes.push(byte3);
+                bytes.push(byte4);
+            }
+            268_435_456..=4_294_967_295 => {
+                bytes.push(0b1111_0000);
+                bytes.extend_from_slice(&(value as u32).to_be_bytes());
+            }
+            4_294_967_296..=18_446_744_073_709_551_615 => {
+                bytes.push(0b1111_0100);
+                bytes.extend_from_slice(&(value as u64).to_be_bytes());
+            }
+            ..=-5 => {
+                let inverted_value = !value as u128;
+                bytes.push((inverted_value & 0b0011_1111) as u8 | 0b1111_1000);
+                bytes.extend_from_slice(&Self::encode(-value - 1)?);
+            }
+            -4..=-1 => {
+                let inverted_value = !value as u8;
+                bytes.push(inverted_value | 0b1111_1100);
+            }
+            _ => return None, // Value out of supported range
+        }
+
+        Some(bytes)
     }
 }
