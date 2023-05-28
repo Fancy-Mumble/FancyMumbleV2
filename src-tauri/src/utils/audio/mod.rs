@@ -1,4 +1,4 @@
-pub mod audio_device_manager;
 pub mod decoder;
+pub mod device_manager;
 pub mod player;
 pub mod recorder;

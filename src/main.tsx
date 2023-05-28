@@ -30,6 +30,12 @@ marked.use(markedHighlight({
   }
 }));
 
+marked.use({
+  breaks: true,
+  mangle: false,
+  headerIds: false
+})
+
 dayjs.extend(isToday);
 dayjs.extend(isYesterday);
 dayjs.extend(relativeTime)
