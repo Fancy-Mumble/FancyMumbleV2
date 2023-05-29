@@ -20,13 +20,13 @@ where
 }
 
 pub trait NetworkMessage {
-    fn message_type(&self) -> u16;
+    fn message_type() -> u16;
 }
 
 macro_rules! message_builder {
     ($($value:expr => $proto:ident),*) => {
         $(impl NetworkMessage for mumble::proto::$proto {
-            fn message_type(&self) -> u16 {
+            fn message_type() -> u16 {
                 $value
             }
         })*
@@ -87,15 +87,22 @@ pub fn message_builder<T>(message: &T) -> Vec<u8>
 where
     T: NetworkMessage + Message,
 {
-    let message_type = message.message_type();
     let payload = message.encode_to_vec();
+    raw_message_builder::<T>(&payload)
+}
+
+pub fn raw_message_builder<T>(payload: &[u8]) -> Vec<u8>
+where
+    T: NetworkMessage + Message,
+{
+    let message_type = T::message_type();
     let length = payload.len();
     assert!(length < u32::MAX as usize);
 
     let mut new_buffer = vec![0; length + 6];
     BigEndian::write_u16(&mut new_buffer, message_type);
     BigEndian::write_u32(&mut new_buffer[2..], length as u32);
-    new_buffer[6..].copy_from_slice(&payload);
+    new_buffer[6..].copy_from_slice(payload);
 
     new_buffer
 }

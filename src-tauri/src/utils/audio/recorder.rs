@@ -1,8 +1,7 @@
 use std::{
-    borrow::BorrowMut,
     sync::{
         atomic::{AtomicBool, Ordering},
-        mpsc::{self, Receiver, Sender},
+        mpsc::{self},
         Arc,
     },
     thread,
@@ -12,30 +11,31 @@ use std::{
 use cpal::traits::DeviceTrait;
 use opus::Channels;
 use rodio::cpal::{self, traits::HostTrait, traits::StreamTrait};
-use tracing::{error, trace, warn};
+use tokio::sync::broadcast::Sender;
+use tracing::{error, trace};
 
-use crate::errors::AnyError;
+use crate::{
+    errors::AnyError,
+    mumble::proto::UdpTunnel,
+    utils::{messages::raw_message_builder, varint},
+};
 
 pub struct Recorder {
     audio_thread: Option<thread::JoinHandle<()>>,
-    _queue_rx: Receiver<Vec<u8>>,
-    _queue_tx: Option<Sender<Vec<u8>>>,
     playing: Arc<AtomicBool>,
-    sample_rate: u32,
-    channels: opus::Channels,
+    server_channel: Option<Sender<Vec<u8>>>,
 }
 
-impl Recorder {
-    pub fn new(sample_rate: u32, channels: opus::Channels) -> Self {
-        let (tx, rx) = mpsc::channel();
+const VOLUME_ADJUSTMENT: f32 = 12.0;
+const BUFFER_SIZE_USIZE: usize = 4096;
+const MAXIMUM_SAMPLES_PER_TALK: u64 = 600;
 
+impl Recorder {
+    pub fn new(server_channel: Sender<Vec<u8>>) -> Self {
         Self {
             audio_thread: None,
-            _queue_rx: rx,
-            _queue_tx: Some(tx),
             playing: Arc::new(AtomicBool::new(false)),
-            sample_rate,
-            channels,
+            server_channel: Some(server_channel),
         }
     }
 
@@ -45,15 +45,12 @@ impl Recorder {
             return Err("Audio thread already started".into());
         }
 
-        //let audio_queue_ref = self.queue_tx.take().unwrap();
-        //let playing_clone = self.playing.clone();
-
-        /*let sample_rate = cpal::SampleRate(self.sample_rate);
-        let channels = match self.channels {
-            opus::Channels::Mono => 1,
-            opus::Channels::Stereo => 2,
-        };*/
         let playing_clone = self.playing.clone();
+        let audio_queue_ref = self
+            .server_channel
+            .take()
+            .ok_or("failed to get audio queue")
+            .expect("failed to get audio queue");
 
         self.audio_thread = Some(thread::spawn(move || {
             trace!("Starting audio thread");
@@ -73,8 +70,7 @@ impl Recorder {
                 .max_by(|a, b| a.max_sample_rate().cmp(&b.max_sample_rate()))
                 .expect("Failed to get max sample rate");
 
-            const buffer_size_usize: usize = 4096;
-            let buffer_size = cpal::BufferSize::Fixed(buffer_size_usize as u32);
+            let buffer_size = cpal::BufferSize::Fixed(BUFFER_SIZE_USIZE as u32);
 
             let config = cpal::StreamConfig {
                 channels: device_config.channels(),
@@ -82,11 +78,21 @@ impl Recorder {
                 buffer_size,
             };
 
+            trace!("Using config: {:?}", config);
+
             let (tx, rx) = mpsc::channel();
 
             let callback = move |data: &[f32], _: &cpal::InputCallbackInfo| {
+                let mut processed_buffer = data.to_vec();
+
+                // Convert stereo samples to mono by averaging the left and right channels
+                for (_, processed_sample) in processed_buffer.iter_mut().enumerate() {
+                    *processed_sample *= VOLUME_ADJUSTMENT;
+                }
+
                 // Add the audio samples to the buffer
-                tx.send(data.to_vec()).expect("Failed to send audio data");
+                tx.send(processed_buffer)
+                    .expect("Failed to send audio data");
             };
 
             let err_fn = |err| error!("an error occurred on stream: {}", err);
@@ -111,27 +117,50 @@ impl Recorder {
 
             trace!("Audio thread started");
             trace!("Playing: {:?}", playing_clone.load(Ordering::Relaxed));
+
+            let mut sequence_number = 0u64;
             while playing_clone.load(Ordering::Relaxed) {
                 let value = rx.recv().expect("Failed to receive audio data");
                 let output = encoder
-                    .encode_vec_float(&value, buffer_size_usize)
+                    .encode_vec_float(&value, BUFFER_SIZE_USIZE)
                     .expect("Failed to encode audio data");
 
-                trace!("Sending audio data to queue: {:?}", output);
+                let mut audio_buffer = Vec::new();
+
+                let opus_audio_codec = 4u8 << 5;
+                let target = 0b0000_0000u8;
+                let first_byte = opus_audio_codec | target;
+                audio_buffer.push(first_byte);
+
+                let sequence_number_bytes = varint::Builder::from(sequence_number as i128)
+                    .build()
+                    .expect("Failed to build sequence number");
+                audio_buffer.extend(sequence_number_bytes.parsed_vec());
+                sequence_number += 1;
+
+                let mut size_pre = output.len() as i128;
+                if sequence_number > MAXIMUM_SAMPLES_PER_TALK {
+                    size_pre |= 1 << 14;
+                    sequence_number = 0;
+                }
+                let size = varint::Builder::new(size_pre)
+                    .minimum_bytes(2)
+                    .encode_build()
+                    .expect("Failed to build size");
+
+                audio_buffer.extend(size.parsed_vec());
+
+                audio_buffer.extend(output);
+
+                let result_buffer = raw_message_builder::<UdpTunnel>(&audio_buffer);
+                audio_queue_ref
+                    .send(result_buffer)
+                    .expect("Failed to send audio data");
             }
         }));
 
         Ok(())
     }
-
-    /*pub fn read_queue(&mut self) -> AnyError<Vec<u8>> {
-        if self.playing.load(Ordering::Relaxed) {
-            //todo add user id to audio data
-            return Ok(self.queue_rx.recv_timeout(Duration::from_millis(2000))?);
-        }
-
-        Err("Audio thread not started".into())
-    }*/
 
     pub fn stop(&mut self) {
         if self.playing.swap(false, Ordering::Relaxed) {
