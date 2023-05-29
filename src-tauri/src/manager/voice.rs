@@ -35,7 +35,8 @@ impl Manager {
             error!("Failed to start audio player: {}", error);
         }
 
-        let mut recoder = audio::recorder::Recorder::new(SAMPLE_RATE, CHANNELS);
+        let server_channel_clone = server_channel.clone();
+        let mut recoder = audio::recorder::Recorder::new(server_channel_clone);
         if let Err(error) = recoder.start() {
             error!("Failed to start audio recorder: {}", error);
         }
@@ -104,6 +105,7 @@ impl Manager {
 impl Shutdown for Manager {
     async fn shutdown(&mut self) -> AnyError<()> {
         self.audio_player.stop();
+        self.recoder.stop();
 
         Ok(())
     }

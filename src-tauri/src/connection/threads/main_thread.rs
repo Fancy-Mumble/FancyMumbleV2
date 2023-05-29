@@ -50,7 +50,7 @@ impl MainThread for Connection {
                             }
                         }
                         Ok(result) = rx_out.recv() => {
-                            if result.len() < MAX_SEND_SIZE {
+                            if result.len() < MAX_SEND_SIZE && result[1] != 0x01 {
                                 trace!("Sending to server: {result:?}");
                             }
 
