@@ -10,6 +10,7 @@ pub struct Builder {
     bytes: Option<Vec<u8>>,
     parsed_value: Option<i128>,
     parsed_bytes: Option<u32>,
+    minimum_bytes: Option<u32>,
 }
 
 impl From<&[u8]> for Builder {
@@ -23,24 +24,56 @@ impl From<&[u8]> for Builder {
             bytes: Some(bytes.to_vec()),
             parsed_value,
             parsed_bytes,
+            minimum_bytes: None,
         }
     }
 }
 
 impl From<i128> for Builder {
     fn from(value: i128) -> Self {
-        let bytes = Varint::encode(value);
+        let bytes = Varint::encode(value, 1);
         let size = bytes.as_ref().map(|b| b.len() as u32);
 
         Self {
             bytes,
             parsed_value: Some(value),
             parsed_bytes: size,
+            minimum_bytes: None,
         }
     }
 }
 
 impl Builder {
+    pub fn new(value: i128) -> Self {
+        Self {
+            bytes: None,
+            parsed_value: Some(value),
+            parsed_bytes: None,
+            minimum_bytes: None,
+        }
+    }
+
+    pub fn minimum_bytes(mut self, minimum_bytes: u32) -> Self {
+        self.minimum_bytes = Some(minimum_bytes);
+        self
+    }
+
+    pub fn encode_build(self) -> AnyError<Varint> {
+        let bytes = Varint::encode(
+            self.parsed_value.unwrap_or(0),
+            self.minimum_bytes.unwrap_or(1),
+        );
+        let size = bytes.as_ref().map(|b| b.len() as u32);
+
+        Ok(Varint {
+            bytes: bytes.ok_or_else(|| VoiceError::new("No bytes"))?,
+            parsed_value: self
+                .parsed_value
+                .ok_or_else(|| VoiceError::new("No parsed value"))?,
+            parsed_bytes: size.ok_or_else(|| VoiceError::new("No parsed bytes"))?,
+        })
+    }
+
     pub fn build(self) -> AnyError<Varint> {
         Ok(Varint {
             bytes: self.bytes.ok_or_else(|| VoiceError::new("No bytes"))?,
@@ -141,20 +174,20 @@ impl Varint {
         Ok(value)
     }
 
-    fn encode(value: i128) -> Option<Vec<u8>> {
+    fn encode(value: i128, minimum_length: u32) -> Option<Vec<u8>> {
         let mut bytes = Vec::new();
 
         match value {
-            0..=127 => {
+            0..=127 if minimum_length <= 1 => {
                 bytes.push(value as u8);
             }
-            128..=16_383 => {
+            ..=16_383 if minimum_length <= 2 => {
                 let byte1 = ((value >> 8) & 0b0011_1111) as u8 | 0b1000_0000;
                 let byte2 = (value & 0xFF) as u8;
                 bytes.push(byte1);
                 bytes.push(byte2);
             }
-            16_384..=2_097_151 => {
+            ..=2_097_151 if minimum_length <= 3 => {
                 let byte1 = ((value >> 16) & 0b0001_1111) as u8 | 0b1100_0000;
                 let byte2 = ((value >> 8) & 0xFF) as u8;
                 let byte3 = (value & 0xFF) as u8;
@@ -162,7 +195,7 @@ impl Varint {
                 bytes.push(byte2);
                 bytes.push(byte3);
             }
-            2_097_152..=268_435_455 => {
+            ..=268_435_455 if minimum_length <= 4 => {
                 let byte1 = ((value >> 24) & 0b0000_1111) as u8 | 0b1110_0000;
                 let byte2 = ((value >> 16) & 0xFF) as u8;
                 let byte3 = ((value >> 8) & 0xFF) as u8;
@@ -172,18 +205,18 @@ impl Varint {
                 bytes.push(byte3);
                 bytes.push(byte4);
             }
-            268_435_456..=4_294_967_295 => {
+            ..=4_294_967_295 if minimum_length <= 5 => {
                 bytes.push(0b1111_0000);
                 bytes.extend_from_slice(&(value as u32).to_be_bytes());
             }
-            4_294_967_296..=18_446_744_073_709_551_615 => {
+            ..=18_446_744_073_709_551_615 if minimum_length <= 9 => {
                 bytes.push(0b1111_0100);
                 bytes.extend_from_slice(&(value as u64).to_be_bytes());
             }
             ..=-5 => {
                 let inverted_value = !value as u128;
                 bytes.push((inverted_value & 0b0011_1111) as u8 | 0b1111_1000);
-                bytes.extend_from_slice(&Self::encode(-value - 1)?);
+                bytes.extend_from_slice(&Self::encode(-value - 1, minimum_length)?);
             }
             -4..=-1 => {
                 let inverted_value = !value as u8;
