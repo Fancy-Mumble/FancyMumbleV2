@@ -24,8 +24,6 @@ function CurrentUserInfo() {
 
             update(currentUser, currentUserClone);
             invoke('change_user_state', { userState: currentUserClone });
-
-            dispatch(updateUserFromUpdateable(currentUserClone));
         }
     }
 

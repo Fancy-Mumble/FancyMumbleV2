@@ -5,7 +5,7 @@ use std::{
         Arc,
     },
     thread,
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use cpal::traits::DeviceTrait;
@@ -27,8 +27,10 @@ pub struct Recorder {
 }
 
 const VOLUME_ADJUSTMENT: f32 = 12.0;
-const BUFFER_SIZE_USIZE: usize = 4096;
+const BUFFER_SIZE_USIZE: usize = usize::pow(2, 5);
 const MAXIMUM_SAMPLES_PER_TALK: u64 = 600;
+const AUDIO_THRESHOLD: f32 = 2.0;
+const QUALITY: opus::Application = opus::Application::LowDelay;
 
 impl Recorder {
     pub fn new(server_channel: Sender<Vec<u8>>) -> Self {
@@ -85,9 +87,11 @@ impl Recorder {
             let callback = move |data: &[f32], _: &cpal::InputCallbackInfo| {
                 let mut processed_buffer = data.to_vec();
 
-                // Convert stereo samples to mono by averaging the left and right channels
                 for (_, processed_sample) in processed_buffer.iter_mut().enumerate() {
                     *processed_sample *= VOLUME_ADJUSTMENT;
+                    /*if processed_sample.abs() < AUDIO_THRESHOLD {
+                        *processed_sample = 0.0;
+                    }*/
                 }
 
                 // Add the audio samples to the buffer
@@ -108,18 +112,16 @@ impl Recorder {
                 _ => panic!("Unsupported channel count"),
             };
 
-            let mut encoder = opus::Encoder::new(
-                device_config.max_sample_rate().0,
-                opus_channels,
-                opus::Application::Voip,
-            )
-            .expect("Failed to create opus encoder");
+            let mut encoder =
+                opus::Encoder::new(device_config.max_sample_rate().0, opus_channels, QUALITY)
+                    .expect("Failed to create opus encoder");
 
             trace!("Audio thread started");
             trace!("Playing: {:?}", playing_clone.load(Ordering::Relaxed));
 
             let mut sequence_number = 0u64;
             while playing_clone.load(Ordering::Relaxed) {
+                let start = Instant::now();
                 let value = rx.recv().expect("Failed to receive audio data");
                 let output = encoder
                     .encode_vec_float(&value, BUFFER_SIZE_USIZE)
@@ -139,8 +141,9 @@ impl Recorder {
                 sequence_number += 1;
 
                 let mut size_pre = output.len() as i128;
+                size_pre |= 1 << 14;
+
                 if sequence_number > MAXIMUM_SAMPLES_PER_TALK {
-                    size_pre |= 1 << 14;
                     sequence_number = 0;
                 }
                 let size = varint::Builder::new(size_pre)
@@ -156,6 +159,8 @@ impl Recorder {
                 audio_queue_ref
                     .send(result_buffer)
                     .expect("Failed to send audio data");
+                let duration = start.elapsed();
+                //trace!("Audio thread took: {:?}", duration);
             }
         }));
 
