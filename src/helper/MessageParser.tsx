@@ -12,7 +12,7 @@ interface LinkReplacement {
 class DOMMessageParser {
     private document: Document;
     private replacementUrl: LinkReplacement[] = [
-        { regex: /https:\/\/store\.steampowered\.com\/app\/([0-9]+)\/?.*/, replacement: 'steam://advertise/$1', inline: false },
+        //{ regex: /https:\/\/store\.steampowered\.com\/app\/([0-9]+)\/?.*/, replacement: 'steam://advertise/$1', inline: false },
         { regex: /https:\/\/www\.youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/, replacement: 'https://www.youtube.com/embed/$1', inline: true },
         { regex: /https:\/\/www\.twitch\.tv\/videos\/([0-9]+)/, replacement: 'https://player.twitch.tv/?video=$1&parent='+(window.location.hostname), inline: true },
         { regex: /https:\/\/clips\.twitch\.tv\/([a-zA-Z0-9_-]+)/, replacement: 'https://clips.twitch.tv/embed?clip=$1&parent='+(window.location.hostname), inline: true },
