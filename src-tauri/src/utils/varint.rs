@@ -1,3 +1,4 @@
+use num_traits::{self, Num, ToPrimitive};
 use std::error::Error;
 
 use crate::errors::{voice_error::VoiceError, AnyError};
@@ -9,48 +10,26 @@ fn create_voice_eoi(on: &str) -> Box<dyn Error> {
 pub struct Builder {
     bytes: Option<Vec<u8>>,
     parsed_value: Option<i128>,
-    parsed_bytes: Option<u32>,
     minimum_bytes: Option<u32>,
 }
 
-impl From<&[u8]> for Builder {
-    fn from(bytes: &[u8]) -> Self {
-        let (parsed_value, parsed_bytes) = match Varint::parse(bytes) {
-            Ok((value, bytes)) => (Some(value), Some(bytes)),
-            Err(_) => (None, None),
-        };
-
-        Self {
-            bytes: Some(bytes.to_vec()),
-            parsed_value,
-            parsed_bytes,
-            minimum_bytes: None,
-        }
-    }
-}
-
-impl From<i128> for Builder {
-    fn from(value: i128) -> Self {
-        let bytes = Varint::encode(value, 1);
-        let size = bytes.as_ref().map(|b| b.len() as u32);
-
-        Self {
-            bytes,
-            parsed_value: Some(value),
-            parsed_bytes: size,
-            minimum_bytes: None,
-        }
-    }
-}
-
 impl Builder {
-    pub fn new(value: i128) -> Self {
+    pub fn new() -> Self {
         Self {
             bytes: None,
-            parsed_value: Some(value),
-            parsed_bytes: None,
+            parsed_value: None,
             minimum_bytes: None,
         }
+    }
+
+    pub fn number<T: Num + ToPrimitive>(mut self, number: T) -> Self {
+        self.parsed_value = number.to_i128();
+        self
+    }
+
+    pub fn slice(mut self, bytes: &[u8]) -> Self {
+        self.bytes = Some(bytes.to_vec());
+        self
     }
 
     pub fn minimum_bytes(mut self, minimum_bytes: u32) -> Self {
@@ -58,32 +37,45 @@ impl Builder {
         self
     }
 
-    pub fn encode_build(self) -> AnyError<Varint> {
-        let bytes = Varint::encode(
-            self.parsed_value.unwrap_or(0),
-            self.minimum_bytes.unwrap_or(1),
-        );
-        let size = bytes.as_ref().map(|b| b.len() as u32);
-
-        Ok(Varint {
-            bytes: bytes.ok_or_else(|| VoiceError::new("No bytes"))?,
-            parsed_value: self
-                .parsed_value
-                .ok_or_else(|| VoiceError::new("No parsed value"))?,
-            parsed_bytes: size.ok_or_else(|| VoiceError::new("No parsed bytes"))?,
-        })
-    }
-
     pub fn build(self) -> AnyError<Varint> {
-        Ok(Varint {
-            bytes: self.bytes.ok_or_else(|| VoiceError::new("No bytes"))?,
-            parsed_value: self
-                .parsed_value
-                .ok_or_else(|| VoiceError::new("No parsed value"))?,
-            parsed_bytes: self
-                .parsed_bytes
-                .ok_or_else(|| VoiceError::new("No parsed bytes"))?,
-        })
+        if self.parsed_value.is_some() && self.bytes.is_some() {
+            return Err(Box::new(VoiceError::new(
+                "Cannot build from both number and slice",
+            )));
+        }
+
+        if self.parsed_value.is_none() && self.bytes.is_none() {
+            return Err(Box::new(VoiceError::new(
+                "Cannot build from neither number nor slice",
+            )));
+        }
+
+        if self.parsed_value.is_some() {
+            let mut minimum_bytes = 0;
+            if self.minimum_bytes.is_some() {
+                minimum_bytes = self.minimum_bytes.unwrap();
+            }
+            let bytes = Varint::encode(self.parsed_value.unwrap(), minimum_bytes);
+
+            let bytes = bytes.ok_or("Unable to encode bytes from given value")?;
+            return Ok(Varint {
+                parsed_value: self
+                    .parsed_value
+                    .ok_or("unable to parse value from given bytes")?,
+                parsed_bytes: bytes.len() as u32,
+                bytes,
+            });
+        } else if self.bytes.is_some() {
+            let byte_slice = self.bytes.unwrap();
+            let (value, bytes) = Varint::parse(&byte_slice)?;
+            return Ok(Varint {
+                bytes: byte_slice,
+                parsed_value: value,
+                parsed_bytes: bytes,
+            });
+        }
+
+        Err(Box::new(VoiceError::new("Unable to build varint")))
     }
 }
 
