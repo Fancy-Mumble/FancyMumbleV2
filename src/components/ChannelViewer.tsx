@@ -11,6 +11,7 @@ import { ReactNode } from "react";
 import './styles/ChannelViewer.css';
 import UserInfo from "./UserInfo";
 import React from "react";
+import UserInfoPopover from "./UserInfoPopover";
 
 function ChannelViewer() {
     const userList = useSelector((state: RootState) => state.reducer.userInfo);
@@ -59,7 +60,7 @@ function ChannelViewer() {
     function showUserInfo(user: UsersState) {
         if (userInfoAnchor) {
             return (
-                <UserInfo
+                <UserInfoPopover
                     anchorEl={userInfoAnchor}
                     onClose={() => setUserInfoAnchor(null)}
                     userInfo={user}

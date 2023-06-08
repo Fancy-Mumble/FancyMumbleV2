@@ -37,9 +37,9 @@ impl Manager {
 
         let server_channel_clone = server_channel.clone();
         let mut recoder = audio::recorder::Recorder::new(server_channel_clone);
-        if let Err(error) = recoder.start() {
+        /*if let Err(error) = recoder.start() {
             error!("Failed to start audio recorder: {}", error);
-        }
+        }*/
 
         Ok(Self {
             frontend_channel: send_to,
