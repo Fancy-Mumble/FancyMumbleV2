@@ -17,6 +17,7 @@ import React from "react";
 import { RootState } from "../store/store";
 import { useSelector } from "react-redux";
 import "./styles/ChatMessage.css";
+import UserInfoPopover from "./UserInfoPopover";
 
 
 interface ChatMessageProps {
@@ -76,7 +77,7 @@ function ChatMessage(props: ChatMessageProps) {
     function showUserInfo() {
         if (userInfoAnchor) {
             return (
-                <UserInfo
+                <UserInfoPopover
                     anchorEl={userInfoAnchor}
                     onClose={() => setUserInfoAnchor(null)}
                     userInfo={user}

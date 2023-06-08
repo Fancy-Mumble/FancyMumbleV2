@@ -1,13 +1,14 @@
 use std::{
+    ops::ControlFlow,
     sync::{
         atomic::{AtomicBool, Ordering},
-        mpsc::{self},
+        mpsc::{self, Receiver},
         Arc,
     },
     thread,
 };
 
-use tokio::sync::broadcast::Sender;
+use tokio::sync::broadcast;
 use tracing::{error, trace};
 
 use crate::{
@@ -18,18 +19,37 @@ use crate::{
 
 use super::encoder::Encoder;
 
+pub struct RecorderSettings {
+    pub sample_rate: u32,
+    pub channels: u8,
+    pub frame_size: usize,
+}
+
+struct SettingsChannel {
+    rx_channel: Option<mpsc::Receiver<RecorderSettings>>,
+    tx_channel: mpsc::Sender<RecorderSettings>,
+}
+
 pub struct Recorder {
     audio_thread: Option<thread::JoinHandle<()>>,
     playing: Arc<AtomicBool>,
-    server_channel: Option<Sender<Vec<u8>>>,
+    server_channel: Option<broadcast::Sender<Vec<u8>>>,
+    settings_channel: SettingsChannel,
 }
 
 impl Recorder {
-    pub fn new(server_channel: Sender<Vec<u8>>) -> Self {
+    pub fn new(server_channel: broadcast::Sender<Vec<u8>>) -> Self {
+        let (tx, rx) = mpsc::channel();
+        let settings_channel = SettingsChannel {
+            rx_channel: Some(rx),
+            tx_channel: tx,
+        };
+
         Self {
             audio_thread: None,
             playing: Arc::new(AtomicBool::new(false)),
             server_channel: Some(server_channel),
+            settings_channel,
         }
     }
 
@@ -45,6 +65,11 @@ impl Recorder {
             .take()
             .ok_or("failed to get audio queue")
             .expect("failed to get audio queue");
+        let settings_channel = self
+            .settings_channel
+            .rx_channel
+            .take()
+            .ok_or("failed to get settings channel")?;
 
         self.audio_thread = Some(thread::spawn(move || {
             trace!("Starting audio thread");
@@ -65,6 +90,8 @@ impl Recorder {
 
             let mut sequence_number = 0u64;
             while playing_clone.load(Ordering::Relaxed) {
+                update_settings(&settings_channel, &mut encoder);
+
                 let value = rx.recv().expect("Failed to receive audio data");
 
                 let audio_buffer = encoder.encode_audio(&value, &mut sequence_number);
@@ -74,8 +101,8 @@ impl Recorder {
                     .send(result_buffer)
                     .expect("Failed to send audio data");
             }
+            microphone.stop().expect("Failed to stop microphone");
         }));
-
         Ok(())
     }
 
@@ -90,6 +117,26 @@ impl Recorder {
             }
         }
     }
+
+    pub fn send_settings(&mut self, settings: RecorderSettings) -> AnyError<()> {
+        self.settings_channel
+            .tx_channel
+            .send(settings)
+            .expect("Failed to send settings");
+        Ok(())
+    }
+}
+
+fn update_settings(settings_channel: &Receiver<RecorderSettings>, encoder: &mut Encoder) {
+    match settings_channel.try_recv() {
+        Ok(settings) => {
+            encoder.update_settings(settings);
+        }
+        Err(mpsc::TryRecvError::Empty) => {}
+        Err(mpsc::TryRecvError::Disconnected) => {
+            error!("Failed to receive settings");
+        }
+    };
 }
 
 impl Drop for Recorder {

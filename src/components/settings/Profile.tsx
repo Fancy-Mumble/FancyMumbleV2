@@ -1,7 +1,12 @@
-import { Alert, Box, Button, CircularProgress, Container, FormControl, InputLabel, MenuItem, Select, Typography } from "@mui/material";
+import { Alert, Box, Button, CircularProgress, Container, Divider, FormControl, InputLabel, MenuItem, Select, TextField, Typography } from "@mui/material";
 import { invoke } from "@tauri-apps/api";
 import UploadBox from "../UploadBox";
 import React, { useState } from 'react';
+import DefaultColorPicker from "../ColorPicker";
+import { HSLColor } from "react-color";
+import UserInfo from "../UserInfo";
+import { RootState } from "../../store/store";
+import { useSelector } from "react-redux";
 
 enum ImageType {
     Profile = 'profile',
@@ -9,9 +14,17 @@ enum ImageType {
 }
 
 function Profile() {
+    const userInfo = useSelector((state: RootState) => state.reducer.userInfo).currentUser;
+
     let [errorMessage, setErrorMessage] = useState('');
     let [loading, setLoading] = useState(false);
     let [profilePicResolution, setProfilePicResolution] = useState(0);
+    const [primaryColor, setPrimaryColor] = React.useState({
+        hex: '#ffffff'
+    })
+    const [accentColor, setAccentColor] = React.useState({
+        hex: '#ffffff'
+    })
 
     function showErrorMessage() {
         if (errorMessage) {
@@ -44,58 +57,48 @@ function Profile() {
     }
 
     return (
-        <Container>
+        <Container sx={{ maxWidth: '600px' }}>
             {showErrorMessage()}
-            <Typography variant="h3">Profile</Typography>
-            <Box sx={{
-                display: 'flex',
-                flexDirection: 'row',
-                alignContent: 'center',
-                maxWidth: '100%'
-            }}>
-                <UploadBox onUpload={(path) => uploadFile(path, ImageType.Background)}>{displayLoadingText("Background Image")}</UploadBox>
-                <FormControl sx={{ m: 1, minWidth: 120, justifyContent: 'center' }} size="small">
-                    <InputLabel id="demo-select-small-label">Size</InputLabel>
-                    <Select
-                        labelId="demo-simple-select-helper-label"
-                        id="demo-simple-select-helper"
-                        value={profilePicResolution}
-                        label="Age"
-                        onChange={(e) => setProfilePicResolution(e.target.value as any)}
-                    >
-                        <MenuItem value="">
-                            <em>None</em>
-                        </MenuItem>
-                        {gennerateResolutions(5).map((value) => {
-                            return (<MenuItem value={value}>{value}px</MenuItem>);
-                        })}
-                    </Select>
-                </FormControl>
-            </Box>
-            <Box sx={{
-                display: 'flex',
-                flexDirection: 'row',
-                alignContent: 'center',
-                maxWidth: '100%'
-            }}>
-                <UploadBox onUpload={(path) => uploadFile(path, ImageType.Profile)}>{displayLoadingText("Profile Image")}</UploadBox>
-                <FormControl sx={{ m: 1, minWidth: 120, justifyContent: 'center' }} size="small">
-                    <InputLabel id="demo-select-small-label">Size</InputLabel>
-                    <Select
-                        labelId="demo-simple-select-helper-label"
-                        id="demo-simple-select-helper"
-                        value={profilePicResolution}
-                        label="Age"
-                        onChange={(e) => setProfilePicResolution(e.target.value as any)}
-                    >
-                        <MenuItem value="">
-                            <em>None</em>
-                        </MenuItem>
-                        {gennerateResolutions(5).map((value) => {
-                            return (<MenuItem value={value}>{value}px</MenuItem>);
-                        })}
-                    </Select>
-                </FormControl>
+            <Typography variant="h3" sx={{ marginBottom: 5 }}>Profile</Typography>
+            <Box sx={{ display: "flex", flexDirection: "row" }}>
+                <Box sx={{ flexGrow: 1, marginRight: 6 }}>
+                    <Typography variant="h5">Images</Typography>
+                    <Box sx={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignContent: 'center',
+                        maxWidth: '100%'
+                    }}>
+                        <UploadBox onUpload={(path) => uploadFile(path, ImageType.Background)}>{displayLoadingText("Background Image")}</UploadBox>
+                    </Box>
+                    <Box sx={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignContent: 'center',
+                        maxWidth: '100%'
+                    }}>
+                        <UploadBox onUpload={(path) => uploadFile(path, ImageType.Profile)}>{displayLoadingText("Profile Image")}</UploadBox>
+                    </Box>
+                    <Typography variant="h5" sx={{ marginTop: 4, marginBottom: 1 }}>Colors</Typography>
+                    <Box sx={{ display: 'flex' }}>
+                        <DefaultColorPicker color={primaryColor} onChangeComplete={(color) => setPrimaryColor(color)} description="Primary" style={{ marginRight: 15 }} />
+                        <DefaultColorPicker color={accentColor} onChangeComplete={(color) => setAccentColor(color)} description="Accent" style={{ marginRight: 15 }} />
+                    </Box>
+                    <Typography variant="h5" sx={{ marginTop: 4, marginBottom: 1 }}>About Me</Typography>
+                    <Box sx={{ display: 'flex' }}>
+                        <TextField
+                            placeholder="Tell us about yourself!"
+                            rows={4}
+                            multiline
+                            sx={{ flexGrow: 1, marginRight: 2 }}
+                        />
+                    </Box>
+                </Box>
+                <Box>
+                    <UserInfo
+                        userInfo={userInfo}
+                    />
+                </Box>
             </Box>
         </Container >
     )

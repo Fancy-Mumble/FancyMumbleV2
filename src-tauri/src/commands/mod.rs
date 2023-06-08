@@ -1,4 +1,8 @@
-use std::{borrow::BorrowMut, collections::HashMap};
+use std::{
+    borrow::BorrowMut,
+    collections::HashMap,
+    io::{self, Write},
+};
 
 use crate::{
     connection::{traits::Shutdown, Connection},
@@ -187,4 +191,16 @@ pub async fn get_audio_devices(
     }
 
     Err(ErrorString("Failed to get audio devices".to_string()))
+}
+
+#[tauri::command]
+pub fn zip_data_to_utf8(data: &str, quality: u32) -> Result<String, String> {
+    let lg_windows_size = 22;
+    let mut writer = brotli::CompressorWriter::new(Vec::new(), 4096, quality, lg_windows_size);
+    writer
+        .write_all(data.as_bytes())
+        .map_err(|e| e.to_string())?;
+    let output = writer.into_inner();
+
+    Ok(String::from_utf8_lossy(&output).to_string())
 }
