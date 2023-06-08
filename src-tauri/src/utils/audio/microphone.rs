@@ -96,37 +96,14 @@ impl Microphone {
 
         let audio_settigns = self.input_settings.clone();
         let callback = move |data: &[f32], _: &cpal::InputCallbackInfo| {
-            let mut energy_level = 0.0;
-            let mut silent_duration = 0;
-            let mut is_silent = false;
-            let hysteresis_threshold = 0.0003;
-
             let mut processed_buffer = data.to_vec();
 
             let input_settings = audio_settigns
                 .lock()
                 .expect("Failed to lock input settings");
-            let duration_ms = input_settings.voice_hold.as_millis();
 
             for (_, processed_sample) in processed_buffer.iter_mut().enumerate() {
                 *processed_sample *= input_settings.volume_adjustment;
-
-                energy_level = processed_sample.powi(2);
-
-                if energy_level < input_settings.voice_threshold {
-                    if is_silent {
-                        silent_duration += 1;
-                    } else {
-                        is_silent = true;
-                        silent_duration = 0;
-                    }
-                } else if energy_level > hysteresis_threshold {
-                    is_silent = false;
-                }
-
-                if silent_duration >= duration_ms {
-                    *processed_sample = 0.0;
-                }
             }
             drop(input_settings);
 
@@ -147,6 +124,14 @@ impl Microphone {
         self.stream = Some(stream);
         trace!("Microphone started");
 
+        Ok(())
+    }
+
+    pub fn stop(&mut self) -> AnyError<()> {
+        if let Some(stream) = self.stream.take() {
+            stream.pause()?;
+            trace!("Microphone stopped");
+        }
         Ok(())
     }
 }
