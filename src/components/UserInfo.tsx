@@ -13,6 +13,7 @@ import "./styles/common.css"
 
 interface UserInfoProps {
     userInfo: UsersState | undefined;
+    style: React.CSSProperties;
 }
 
 function UserInfo(props: UserInfoProps) {
@@ -60,10 +61,22 @@ function UserInfo(props: UserInfoProps) {
         }
     }
 
+    function getUserColors(): React.CSSProperties | undefined {
+        if (props.userInfo) {
+            let settings = props.userInfo?.commentData?.settings;
+
+            let colors: React.CSSProperties = {};
+            if(settings?.primary_color) colors.backgroundColor = settings.primary_color;
+            if(settings?.accent_color) colors.backgroundColor = settings.accent_color;
+
+            return colors;
+        }
+    }
+
     return (
-        <Card sx={{ maxWidth: 345 }}>
+        <Card sx={{ maxWidth: 345 }} style={props.style}>
             {generateCardMedia()}
-            <CardContent sx={{ paddingTop: 0 }}>
+            <CardContent sx={{ paddingTop: 0, ...getUserColors()  }}>
                 <Box className="user-info-avatar">
                     <Avatar
                         alt={props.userInfo?.name}

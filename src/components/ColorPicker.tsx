@@ -72,8 +72,6 @@ function DefaultColorPicker(props: ColorPickerProps) {
             hex: hue.hex
         });
 
-        //if(props.onChangeComplete)
-        //    props.onChangeComplete(colorState)
     }
 
     const handleSaturationChange = (hsv: any) => {
@@ -83,8 +81,12 @@ function DefaultColorPicker(props: ColorPickerProps) {
             hsv: color.toHsv(),
             hex: '#' + color.toHex()
         });
-        //if(props.onChangeComplete)
-        //    props.onChangeComplete(colorState)
+    }
+
+    const handleChangeComplete = (hue: any) => {
+        console.log("Complete!");
+        if(props.onChangeComplete)
+           props.onChangeComplete(colorState)
     }
 
     const showDescription = () => {
@@ -146,6 +148,7 @@ function DefaultColorPicker(props: ColorPickerProps) {
                         hsl={colorState.hsl}
                         hsv={colorState.hsv}
                         onChange={handleSaturationChange}
+                        onChangeComplete={handleChangeComplete}
                         pointer={CustomPointer}
                     />
                 </Box>
@@ -158,6 +161,7 @@ function DefaultColorPicker(props: ColorPickerProps) {
                         hsl={colorState.hsl}
                         hsv={colorState.hsv}
                         onChange={handleHueChange}
+                        onChangeComplete={handleChangeComplete}
                         direction={'horizontal'}
                     />
                 </Box>
