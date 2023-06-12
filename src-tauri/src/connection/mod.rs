@@ -216,7 +216,7 @@ impl Connection {
             texture: None,
             plugin_context: None,
             plugin_identity: None,
-            comment: None,
+            comment: user.comment.take(),
             hash: None,
             comment_hash: None,
             texture_hash: None,

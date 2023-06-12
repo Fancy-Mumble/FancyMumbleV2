@@ -1,7 +1,19 @@
-import { createSlice } from '@reduxjs/toolkit'
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import type { PayloadAction } from '@reduxjs/toolkit'
+import { parseUserCommentForData } from '../../../helper/ProfileDataHelper'
+import { AsyncThunkFulfilledActionCreator } from '@reduxjs/toolkit/dist/createAsyncThunk';
 
+type DataUpdateAction<T> = AsyncThunkFulfilledActionCreator<T, void, any>;
 
+export interface UserCommentSettings {
+  primary_color: string,
+  accent_color: string,
+}
+export interface UserCommentData {
+  comment: string,
+  background_picture: string,
+  settings: UserCommentSettings
+}
 export interface UpdateableUserState {
   id?: number
   channel_id?: number,
@@ -32,6 +44,7 @@ export interface UsersState {
   talking: boolean,
   mutedSince: number | undefined,
   deafenedSince: number | undefined,
+  commentData: UserCommentData
 }
 
 interface UserDataUpdate {
@@ -51,26 +64,35 @@ const initialState: UserInfoState = {
   connected: false,
 };
 
-function updateUserData(state: UsersState[], user_info: UserDataUpdate, field: string) {
+function updateUserData(state: UsersState[], user_info: UserDataUpdate, field: string): UsersState {
   let prevList = state;
   const userIndex = prevList.findIndex(e => e.id === user_info.user_id);
   if (userIndex !== -1) {
     // @ts-ignore (field is one of the above types, but TS doesn't like this)
     state[userIndex][field] = user_info.data;
   }
+
+  return state[userIndex];
 }
+
+export const updateUserComment = createAsyncThunk(
+  'updateUserComment',
+  async (payload: UserDataUpdate, thunkAPI) => {
+    return [payload, await parseUserCommentForData(payload.data)];
+  }
+);
+
+export const updateUser = createAsyncThunk(
+  'updateUser',
+  async (payload: UsersState, thunkAPI) => {
+    return payload;
+  }
+);
 
 export const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
-    updateUserComment: (state, action: PayloadAction<UserDataUpdate>) => {
-      updateUserData(state.users, action.payload, "comment");
-
-      if (state.currentUser?.id === action.payload.user_id) {
-        state.currentUser.comment = action.payload.data;
-      }
-    },
     updateUserImage: (state, action: PayloadAction<UserDataUpdate>) => {
       updateUserData(state.users, action.payload, "profile_picture");
 
@@ -83,45 +105,6 @@ export const userSlice = createSlice({
       let userIndex = state.users.findIndex(e => e.id === userId);
       state.users.splice(userIndex, 1);
 
-    },
-    updateUser: (state, action: PayloadAction<UsersState>) => {
-      let userId = action.payload.id;
-      let userIndex = state.users.findIndex(e => e.id === userId);
-      if (userIndex !== -1) {
-        let muted_since = action.payload.self_mute && state.users[userIndex].self_mute !== action.payload.self_mute ? Date.now() : undefined;
-        let deafened_since = action.payload.self_deaf && state.users[userIndex].self_deaf !== action.payload.self_deaf ? Date.now() : undefined;
-        let profilePicture = state.users[userIndex].profile_picture;
-        let comment = state.users[userIndex].comment;
-
-        state.users[userIndex] = action.payload;
-        state.users[userIndex].comment = comment;
-        state.users[userIndex].profile_picture = profilePicture;
-        state.users[userIndex].mutedSince = muted_since;
-        state.users[userIndex].deafenedSince = deafened_since;
-      } else {
-        action.payload.talking = false;
-        state.users.push(action.payload);
-      }
-
-      if (state.currentUser?.id === userId) {
-        state.currentUser = action.payload;
-      }
-    },
-    updateUserFromUpdateable: (state, action: PayloadAction<UpdateableUserState>) => {
-      let currentUser = state.users.find(e => e.id === action.payload.id);
-      if (currentUser) {
-        if(action.payload.channel_id) currentUser.channel_id = action.payload.channel_id;
-        if(action.payload.comment) currentUser.comment = action.payload.comment;
-        if(action.payload.deaf) currentUser.deaf = action.payload.deaf;
-        if(action.payload.mute) currentUser.mute = action.payload.mute;
-        if(action.payload.name) currentUser.name = action.payload.name;
-        if(action.payload.priority_speaker) currentUser.priority_speaker = action.payload.priority_speaker;
-        if(action.payload.profile_picture) currentUser.profile_picture = action.payload.profile_picture;
-        if(action.payload.recording) currentUser.recording = action.payload.recording;
-        if(action.payload.self_deaf) currentUser.self_deaf = action.payload.self_deaf;
-        if(action.payload.self_mute) currentUser.self_mute = action.payload.self_mute;
-        if(action.payload.suppress) currentUser.suppress = action.payload.suppress;
-      }
     },
     updateCurrentUserById: (state, action: PayloadAction<number>) => {
       let currentUser = state.users.find(e => e.id === action.payload);
@@ -137,11 +120,55 @@ export const userSlice = createSlice({
       if (userIndex !== -1) {
         state.users[userIndex].talking = action.payload.talking;
       }
-    }
+    },
   },
+  extraReducers: (builder) => {
+    builder
+      // @ts-ignore (stfu)
+      .addCase<DataUpdateAction<any>>(updateUserComment.fulfilled, (state, action) => {
+        let userIndex = state.users.findIndex(e => e.id === action.payload[0].user_id);
+        if (userIndex !== -1) {
+          state.users[userIndex].comment = action.payload[0].data;
+          state.users[userIndex].commentData = action.payload[1];
+        }
+
+        if (state && state.currentUser && state?.currentUser?.id === action.payload[0].user_id) {
+          state.currentUser.comment = action.payload[0].data;
+          state.currentUser.commentData = action.payload[1];
+        }
+      })
+      // @ts-ignore (stfu)
+      .addCase<DataUpdateAction<any>>(updateUser.fulfilled, (state, action) => {
+        console.log("updateUser", action.payload);
+
+        let userId = action.payload.id;
+        let userIndex = state.users.findIndex(e => e.id === userId);
+        if (userIndex !== -1) {
+          let muted_since = action.payload.self_mute && state.users[userIndex].self_mute !== action.payload.self_mute ? Date.now() : undefined;
+          let deafened_since = action.payload.self_deaf && state.users[userIndex].self_deaf !== action.payload.self_deaf ? Date.now() : undefined;
+          let profilePicture = state.users[userIndex].profile_picture;
+          let comment = state.users[userIndex].comment;
+          let parsedComment = parseUserCommentForData(action.payload.comment);
+
+          state.users[userIndex] = action.payload;
+          state.users[userIndex].comment = comment;
+          state.users[userIndex].profile_picture = profilePicture;
+          state.users[userIndex].mutedSince = muted_since;
+          state.users[userIndex].deafenedSince = deafened_since;
+        } else {
+          // new user
+          action.payload.talking = false;
+          state.users.push(action.payload);
+        }
+
+        if (state.currentUser?.id === userId) {
+          state.currentUser = action.payload;
+        }
+      });
+  }
 })
 
 // Action creators are generated for each case reducer function
-export const { updateUser, deleteUser, updateUserComment, updateUserImage, updateCurrentUserById, updateConnected, updateUserTalkingInfo, updateUserFromUpdateable } = userSlice.actions
+export const { deleteUser, updateUserImage, updateCurrentUserById, updateConnected, updateUserTalkingInfo } = userSlice.actions
 
 export default userSlice.reducer

@@ -25,8 +25,8 @@ const darkTheme = createTheme({
 marked.use(markedHighlight({
   langPrefix: 'hljs language-',
   highlight(code, lang) {
-      const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-      return hljs.highlight(code, { language }).value;
+    const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+    return hljs.highlight(code, { language }).value;
   }
 }));
 
@@ -43,11 +43,11 @@ dayjs.extend(relativeTime)
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <ThemeProvider theme={darkTheme}>
-    <Suspense fallback={<Loader />}>
-    <Provider store={store}>
-    <App />
-    </Provider>
-    </Suspense>
+      <Suspense fallback={<Loader />}>
+        <Provider store={store}>
+          <App />
+        </Provider>
+      </Suspense>
     </ThemeProvider>
   </React.StrictMode>,
 )

@@ -156,7 +156,12 @@ impl Manager {
     }
 
     fn notify_user_comment(&self, session: u32) -> AnyError<()> {
+        trace!("notify_user_comment: {}", session);
         if let Some(user) = self.users.get(&session) {
+            if user.comment_hash.is_empty() {
+                return Ok(());
+            }
+
             store_data_in_cache(&user.comment_hash, user.comment.as_bytes())?;
 
             let user_image = BlobData {
@@ -209,16 +214,15 @@ impl Manager {
             );
             return Ok(());
         }
-        trace!("User comment is not up to date for user {}", user.id);
 
-        let no_comment_available = cached_user_comment_hash.is_empty();
         let comment_in_current_message = !comment_hash.is_empty();
 
-        if no_comment_available && comment_in_current_message {
+        if comment_in_current_message {
             let blob_request = mumble::proto::RequestBlob {
                 session_comment: vec![user.id],
                 ..Default::default()
             };
+
             self.server_channel.send(message_builder(&blob_request))?;
         }
 

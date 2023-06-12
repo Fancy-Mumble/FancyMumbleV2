@@ -63,7 +63,7 @@ function Settings() {
                 </Box>
             </Box>
             <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
-                <Box sx={{ p: 3 }}>
+                <Box sx={{ p: 0 }}>
                     {selectedIndex === 0 && <AudioSettings />}
                     {selectedIndex === 1 && <Profile />}
                     {selectedIndex === 2 && <div>Additional Features</div>}
