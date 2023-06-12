@@ -49,6 +49,7 @@ export function handleBackendMessage<T>(event: Event<T>, dispatch: Dispatch<AnyA
             break;
         }
         case MessageTypes.UserComment: {
+            // @ts-ignore (whatever is going on here)
             dispatch(updateUserComment(message.data));
             break;
         }

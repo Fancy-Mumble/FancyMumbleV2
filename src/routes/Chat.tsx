@@ -10,13 +10,10 @@ import React from 'react';
 import Sidebar from '../components/Sidebar';
 import { RootState } from '../store/store';
 import { useDispatch, useSelector } from 'react-redux';
-import { TextMessage, addChatMessage } from '../store/features/users/chatMessageSlice';
 import { formatBytes } from '../helper/Fomat';
-import MessageParser from '../helper/MessageParser';
-import { UpdateableUserState, UserInfoState, UsersState, updateUserFromUpdateable } from '../store/features/users/userSlice';
+import { UpdateableUserState, UsersState } from '../store/features/users/userSlice';
 import { ChatMessageHandler } from '../helper/ChatMessage';
-import { register, unregister } from '@tauri-apps/api/globalShortcut';
-import { updateUserValue } from '../helper/UserInfo';
+import { unregister } from '@tauri-apps/api/globalShortcut';
 
 function Chat() {
     const [chatMessage, setChatMessage] = useState("");
