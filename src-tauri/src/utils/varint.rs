@@ -14,7 +14,7 @@ pub struct Builder {
 }
 
 impl Builder {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             bytes: None,
             parsed_value: None,
@@ -22,7 +22,7 @@ impl Builder {
         }
     }
 
-    pub fn number<T: Num + ToPrimitive>(mut self, number: T) -> Self {
+    pub fn number<T: Num + ToPrimitive>(mut self, number: &T) -> Self {
         self.parsed_value = number.to_i128();
         self
     }
@@ -32,7 +32,7 @@ impl Builder {
         self
     }
 
-    pub fn minimum_bytes(mut self, minimum_bytes: u32) -> Self {
+    pub const fn minimum_bytes(mut self, minimum_bytes: u32) -> Self {
         self.minimum_bytes = Some(minimum_bytes);
         self
     }
@@ -51,22 +51,24 @@ impl Builder {
         }
 
         if self.parsed_value.is_some() {
-            let mut minimum_bytes = 0;
-            if self.minimum_bytes.is_some() {
-                minimum_bytes = self.minimum_bytes.unwrap();
-            }
-            let bytes = Varint::encode(self.parsed_value.unwrap(), minimum_bytes);
+            let minimum_bytes = if self.minimum_bytes.is_some() {
+                self.minimum_bytes.unwrap_or(0)
+            } else {
+                0
+            };
+
+            let bytes = Varint::encode(self.parsed_value.unwrap_or(0), minimum_bytes);
 
             let bytes = bytes.ok_or("Unable to encode bytes from given value")?;
             return Ok(Varint {
                 parsed_value: self
                     .parsed_value
                     .ok_or("unable to parse value from given bytes")?,
-                parsed_bytes: bytes.len() as u32,
+                parsed_bytes: u32::try_from(bytes.len())?,
                 bytes,
             });
         } else if self.bytes.is_some() {
-            let byte_slice = self.bytes.unwrap();
+            let byte_slice = self.bytes.ok_or("Invalid bytes")?;
             let (value, bytes) = Varint::parse(&byte_slice)?;
             return Ok(Varint {
                 bytes: byte_slice,
@@ -166,57 +168,59 @@ impl Varint {
         Ok(value)
     }
 
+    #[allow(clippy::cast_possible_truncation)]
+    #[allow(clippy::cast_sign_loss)]
     fn encode(value: i128, minimum_length: u32) -> Option<Vec<u8>> {
-        let mut bytes = Vec::new();
+        let mut byte_container = Vec::new();
 
         match value {
             0..=127 if minimum_length <= 1 => {
-                bytes.push(value as u8);
+                byte_container.push(value as u8);
             }
             ..=16_383 if minimum_length <= 2 => {
                 let byte1 = ((value >> 8) & 0b0011_1111) as u8 | 0b1000_0000;
                 let byte2 = (value & 0xFF) as u8;
-                bytes.push(byte1);
-                bytes.push(byte2);
+                byte_container.push(byte1);
+                byte_container.push(byte2);
             }
             ..=2_097_151 if minimum_length <= 3 => {
                 let byte1 = ((value >> 16) & 0b0001_1111) as u8 | 0b1100_0000;
                 let byte2 = ((value >> 8) & 0xFF) as u8;
                 let byte3 = (value & 0xFF) as u8;
-                bytes.push(byte1);
-                bytes.push(byte2);
-                bytes.push(byte3);
+                byte_container.push(byte1);
+                byte_container.push(byte2);
+                byte_container.push(byte3);
             }
             ..=268_435_455 if minimum_length <= 4 => {
                 let byte1 = ((value >> 24) & 0b0000_1111) as u8 | 0b1110_0000;
                 let byte2 = ((value >> 16) & 0xFF) as u8;
                 let byte3 = ((value >> 8) & 0xFF) as u8;
                 let byte4 = (value & 0xFF) as u8;
-                bytes.push(byte1);
-                bytes.push(byte2);
-                bytes.push(byte3);
-                bytes.push(byte4);
+                byte_container.push(byte1);
+                byte_container.push(byte2);
+                byte_container.push(byte3);
+                byte_container.push(byte4);
             }
             ..=4_294_967_295 if minimum_length <= 5 => {
-                bytes.push(0b1111_0000);
-                bytes.extend_from_slice(&(value as u32).to_be_bytes());
+                byte_container.push(0b1111_0000);
+                byte_container.extend_from_slice(&(value as u32).to_be_bytes());
             }
             ..=18_446_744_073_709_551_615 if minimum_length <= 9 => {
-                bytes.push(0b1111_0100);
-                bytes.extend_from_slice(&(value as u64).to_be_bytes());
+                byte_container.push(0b1111_0100);
+                byte_container.extend_from_slice(&(value as u64).to_be_bytes());
             }
             ..=-5 => {
                 let inverted_value = !value as u128;
-                bytes.push((inverted_value & 0b0011_1111) as u8 | 0b1111_1000);
-                bytes.extend_from_slice(&Self::encode(-value - 1, minimum_length)?);
+                byte_container.push((inverted_value & 0b0011_1111) as u8 | 0b1111_1000);
+                byte_container.extend_from_slice(&Self::encode(-value - 1, minimum_length)?);
             }
             -4..=-1 => {
-                let inverted_value = !value as u8;
-                bytes.push(inverted_value | 0b1111_1100);
+                let inverted_value = u8::try_from(!value).ok()?;
+                byte_container.push(inverted_value | 0b1111_1100);
             }
             _ => return None, // Value out of supported range
         }
 
-        Some(bytes)
+        Some(byte_container)
     }
 }

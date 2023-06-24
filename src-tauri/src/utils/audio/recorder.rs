@@ -18,15 +18,15 @@ use crate::{
 
 use super::encoder::Encoder;
 
-pub struct RecorderSettings {
+pub struct Settings {
     pub sample_rate: u32,
     pub channels: u8,
     pub frame_size: usize,
 }
 
 struct SettingsChannel {
-    rx_channel: Option<mpsc::Receiver<RecorderSettings>>,
-    _tx_channel: mpsc::Sender<RecorderSettings>,
+    rx_channel: Option<mpsc::Receiver<Settings>>,
+    _tx_channel: mpsc::Sender<Settings>,
 }
 
 pub struct Recorder {
@@ -95,7 +95,8 @@ impl Recorder {
 
                 let audio_buffer = encoder.encode_audio(&value, &mut sequence_number);
 
-                let result_buffer = raw_message_builder::<UdpTunnel>(&audio_buffer);
+                let result_buffer =
+                    raw_message_builder::<UdpTunnel>(&audio_buffer).unwrap_or_default();
                 audio_queue_ref
                     .send(result_buffer)
                     .expect("Failed to send audio data");
@@ -118,10 +119,10 @@ impl Recorder {
     }
 }
 
-fn update_settings(settings_channel: &Receiver<RecorderSettings>, encoder: &mut Encoder) {
+fn update_settings(settings_channel: &Receiver<Settings>, encoder: &mut Encoder) {
     match settings_channel.try_recv() {
         Ok(settings) => {
-            encoder.update_settings(settings);
+            encoder.update_settings(&settings);
         }
         Err(mpsc::TryRecvError::Empty) => {}
         Err(mpsc::TryRecvError::Disconnected) => {
