@@ -197,7 +197,7 @@ impl Manager {
                 session_texture: vec![user.id],
                 ..Default::default()
             };
-            self.server_channel.send(message_builder(&blob_request))?;
+            self.server_channel.send(message_builder(&blob_request)?)?;
         }
 
         Ok(())
@@ -223,7 +223,7 @@ impl Manager {
                 ..Default::default()
             };
 
-            self.server_channel.send(message_builder(&blob_request))?;
+            self.server_channel.send(message_builder(&blob_request)?)?;
         }
 
         Ok(())

@@ -36,7 +36,7 @@ impl OutputThread for Connection {
                                 message: result.message,
                             };
                             trace!("Sending message: {:?}", message);
-                            let buffer = message_builder(&message);
+                            let buffer = message_builder(&message).unwrap_or_default();
 
                             if let Err(error) = tx_out.send(buffer) {
                                 error!("Unable to send message: {}", error);

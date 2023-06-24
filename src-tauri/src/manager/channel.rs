@@ -129,7 +129,7 @@ impl Manager {
                 channel_description: vec![channel_id],
                 ..Default::default()
             };
-            self.server_channel.send(message_builder(&blob_request))?;
+            self.server_channel.send(message_builder(&blob_request)?)?;
         }
 
         Ok(())

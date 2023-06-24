@@ -115,7 +115,7 @@ impl Manager {
             self_mute: Some(true),
             ..Default::default()
         };
-        self.server_channel.send(message_builder(&blob_request))?;
+        self.server_channel.send(message_builder(&blob_request)?)?;
 
         Ok(())
     }

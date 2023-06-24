@@ -1,4 +1,5 @@
 use opus::Channels;
+use tracing::trace;
 
 use crate::utils::varint;
 
@@ -43,7 +44,7 @@ impl Encoder {
         audio_buffer.push(first_byte);
 
         let sequence_number_bytes = varint::Builder::new()
-            .number(*sequence_number)
+            .number(&*sequence_number)
             .build()
             .expect("Failed to build sequence number");
         audio_buffer.extend(sequence_number_bytes.parsed_vec());
@@ -56,7 +57,7 @@ impl Encoder {
             *sequence_number = 0;
         }
         let size = varint::Builder::new()
-            .number(size_pre)
+            .number(&size_pre)
             .minimum_bytes(2)
             .build()
             .expect("Failed to build size");
@@ -68,5 +69,7 @@ impl Encoder {
         audio_buffer
     }
 
-    pub(crate) fn update_settings(&self, _settings: super::recorder::RecorderSettings) {}
+    pub(crate) fn update_settings(&self, _settings: &super::recorder::Settings) {
+        trace!("Updating settings, {}", self.audio_buffer_size);
+    }
 }

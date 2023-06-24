@@ -1,3 +1,6 @@
+// clippy is detecting '_ as a underscore binding, which it shouldn't
+#![allow(clippy::used_underscore_binding)]
+
 use std::{
     borrow::BorrowMut,
     collections::HashMap,
@@ -74,7 +77,7 @@ pub async fn connect_to_server(
 }
 
 #[tauri::command]
-pub async fn save_server(
+pub fn save_server(
     description: &str,
     server_host: &str,
     server_port: u16,
@@ -98,10 +101,10 @@ pub async fn save_server(
 
     // read the json content using serde and append the new server
     let mut server_list =
-        serde_json::from_reader::<&std::fs::File, Vec<Server>>(&server_file).unwrap_or(Vec::new());
+        serde_json::from_reader::<&std::fs::File, Vec<Server>>(&server_file).unwrap_or_default();
 
     // check if the server is already in the list
-    for server in server_list.iter() {
+    for server in &server_list {
         if server.host == server_host && server.port == server_port {
             return Err("Server already exists".to_string());
         }
@@ -132,7 +135,7 @@ pub async fn save_server(
 }
 
 #[tauri::command]
-pub async fn get_server_list() -> Result<Vec<Server>, String> {
+pub fn get_server_list() -> Result<Vec<Server>, String> {
     info!("Getting server list");
     let project_dirs = get_project_dirs().ok_or("Unable to load project dir")?;
 
@@ -151,7 +154,7 @@ pub async fn get_server_list() -> Result<Vec<Server>, String> {
 
     // read the json content using serde
     let server_list =
-        serde_json::from_reader::<&std::fs::File, Vec<Server>>(&server_file).unwrap_or(Vec::new());
+        serde_json::from_reader::<&std::fs::File, Vec<Server>>(&server_file).unwrap_or_default();
 
     trace!("Server list: {:#?}", server_list);
 

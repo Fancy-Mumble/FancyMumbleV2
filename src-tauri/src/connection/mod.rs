@@ -161,7 +161,7 @@ impl Connection {
             data: Some(message_id.as_bytes().to_vec()),
             data_id: None,
         };
-        self.tx_out.send(message_builder(&like_message))?;
+        self.tx_out.send(message_builder(&like_message)?)?;
 
         Ok(())
     }
@@ -185,7 +185,8 @@ impl Connection {
                     comment: img,
                     ..Default::default()
                 };
-                self.tx_out.send(message_builder(&set_profile_background))?;
+                self.tx_out
+                    .send(message_builder(&set_profile_background)?)?;
             }
             "profile" => {
                 let image_vec = Some(image_data);
@@ -193,7 +194,8 @@ impl Connection {
                     texture: image_vec,
                     ..Default::default()
                 };
-                self.tx_out.send(message_builder(&set_profile_background))?;
+                self.tx_out
+                    .send(message_builder(&set_profile_background)?)?;
             }
             _ => {}
         }
@@ -227,7 +229,7 @@ impl Connection {
             listening_channel_remove: Vec::new(),
             listening_volume_adjustment: Vec::new(),
         };
-        self.tx_out.send(message_builder(&updated_state))?;
+        self.tx_out.send(message_builder(&updated_state)?)?;
 
         Ok(())
     }
