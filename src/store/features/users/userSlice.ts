@@ -6,8 +6,8 @@ import { AsyncThunkFulfilledActionCreator } from '@reduxjs/toolkit/dist/createAs
 type DataUpdateAction<T> = AsyncThunkFulfilledActionCreator<T, void, any>;
 
 export interface UserCommentSettings {
-  primary_color: string,
-  accent_color: string,
+  primary_color?: string,
+  accent_color?: string,
 }
 export interface UserCommentData {
   comment: string,
@@ -63,6 +63,31 @@ const initialState: UserInfoState = {
   users: [],
   connected: false,
 };
+
+export function defaultInitializeUser(): UsersState {
+  return {
+    channel_id: 0,
+    comment: "",
+    deaf: false,
+    id: 0,
+    mute: false,
+    name: "",
+    priority_speaker: false,
+    profile_picture: "",
+    recording: false,
+    self_deaf: false,
+    self_mute: false,
+    suppress: false,
+    talking: false,
+    mutedSince: undefined,
+    deafenedSince: undefined,
+    commentData: {
+      comment: "",
+      background_picture: "",
+      settings: {}
+    }
+  }
+}
 
 function updateUserData(state: UsersState[], user_info: UserDataUpdate, field: string): UsersState {
   let prevList = state;
@@ -121,6 +146,23 @@ export const userSlice = createSlice({
         state.users[userIndex].talking = action.payload.talking;
       }
     },
+    updateUserSettings(state, action: PayloadAction<{ user_id: number, settings: UserCommentSettings }>) {
+      let userIndex = state.users.findIndex(e => e.id === action.payload.user_id);
+      if (userIndex !== -1) {
+        if (!state.users[userIndex].commentData) {
+          state.users[userIndex].commentData = {
+            comment: "",
+            background_picture: "",
+            settings: {}
+          }
+        }
+        state.users[userIndex].commentData.settings = action.payload.settings;
+
+        if (state.currentUser?.id === action.payload.user_id) {
+          state.currentUser.commentData = state.users[userIndex].commentData;
+        }
+      }
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -169,6 +211,6 @@ export const userSlice = createSlice({
 })
 
 // Action creators are generated for each case reducer function
-export const { deleteUser, updateUserImage, updateCurrentUserById, updateConnected, updateUserTalkingInfo } = userSlice.actions
+export const { deleteUser, updateUserImage, updateCurrentUserById, updateConnected, updateUserTalkingInfo, updateUserSettings } = userSlice.actions
 
 export default userSlice.reducer

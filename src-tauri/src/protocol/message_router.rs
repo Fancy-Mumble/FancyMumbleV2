@@ -42,7 +42,7 @@ impl MessageRouter {
                 sender.message_channel.clone(),
                 server_channel.clone(),
             ),
-            voice_manager: voice::Manager::new(sender.message_channel, server_channel)?,
+            voice_manager: voice::Manager::new(sender.message_channel, server_channel, false)?,
         })
     }
 
@@ -96,6 +96,7 @@ impl MessageRouter {
                 let server_sync = Self::handle_downcast::<mumble::proto::ServerSync>(message)?;
                 self.user_manager.notify_current_user(&server_sync);
                 self.connection_manager.notify_connected();
+                self.voice_manager.deafen()?;
             }
             crate::utils::messages::MessageTypes::ChannelRemove => {
                 let removed_channel =

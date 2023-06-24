@@ -68,5 +68,5 @@ impl Encoder {
         audio_buffer
     }
 
-    pub(crate) fn update_settings(&self, settings: super::recorder::RecorderSettings) {}
+    pub(crate) fn update_settings(&self, _settings: super::recorder::RecorderSettings) {}
 }

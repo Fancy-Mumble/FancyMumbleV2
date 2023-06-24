@@ -13,7 +13,7 @@ import "./styles/common.css"
 
 interface UserInfoProps {
     userInfo: UsersState | undefined;
-    style: React.CSSProperties;
+    style?: React.CSSProperties;
 }
 
 function UserInfo(props: UserInfoProps) {

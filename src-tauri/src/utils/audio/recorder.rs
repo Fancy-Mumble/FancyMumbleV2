@@ -1,5 +1,4 @@
 use std::{
-    ops::ControlFlow,
     sync::{
         atomic::{AtomicBool, Ordering},
         mpsc::{self, Receiver},
@@ -27,7 +26,7 @@ pub struct RecorderSettings {
 
 struct SettingsChannel {
     rx_channel: Option<mpsc::Receiver<RecorderSettings>>,
-    tx_channel: mpsc::Sender<RecorderSettings>,
+    _tx_channel: mpsc::Sender<RecorderSettings>,
 }
 
 pub struct Recorder {
@@ -42,7 +41,7 @@ impl Recorder {
         let (tx, rx) = mpsc::channel();
         let settings_channel = SettingsChannel {
             rx_channel: Some(rx),
-            tx_channel: tx,
+            _tx_channel: tx,
         };
 
         Self {
@@ -116,14 +115,6 @@ impl Recorder {
                 }
             }
         }
-    }
-
-    pub fn send_settings(&mut self, settings: RecorderSettings) -> AnyError<()> {
-        self.settings_channel
-            .tx_channel
-            .send(settings)
-            .expect("Failed to send settings");
-        Ok(())
     }
 }
 

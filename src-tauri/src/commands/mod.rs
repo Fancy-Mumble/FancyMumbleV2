@@ -1,7 +1,7 @@
 use std::{
     borrow::BorrowMut,
     collections::HashMap,
-    io::{Read, Write},
+    io::{Seek, SeekFrom, Write},
 };
 
 use crate::{
@@ -9,7 +9,9 @@ use crate::{
     errors::string_convertion::ErrorString,
     manager::user::UpdateableUserState,
     protocol::message_transmitter::MessageTransmitter,
-    utils::audio::device_manager::AudioDeviceManager,
+    utils::{
+        audio::device_manager::AudioDeviceManager, constants::get_project_dirs, server::Server,
+    },
 };
 use base64::{engine::general_purpose, Engine};
 use tauri::State;
@@ -69,6 +71,91 @@ pub async fn connect_to_server(
     add_message_handler(&state, "transmitter".to_string(), Box::new(transmitter)).await;
 
     Ok(())
+}
+
+#[tauri::command]
+pub async fn save_server(
+    description: &str,
+    server_host: &str,
+    server_port: u16,
+    username: &str,
+) -> Result<(), String> {
+    info!("Saving server: {server_host}:{server_port}");
+    let project_dirs = get_project_dirs().ok_or("Unable to load project dir")?;
+
+    let data_dir = project_dirs.config_dir();
+
+    // create config dir if it doesn't exist
+    std::fs::create_dir_all(data_dir).map_err(|e| format!("{e:?}"))?;
+
+    // open server.json or create it if it doesn't exist
+    let mut server_file = std::fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .open(data_dir.join("server.json"))
+        .map_err(|e| format!("Error opening file: {e:?}"))?;
+
+    // read the json content using serde and append the new server
+    let mut server_list =
+        serde_json::from_reader::<&std::fs::File, Vec<Server>>(&server_file).unwrap_or(Vec::new());
+
+    // check if the server is already in the list
+    for server in server_list.iter() {
+        if server.host == server_host && server.port == server_port {
+            return Err("Server already exists".to_string());
+        }
+    }
+
+    server_list.push(Server {
+        description: description.to_string(),
+        host: server_host.to_string(),
+        port: server_port,
+        username: username.to_string(),
+    });
+
+    trace!("Server list: {:#?}", server_list);
+
+    // write the new json content
+    server_file
+        .seek(SeekFrom::Start(0))
+        .map_err(|e| format!("{e:?}"))?;
+    server_file
+        .write_all(
+            serde_json::to_string_pretty(&server_list)
+                .map_err(|e| format!("{e:?}"))?
+                .as_bytes(),
+        )
+        .map_err(|e| format!("{e:?}"))?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn get_server_list() -> Result<Vec<Server>, String> {
+    info!("Getting server list");
+    let project_dirs = get_project_dirs().ok_or("Unable to load project dir")?;
+
+    let data_dir = project_dirs.config_dir();
+
+    // create config dir if it doesn't exist
+    std::fs::create_dir_all(data_dir).map_err(|e| format!("{e:?}"))?;
+
+    // open server.json or create it if it doesn't exist
+    let server_file = std::fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .open(data_dir.join("server.json"))
+        .map_err(|e| format!("Error opening file: {e:?}"))?;
+
+    // read the json content using serde
+    let server_list =
+        serde_json::from_reader::<&std::fs::File, Vec<Server>>(&server_file).unwrap_or(Vec::new());
+
+    trace!("Server list: {:#?}", server_list);
+
+    Ok(server_list)
 }
 
 #[tauri::command]
