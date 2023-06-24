@@ -23,8 +23,8 @@ pub struct DeviceConfig {
 
 struct InputSettings {
     volume_adjustment: f32,
-    voice_hold: Duration,
-    voice_threshold: f32,
+    _voice_hold: Duration,
+    _voice_threshold: f32,
 }
 
 pub struct Microphone {
@@ -76,8 +76,8 @@ impl Microphone {
             stream: None,
             input_settings: Arc::new(Mutex::new(InputSettings {
                 volume_adjustment: f32::powf(10.0, decibel_adjustment / 20.0),
-                voice_hold: Duration::from_millis(20),
-                voice_threshold: 0.03,
+                _voice_hold: Duration::from_millis(20),
+                _voice_threshold: 0.03,
             })),
         })
     }

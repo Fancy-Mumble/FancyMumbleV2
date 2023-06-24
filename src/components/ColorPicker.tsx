@@ -1,9 +1,8 @@
 import { Box, Button, IconButton, InputBase, Paper, Popover, Typography } from '@mui/material';
 import React from 'react';
-import { CustomPicker, HuePickerProps } from 'react-color';
-import Alpha from 'react-color/lib/components/alpha/Alpha';
+import { ColorResult, CustomPicker, HuePickerProps } from 'react-color';
 import Hue from 'react-color/lib/components/hue/Hue';
-import { Checkboard, Saturation } from 'react-color/lib/components/common'
+import { Saturation } from 'react-color/lib/components/common'
 import tinycolor from 'tinycolor2';
 import FormatPaintIcon from '@mui/icons-material/FormatPaint';
 import ColorLensIcon from '@mui/icons-material/ColorLens';
@@ -81,12 +80,15 @@ function DefaultColorPicker(props: ColorPickerProps) {
             hsv: color.toHsv(),
             hex: '#' + color.toHex()
         });
+        if(props.onChangeComplete)
+           props.onChangeComplete(colorState, event)
     }
 
-    const handleChangeComplete = (hue: any) => {
+    const handleChangeComplete = (hue: ColorResult, event: React.ChangeEvent<HTMLInputElement>) => {
         console.log("Complete!");
+        handleHueChange(hue);
         if(props.onChangeComplete)
-           props.onChangeComplete(colorState)
+           props.onChangeComplete(colorState, event)
     }
 
     const showDescription = () => {
@@ -148,8 +150,6 @@ function DefaultColorPicker(props: ColorPickerProps) {
                         hsl={colorState.hsl}
                         hsv={colorState.hsv}
                         onChange={handleSaturationChange}
-                        onChangeComplete={handleChangeComplete}
-                        pointer={CustomPointer}
                     />
                 </Box>
                 <Box sx={{
@@ -160,8 +160,7 @@ function DefaultColorPicker(props: ColorPickerProps) {
                         width={200}
                         hsl={colorState.hsl}
                         hsv={colorState.hsv}
-                        onChange={handleHueChange}
-                        onChangeComplete={handleChangeComplete}
+                        onChange={handleChangeComplete}
                         direction={'horizontal'}
                     />
                 </Box>

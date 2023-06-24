@@ -22,7 +22,7 @@ export async function parseUserCommentForData(data: string): Promise<UserComment
             })
             .catch((error) => {
                 console.log(error);
-                return { comment: '', background_picture: '', settings: { primary_color: '', accent_color: '' } };
+                return { comment: '', background_picture: '', settings: {} };
             });
         return { comment: '', background_picture: '', settings: result };
     }
@@ -32,7 +32,7 @@ export async function parseUserCommentForData(data: string): Promise<UserComment
 
 export async function encodeUserCommentData(comment: string, data: UserCommentData | null): Promise<string> {
     if (!data) {
-        data = { comment: comment, background_picture: '', settings: { primary_color: '', accent_color: '' } };
+        data = { comment: comment, background_picture: '', settings: {} };
     }
     const json = JSON.stringify(data.settings);
     const compressed = await invoke('zip_data_to_utf8', { data: json, quality: 11 });

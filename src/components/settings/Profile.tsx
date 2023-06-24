@@ -8,9 +8,10 @@ import UserInfo from "../UserInfo";
 import { RootState } from "../../store/store";
 import { useDispatch, useSelector } from "react-redux";
 import { updateUserValue } from "../../helper/UserInfo";
-import { UpdateableUserState, UsersState } from "../../store/features/users/userSlice";
+import { UpdateableUserState, UsersState, defaultInitializeUser, updateUser, updateUserSettings } from "../../store/features/users/userSlice";
 import { encodeUserCommentData } from "../../helper/ProfileDataHelper";
 import { useTheme } from '@mui/material/styles';
+import './styles/Profile.css'
 
 enum ImageType {
     Profile = 'profile',
@@ -22,6 +23,8 @@ function Profile() {
     const dispatch = useDispatch();
 
     const userInfo = useSelector((state: RootState) => state.reducer.userInfo).currentUser;
+    let userInfoClone = JSON.stringify(userInfo) ?? defaultInitializeUser();
+
 
     let [errorMessage, setErrorMessage] = useState('');
     let [loading, setLoading] = useState(false);
@@ -51,7 +54,7 @@ function Profile() {
             let currentUserClone: UpdateableUserState = { id: userInfo.id };
 
             await update(userInfo, currentUserClone);
-            await invoke('change_user_state', { userState: currentUserClone }).catch(e => console.log(e));
+            //await invoke('change_user_state', { userState: currentUserClone }).catch(e => console.log(e));
         }
     }
 
@@ -68,15 +71,33 @@ function Profile() {
             };
 
             updateUserValue(async (currentUser, currentUserClone) => {
-                console.log(currentUser);
                 let encoded = await encodeUserCommentData(currentUser.comment, userData);
                 currentUserClone.comment = encoded;
             });
+
+            dispatch(updateUserSettings({ user_id: userInfo.id, settings: { ...userInfo.commentData?.settings, primary_color: color.hex } }));
         }
     }
 
     function setAccentColorCall(color: ColorResult) {
         setAccentColor(color);
+        if (userInfo) {
+            /*let userData = {
+                ...userInfo.commentData,
+                settings:
+                {
+                    ...userInfo.commentData?.settings,
+                    accentColor: color.hex
+                }
+            };
+
+            updateUserValue(async (currentUser, currentUserClone) => {
+                let encoded = await encodeUserCommentData(currentUser.comment, userData);
+                currentUserClone.comment = encoded;
+            });*/
+
+            //dispatch(updateUserSettings({ user_id: userInfo.id, settings: { ...userInfo.commentData?.settings, accent_color: color.hex } }));
+        }
     }
 
     async function uploadFile(path: string, type: ImageType) {
@@ -93,7 +114,7 @@ function Profile() {
 
     return (
         <Box>
-            <Container sx={{ maxWidth: '600px' }}>
+            <Container className="settingsContainer">
                 {showErrorMessage()}
                 <Typography variant="h4">Profile</Typography>
                 <Divider sx={{ marginBottom: 5 }} />
@@ -118,7 +139,6 @@ function Profile() {
                         </Box>
                         <Typography variant="h5" sx={{ marginTop: 4, marginBottom: 1 }}>Colors</Typography>
                         <Box sx={{ display: 'flex' }}>
-                            {JSON.stringify(userInfo?.commentData?.settings?.primary_color)}
                             <DefaultColorPicker color={primaryColor} onChangeComplete={(color) => setPrimaryColorCall(color)} description="Primary" style={{ marginRight: 15 }} />
                             <DefaultColorPicker color={accentColor} onChangeComplete={(color) => setAccentColorCall(color)} description="Accent" style={{ marginRight: 15 }} />
                         </Box>
@@ -132,7 +152,7 @@ function Profile() {
                             />
                         </Box>
                     </Grid>
-                    <Grid item xs={12} sm={12} md={6} lg={6} sx={{display: 'flex', justifyContent: 'center'}}>
+                    <Grid item xs={12} sm={12} md={6} lg={6} sx={{ display: 'flex', justifyContent: 'center' }}>
                         <UserInfo
                             userInfo={userInfo}
                             style={{ position: 'sticky', top: theme.spacing(2) }}

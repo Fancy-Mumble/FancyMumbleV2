@@ -22,14 +22,12 @@ import UserInfoPopover from "./UserInfoPopover";
 
 interface ChatMessageProps {
     message: TextMessage,
-    prevCommentBy: number | undefined,
     messageId: number,
 }
 
 function ChatMessage(props: ChatMessageProps) {
     const userList = useSelector((state: RootState) => state.reducer.userInfo);
     const dispatch = useDispatch();
-    const followUpMessage = props.prevCommentBy === props.message.sender.user_id;
     const [userInfoAnchor, setUserInfoAnchor]: any = React.useState(null);
     const user = userList.users.find(e => e.id === props.message.sender.user_id);
 
@@ -74,50 +72,27 @@ function ChatMessage(props: ChatMessageProps) {
         dispatch(deleteChatMessage(messageId));
     }
 
-    function showUserInfo() {
-        if (userInfoAnchor) {
-            return (
-                <UserInfoPopover
-                    anchorEl={userInfoAnchor}
-                    onClose={() => setUserInfoAnchor(null)}
-                    userInfo={user}
-                />
-            )
-        }
-    }
-
     return (
-        <Grid container className="message-root" style={{ marginBottom: (followUpMessage ? 0 : '16px') }}>
-            <Grid item>
-                <Avatar
-                    src={getProfileImage(props.message.sender.user_id)}
-                    className="avatar" style={{ visibility: (followUpMessage ? 'hidden' : 'visible') }}
-                    onClick={e => { setUserInfoAnchor(e.currentTarget); }}
-                />
-                {/*This is wrong, we create this for every chat message :O*/}
-                {/*showUserInfo()*/}
+        <Grid item xs={10} className="message-container">
+            <Grid item className="message-container-inner">
+                <Box className={`message ${false ? "sender" : "receiver"}`}>
+                    {parseMessage(props.message.message)}
+                </Box>
             </Grid>
-            <Grid item xs={10} className="message-container">
-                <Grid item className="message-container-inner">
-                    <Box className={`message ${false ? "sender" : "receiver"}`}>
-                        {parseMessage(props.message.message)}
-                    </Box>
-                </Grid>
-                <Grid item className="message-metadata">
-                    <Typography variant="subtitle2" className="metadata">
-                        <Link className="user-info" href="#">{props.message.sender.user_name}</Link> - {generateDate(props.message.timestamp)}
-                    </Typography>
-                    <Tooltip title="Like">
-                        <IconButton aria-label="Example" size="small" onClick={e => likeMessage("abc")}>
-                            <ThumbUpOffAltIcon fontSize="small" color="disabled" />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete message locally">
-                        <IconButton aria-label="Example" size="small" onClick={e => deleteMessageEvent(props.messageId)}>
-                            <ClearIcon fontSize="small" color="disabled" />
-                        </IconButton>
-                    </Tooltip>
-                </Grid>
+            <Grid item className="message-metadata">
+                <Typography variant="subtitle2" className="metadata">
+                    <Link className="user-info" href="#">{props.message.sender.user_name}</Link> - {generateDate(props.message.timestamp)}
+                </Typography>
+                <Tooltip title="Like">
+                    <IconButton aria-label="Example" size="small" onClick={e => likeMessage("abc")}>
+                        <ThumbUpOffAltIcon fontSize="small" color="disabled" />
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title="Delete message locally">
+                    <IconButton aria-label="Example" size="small" onClick={e => deleteMessageEvent(props.messageId)}>
+                        <ClearIcon fontSize="small" color="disabled" />
+                    </IconButton>
+                </Tooltip>
             </Grid>
         </Grid>
     );

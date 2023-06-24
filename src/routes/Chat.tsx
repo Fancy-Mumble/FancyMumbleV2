@@ -38,6 +38,8 @@ function Chat() {
         });*/
     });
 
+ 
+
     async function updateUserValue(update: (currentUser: UsersState, operator: UpdateableUserState) => void) {
         if (userInfo.currentUser) {
             let currentUser = userInfo.currentUser;
