@@ -37,7 +37,7 @@ pub struct Microphone {
 }
 
 impl Microphone {
-    pub fn new(tx: Sender<Vec<f32>>) -> AnyError<Microphone> {
+    pub fn new(tx: Sender<Vec<f32>>) -> AnyError<Self> {
         let buffer_size = usize::pow(2, 10);
         let host = cpal::default_host();
 
@@ -53,7 +53,7 @@ impl Microphone {
             .max_by(|a, b| a.max_sample_rate().cmp(&b.max_sample_rate()))
             .ok_or("Failed to get max sample rate")?;
 
-        let cpal_buffer_size = cpal::BufferSize::Fixed(buffer_size as u32);
+        let cpal_buffer_size = cpal::BufferSize::Fixed(u32::try_from(buffer_size)?);
         let config = cpal::StreamConfig {
             channels: device_config.channels(),
             sample_rate: device_config.max_sample_rate(),
@@ -68,7 +68,7 @@ impl Microphone {
         };
 
         let decibel_adjustment = 20.0;
-        Ok(Microphone {
+        Ok(Self {
             input_device,
             device_config: Some(config),
             device_info,
@@ -82,7 +82,7 @@ impl Microphone {
         })
     }
 
-    pub fn config(&self) -> DeviceConfig {
+    pub const fn config(&self) -> DeviceConfig {
         self.device_info
     }
 

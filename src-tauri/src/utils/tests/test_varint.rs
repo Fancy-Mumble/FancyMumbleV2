@@ -464,7 +464,7 @@ mod tests {
         assert_eq!(
             &vec![127],
             Builder::new()
-                .number(127)
+                .number(&127)
                 .build()
                 .expect(BUILD_FAILED_STR)
                 .parsed_vec()
@@ -472,7 +472,7 @@ mod tests {
         assert_eq!(
             &vec![0],
             Builder::new()
-                .number(0)
+                .number(&0)
                 .build()
                 .expect(BUILD_FAILED_STR)
                 .parsed_vec()
@@ -480,7 +480,7 @@ mod tests {
         assert_eq!(
             &vec![42],
             Builder::new()
-                .number(42)
+                .number(&42)
                 .build()
                 .expect(BUILD_FAILED_STR)
                 .parsed_vec()
@@ -492,7 +492,7 @@ mod tests {
         assert_eq!(
             &vec![0xBF, 0xFF],
             Builder::new()
-                .number(16383)
+                .number(&16383)
                 .build()
                 .expect(BUILD_FAILED_STR)
                 .parsed_vec()
@@ -500,7 +500,7 @@ mod tests {
         assert_eq!(
             &vec![0x80, 128],
             Builder::new()
-                .number(128)
+                .number(&128)
                 .build()
                 .expect(BUILD_FAILED_STR)
                 .parsed_vec()
@@ -508,7 +508,7 @@ mod tests {
         assert_eq!(
             &vec![0x80, 255],
             Builder::new()
-                .number(255)
+                .number(&255)
                 .build()
                 .expect(BUILD_FAILED_STR)
                 .parsed_vec()
@@ -520,7 +520,7 @@ mod tests {
         assert_eq!(
             &vec![0xDF, 0xFF, 0xFF],
             Builder::new()
-                .number(0x001F_FFFF)
+                .number(&0x001F_FFFF)
                 .build()
                 .expect(BUILD_FAILED_STR)
                 .parsed_vec()
@@ -528,7 +528,7 @@ mod tests {
         assert_eq!(
             &vec![0xC0, 0x40, 0],
             Builder::new()
-                .number(16_384)
+                .number(&16_384)
                 .build()
                 .expect(BUILD_FAILED_STR)
                 .parsed_vec()
@@ -540,7 +540,7 @@ mod tests {
         assert_eq!(
             &vec![0xEF, 0xFF, 0xFF, 0xFF],
             Builder::new()
-                .number(0x0FFF_FFFF)
+                .number(&0x0FFF_FFFF)
                 .build()
                 .expect(BUILD_FAILED_STR)
                 .parsed_vec()
@@ -548,7 +548,7 @@ mod tests {
         assert_eq!(
             &vec![0xE0, 0x20, 0, 0],
             Builder::new()
-                .number(2_097_152)
+                .number(&2_097_152)
                 .build()
                 .expect(BUILD_FAILED_STR)
                 .parsed_vec()
@@ -560,7 +560,7 @@ mod tests {
         assert_eq!(
             &vec![0xF0, 0xFF, 0xFF, 0xFF, 0xFF],
             Builder::new()
-                .number(0xFFFF_FFFFu32)
+                .number(&0xFFFF_FFFFu32)
                 .build()
                 .expect(BUILD_FAILED_STR)
                 .parsed_vec()
@@ -569,7 +569,7 @@ mod tests {
         assert_eq!(
             &vec![0xF0, 0x10, 0, 0, 0],
             Builder::new()
-                .number(268_435_456)
+                .number(&268_435_456)
                 .build()
                 .expect(BUILD_FAILED_STR)
                 .parsed_vec()

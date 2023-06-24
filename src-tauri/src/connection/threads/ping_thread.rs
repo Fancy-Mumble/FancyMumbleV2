@@ -58,7 +58,7 @@ impl PingThread for Connection {
                     select! {
                         _ = deadman_switch.tick() => {}
                         _ = interval.tick() => {
-                            match tx_out.send(message_builder(&ping)) {
+                            match tx_out.send(message_builder(&ping).unwrap_or_default()) {
                                 Ok(_) => {}
                                 Err(error) => error!("Unable to send Ping: {}", error),
                             }
