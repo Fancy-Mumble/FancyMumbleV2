@@ -24,8 +24,8 @@ use tracing::Level;
 use tracing_subscriber::fmt;
 
 use crate::commands::{
-    change_user_state, connect_to_server, get_audio_devices, like_message, logout, send_message,
-    set_user_image, unzip_data_from_utf8, zip_data_to_utf8,
+    change_user_state, connect_to_server, get_audio_devices, get_server_list, like_message, logout,
+    save_server, send_message, set_user_image, unzip_data_from_utf8, zip_data_to_utf8,
 };
 
 fn init_logging() {
@@ -59,6 +59,8 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             connect_to_server,
+            save_server,
+            get_server_list,
             send_message,
             logout,
             like_message,

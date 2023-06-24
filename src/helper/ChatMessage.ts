@@ -9,7 +9,7 @@ export class ChatMessageHandler {
 
     constructor(private dispatch: Dispatch<AnyAction>, private setChatMessage: any) {
 
-     }
+    }
 
     pushChatMessage(message: TextMessage) {
         this.dispatch(addChatMessage(message));
@@ -38,6 +38,8 @@ export class ChatMessageHandler {
     }
 
     public sendChatMessage(chatMessage: string, userInfo: UsersState | undefined) {
+        if (chatMessage.length === 0) return;
+
         let message = new MessageParser(chatMessage)
             .parseLinks()
             .parseCommands()
