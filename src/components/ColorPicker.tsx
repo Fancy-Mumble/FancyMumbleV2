@@ -81,14 +81,14 @@ function DefaultColorPicker(props: ColorPickerProps) {
             hex: '#' + color.toHex()
         });
         if(props.onChangeComplete)
-           props.onChangeComplete(colorState, event)
+           props.onChangeComplete(colorState as any, event as any)
     }
 
     const handleChangeComplete = (hue: ColorResult, event: React.ChangeEvent<HTMLInputElement>) => {
         console.log("Complete!");
         handleHueChange(hue);
         if(props.onChangeComplete)
-           props.onChangeComplete(colorState, event)
+           props.onChangeComplete(colorState as any, event as any)
     }
 
     const showDescription = () => {
@@ -146,9 +146,7 @@ function DefaultColorPicker(props: ColorPickerProps) {
                     borderRadius: '4px',
                 }}>
                     <Saturation
-                        {...props}
-                        hsl={colorState.hsl}
-                        hsv={colorState.hsv}
+                        {...(props as any)}
                         onChange={handleSaturationChange}
                     />
                 </Box>
@@ -157,11 +155,8 @@ function DefaultColorPicker(props: ColorPickerProps) {
                 }}>
                     <Hue
                         {...props}
-                        width={200}
-                        hsl={colorState.hsl}
-                        hsv={colorState.hsv}
+                        width="200"
                         onChange={handleChangeComplete}
-                        direction={'horizontal'}
                     />
                 </Box>
                 <Box>

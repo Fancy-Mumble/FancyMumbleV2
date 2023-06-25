@@ -21,6 +21,7 @@
     "@types/dompurify": "^3.0.1",
     "@types/marked": "^5.0.0",
     "@types/react-color": "^3.0.6",
+    "@types/tinycolor2": "^1.4.3",
     "dayjs": "^1.11.7",
     "dompurify": "^3.0.2",
     "fuse.js": "^6.6.2",
