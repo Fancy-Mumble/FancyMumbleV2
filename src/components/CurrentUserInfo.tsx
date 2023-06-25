@@ -9,7 +9,7 @@ import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import './styles/CurrentUserInfo.css'
 import { invoke } from "@tauri-apps/api";
-import { UpdateableUserState, UsersState, updateUser, updateUserFromUpdateable } from "../store/features/users/userSlice";
+import { UpdateableUserState, UsersState } from "../store/features/users/userSlice";
 import "./styles/common.css"
 
 function CurrentUserInfo() {
@@ -24,8 +24,6 @@ function CurrentUserInfo() {
 
             update(currentUser, currentUserClone);
             invoke('change_user_state', { userState: currentUserClone });
-
-            dispatch(updateUserFromUpdateable(currentUserClone));
         }
     }
 

@@ -14,7 +14,7 @@ function Settings() {
 
     return (
         <Box sx={{ height: '100%', display: 'flex' }}>
-            <Box sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper', height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <Box sx={{ width: '100%', maxWidth: 200, bgcolor: 'background.paper', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
                     <List component="nav" aria-label="main mailbox folders" subheader={<ListSubheader>Settings</ListSubheader>}>
                         <ListItemButton
@@ -63,7 +63,7 @@ function Settings() {
                 </Box>
             </Box>
             <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
-                <Box sx={{ p: 3 }}>
+                <Box sx={{ p: 0 }}>
                     {selectedIndex === 0 && <AudioSettings />}
                     {selectedIndex === 1 && <Profile />}
                     {selectedIndex === 2 && <div>Additional Features</div>}

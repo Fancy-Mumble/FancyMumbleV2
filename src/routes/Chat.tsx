@@ -1,6 +1,6 @@
 import { Box, Divider, IconButton, InputBase, Paper } from '@mui/material';
 import { invoke } from '@tauri-apps/api';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import SendIcon from '@mui/icons-material/Send';
 import AddToPhotosIcon from '@mui/icons-material/AddToPhotos';
 import ChatMessageContainer from '../components/ChatMessageContainer';
@@ -10,11 +10,10 @@ import React from 'react';
 import Sidebar from '../components/Sidebar';
 import { RootState } from '../store/store';
 import { useDispatch, useSelector } from 'react-redux';
-import { TextMessage, addChatMessage } from '../store/features/users/chatMessageSlice';
 import { formatBytes } from '../helper/Fomat';
-import MessageParser from '../helper/MessageParser';
-import { UserInfoState, UsersState } from '../store/features/users/userSlice';
+import { UpdateableUserState, UsersState } from '../store/features/users/userSlice';
 import { ChatMessageHandler } from '../helper/ChatMessage';
+import { unregister } from '@tauri-apps/api/globalShortcut';
 
 function Chat() {
     const [chatMessage, setChatMessage] = useState("");
@@ -29,6 +28,29 @@ function Chat() {
     const currentChannel = channelInfo.find(e => e.channel_id === userInfo.currentUser?.channel_id)?.name;
 
     const chatMessageHandler = new ChatMessageHandler(dispatch, setChatMessage);
+
+    useEffect(() => {
+        unregister('F13');
+        /*register('F13', () => {
+            console.log('F13 is pressed');
+            if (userInfo.currentUser)
+                updateUserValue((currentUser, currentUserClone) => currentUserClone.self_mute = !currentUser.self_mute);
+        });*/
+    });
+
+ 
+
+    async function updateUserValue(update: (currentUser: UsersState, operator: UpdateableUserState) => void) {
+        if (userInfo.currentUser) {
+            let currentUser = userInfo.currentUser;
+            let currentUserClone: UpdateableUserState = { id: currentUser.id };
+
+            update(currentUser, currentUserClone);
+            await invoke('change_user_state', { userState: currentUserClone }).catch(e => console.log(e));
+        }
+    }
+
+
 
     function keyDownHandler(e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) {
         if (e && e.key === 'Enter' && !e.shiftKey) {

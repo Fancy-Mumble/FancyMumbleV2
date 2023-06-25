@@ -1,70 +1,132 @@
-import { Box, Card, CardContent, List } from "@mui/material";
-import React from "react";
+import { Avatar, Box, Card, CardContent, Grid, List } from "@mui/material";
+import React, { ReactElement, useEffect, useMemo, useRef, useState } from "react";
 import { MemoChatMessage } from "./ChatMessage";
 import { useSelector } from "react-redux";
 import { RootState } from "../store/store";
 import { TextMessage } from "../store/features/users/chatMessageSlice";
-
+import { UsersState } from "../store/features/users/userSlice";
+import { getProfileImage } from "../helper/UserInfoHelper";
+import UserInfoPopover from "./UserInfoPopover";
 
 interface ChatMessageContainerProps {
 	messages: TextMessage[]
 }
 
-interface ChatMessageContainerState {
+interface GroupedMessages {
+	user: UsersState | undefined,
+	messages: Array<ReactElement>
 }
 
-class ChatMessageContainer extends React.Component<ChatMessageContainerProps, ChatMessageContainerState> {
 
-	private chatContainer: React.RefObject<any> = React.createRef();
-	private userScrolled: boolean = false;
-	private messagesEndRef: React.RefObject<HTMLDivElement> = React.createRef();
+const ChatMessageContainer = (props: ChatMessageContainerProps) => {
+	const userList = useSelector((state: RootState) => state.reducer.userInfo);
+	const chatContainer: React.RefObject<HTMLDivElement> = React.createRef();
+	const messagesEndRef: React.RefObject<HTMLDivElement> = React.createRef();
+	const [userInfoAnchor, setUserInfoAnchor] = React.useState<HTMLElement | null>(null);
+	const [currentPopoverUserId, setCurrentPopoverUserId]: any = useState(null);
+	const [userScrolled, setUserScrolled] = useState(false);
+	const prevPropsRef = useRef(props);
 
-	constructor(props: ChatMessageContainerProps) {
-		super(props);
-		this.state = { userScrolled: false }
-	}
-
-	scrollToBottom() {
+	const scrollToBottom = () => {
 		//add some minor sleep to make sure the element is rendered
 		new Promise(r => setTimeout(r, 100)).then(() => {
-			this.messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+			messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 		});
 	}
 
-	getSnapshotBeforeUpdate(prevProps: ChatMessageContainerProps, prevState: ChatMessageContainerState) {
-		if (this.chatContainer.current) {
-			let el = this.chatContainer.current;
+	useEffect(() => {
+		if (chatContainer.current) {
+			let el = chatContainer.current;
 			if (el.scrollTop < el.scrollHeight - el.clientHeight * 2) {
 				console.log("User scrolled", el.scrollTop, el.scrollHeight - el.clientHeight);
-				this.userScrolled = true;
+				setUserScrolled(true);
 			} else {
-				this.userScrolled = false;
+				setUserScrolled(false);
 			}
 		}
+	}, [props, prevPropsRef]); // Depend on props
 
-		return null;
-	}
-
-	componentDidUpdate(prevProps: ChatMessageContainerProps) {
-		if (!this.userScrolled && this.chatContainer.current) {
-			this.scrollToBottom();
+	useEffect(() => {
+		if (!userScrolled && chatContainer?.current) {
+			scrollToBottom();
 		}
-	}
+	}, [props, userScrolled]); // Depend on props and userScrolled
 
-	render() {
-		return (
-			<Box sx={{ flex: 1, overflowY: 'auto' }} ref={this.chatContainer}>
-				<List sx={{ width: '100%', maxWidth: '100%' }}>
-					{this.props.messages.map((el, index, array) => {
-						let prevCommentBy = index - 1 >= 0 ? array[index - 1].sender.user_id : undefined;
+	const userIdToUserMap = useMemo(() => {
+		if (!userList) return new Map<number, UsersState>();
 
-						return (<MemoChatMessage messageId={el.timestamp} key={el.timestamp} message={el} prevCommentBy={prevCommentBy} />)
-					}
-					)}
-				</List>
-				<div ref={this.messagesEndRef} />
-			</Box>
-		);
-	}
+		const map = new Map<number, UsersState>();
+		userList.users.forEach(user => map.set(user.id, user));
+		return map;
+	}, [userList]);
+
+	const memoizedMessages = useMemo(() => {
+		if (!props) return [];
+
+		let groupedMessages: Array<GroupedMessages> = [];
+		let prevUser: UsersState | undefined = undefined;
+
+		props.messages.forEach((el) => {
+			let currentUser = userIdToUserMap.get(el.sender.user_id);
+			if (currentUser?.id !== prevUser?.id || groupedMessages.length === 0) {
+				groupedMessages.push({ user: currentUser, messages: [] });
+			}
+
+			groupedMessages[Math.max(0, groupedMessages.length - 1)].messages.push(
+				<MemoChatMessage
+					messageId={el.timestamp}
+					key={el.timestamp}
+					message={el}
+				/>
+			);
+
+			prevUser = currentUser;
+		});
+
+		return groupedMessages;
+	}, [props.messages]);
+
+	const userIdToPopoverMap = useMemo(() => {
+		const popoverMap = new Map<number, ReactElement>();
+		userIdToUserMap.forEach((user, id) => {
+			popoverMap.set(id,
+				<UserInfoPopover
+					anchorEl={userInfoAnchor}
+					onClose={() => {
+						setUserInfoAnchor(null);
+						setCurrentPopoverUserId(null);
+					}}
+					userInfo={user}
+				/>);
+		});
+		return popoverMap;
+	}, [userIdToUserMap, userInfoAnchor]);
+
+	return (
+		<Box sx={{ flex: 1, overflowY: 'auto' }} ref={chatContainer}>
+			<List sx={{ width: '100%', maxWidth: '100%' }}>
+				{memoizedMessages.map((group, index) => (
+					<Grid container className="message-root" key={index} sx={{ width: '100%', flexWrap: 'nowrap' }}>
+						<Grid item >
+							<Avatar
+								sx={{ position: 'sticky', top: 10 }}
+								className="avatar"
+								src={getProfileImage(group.user?.id || 0, userList)}
+								onClick={e => { setCurrentPopoverUserId(group.user?.id); setUserInfoAnchor(e.currentTarget); console.log(e.currentTarget) }}
+								variant="rounded"
+							/>
+						</Grid>
+						<Grid item sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+							{group.messages}
+						</Grid>
+					</Grid>
+
+				))}
+			</List>
+			{currentPopoverUserId && userIdToPopoverMap.get(currentPopoverUserId)}
+			<div ref={messagesEndRef} />
+		</Box>
+	);
 }
-export default ChatMessageContainer
+
+export default React.memo(ChatMessageContainer);

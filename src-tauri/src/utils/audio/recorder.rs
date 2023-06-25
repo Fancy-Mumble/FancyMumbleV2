@@ -1,60 +1,110 @@
 use std::{
     sync::{
         atomic::{AtomicBool, Ordering},
-        mpsc::{self, Receiver, Sender},
+        mpsc::{self, Receiver},
         Arc,
     },
     thread,
 };
 
+use tokio::sync::broadcast;
 use tracing::{error, trace};
 
-use crate::errors::AnyError;
+use crate::{
+    errors::AnyError,
+    mumble::proto::UdpTunnel,
+    utils::{audio::microphone::Microphone, messages::raw_message_builder},
+};
+
+use super::encoder::Encoder;
+
+pub struct Settings {
+    pub sample_rate: u32,
+    pub channels: u8,
+    pub frame_size: usize,
+}
+
+struct SettingsChannel {
+    rx_channel: Option<mpsc::Receiver<Settings>>,
+    _tx_channel: mpsc::Sender<Settings>,
+}
 
 pub struct Recorder {
     audio_thread: Option<thread::JoinHandle<()>>,
-    _queue_rx: Receiver<Vec<u8>>,
-    _queue_tx: Option<Sender<Vec<u8>>>,
     playing: Arc<AtomicBool>,
+    server_channel: Option<broadcast::Sender<Vec<u8>>>,
+    settings_channel: SettingsChannel,
 }
 
 impl Recorder {
-    pub fn new() -> Self {
+    pub fn new(server_channel: broadcast::Sender<Vec<u8>>) -> Self {
         let (tx, rx) = mpsc::channel();
+        let settings_channel = SettingsChannel {
+            rx_channel: Some(rx),
+            _tx_channel: tx,
+        };
 
         Self {
             audio_thread: None,
-            _queue_rx: rx,
-            _queue_tx: Some(tx),
             playing: Arc::new(AtomicBool::new(false)),
+            server_channel: Some(server_channel),
+            settings_channel,
         }
     }
 
     pub fn start(&mut self) -> AnyError<()> {
-        if self.playing.swap(true, Ordering::Relaxed) || self.audio_thread.is_some() {
+        if self.audio_thread.is_some() || self.playing.swap(true, Ordering::Relaxed) {
             error!("Audio thread already started");
             return Err("Audio thread already started".into());
         }
 
-        //let audio_queue_ref = self.queue_tx.take().unwrap();
-        //let playing_clone = self.playing.clone();
+        let playing_clone = self.playing.clone();
+        let audio_queue_ref = self
+            .server_channel
+            .take()
+            .ok_or("failed to get audio queue")
+            .expect("failed to get audio queue");
+        let settings_channel = self
+            .settings_channel
+            .rx_channel
+            .take()
+            .ok_or("failed to get settings channel")?;
 
         self.audio_thread = Some(thread::spawn(move || {
             trace!("Starting audio thread");
-            //let host = cpal::default_host();
-        }));
 
+            let (tx, rx) = mpsc::channel();
+            let mut microphone = Microphone::new(tx).expect("Failed to create microphone");
+            let mut encoder = Encoder::new(microphone.config());
+            match microphone.start() {
+                Ok(_) => {}
+                Err(e) => {
+                    error!("Failed to start microphone: {}", e);
+                    return;
+                }
+            }
+
+            trace!("Audio thread started");
+            trace!("Playing: {:?}", playing_clone.load(Ordering::Relaxed));
+
+            let mut sequence_number = 0u64;
+            while playing_clone.load(Ordering::Relaxed) {
+                update_settings(&settings_channel, &mut encoder);
+
+                let value = rx.recv().expect("Failed to receive audio data");
+
+                let audio_buffer = encoder.encode_audio(&value, &mut sequence_number);
+
+                let result_buffer =
+                    raw_message_builder::<UdpTunnel>(&audio_buffer).unwrap_or_default();
+                audio_queue_ref
+                    .send(result_buffer)
+                    .expect("Failed to send audio data");
+            }
+            microphone.stop().expect("Failed to stop microphone");
+        }));
         Ok(())
     }
-
-    /*pub fn read_queue(&mut self) -> AnyError<Vec<u8>> {
-        if self.playing.load(Ordering::Relaxed) {
-            //todo add user id to audio data
-            return Ok(self.queue_rx.recv_timeout(Duration::from_millis(2000))?);
-        }
-
-        Err("Audio thread not started".into())
-    }*/
 
     pub fn stop(&mut self) {
         if self.playing.swap(false, Ordering::Relaxed) {
@@ -67,6 +117,18 @@ impl Recorder {
             }
         }
     }
+}
+
+fn update_settings(settings_channel: &Receiver<Settings>, encoder: &mut Encoder) {
+    match settings_channel.try_recv() {
+        Ok(settings) => {
+            encoder.update_settings(&settings);
+        }
+        Err(mpsc::TryRecvError::Empty) => {}
+        Err(mpsc::TryRecvError::Disconnected) => {
+            error!("Failed to receive settings");
+        }
+    };
 }
 
 impl Drop for Recorder {

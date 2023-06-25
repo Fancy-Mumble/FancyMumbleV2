@@ -71,7 +71,7 @@ pub fn init_connection(username: &str, channel: &Sender<Vec<u8>>, package_info: 
         fancy_version: Some(version),
     };
 
-    let buffer = message_builder(&version);
+    let buffer = message_builder(&version).unwrap_or_default();
     _ = channel.send(buffer);
 
     let auth = mumble::proto::Authenticate {
@@ -83,6 +83,6 @@ pub fn init_connection(username: &str, channel: &Sender<Vec<u8>>, package_info: 
         client_type: Some(0), // 1 = BOT, 0 = User
     };
 
-    let buffer = message_builder(&auth);
+    let buffer = message_builder(&auth).unwrap_or_default();
     _ = channel.send(buffer);
 }

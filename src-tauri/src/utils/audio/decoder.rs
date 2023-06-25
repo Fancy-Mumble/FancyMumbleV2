@@ -39,17 +39,20 @@ impl Decoder {
         }
         let mut position = 1;
 
-        let session_id = varint::Builder::from(&audio_data[position..])
+        let session_id = varint::Builder::new()
+            .slice(&audio_data[position..])
             .build()?
             .parsed_pair();
         position += session_id.1 as usize;
 
-        let sequence_number = varint::Builder::from(&audio_data[position..])
+        let sequence_number = varint::Builder::new()
+            .slice(&audio_data[position..])
             .build()?
             .parsed_pair();
         position += sequence_number.1 as usize;
 
-        let opus_header = varint::Builder::from(&audio_data[position..])
+        let opus_header = varint::Builder::new()
+            .slice(&audio_data[position..])
             .build()?
             .parsed_pair();
         position += opus_header.1 as usize;

@@ -49,7 +49,6 @@ impl Update<mumble::proto::ChannelState> for Data {
         Self::update_if_some(&mut self.name, &mut other.name);
         Self::update_if_some(&mut self.description, &mut other.description);
         Self::update_if_some(&mut self.position, &mut other.position);
-        //Self::update_if_some(&mut self.description_hash, other.description_hash);
         Self::update_if_some(&mut self.max_users, &mut other.max_users);
         Self::update_if_some(&mut self.temporary, &mut other.temporary);
         Self::update_if_some(
@@ -130,7 +129,7 @@ impl Manager {
                 channel_description: vec![channel_id],
                 ..Default::default()
             };
-            self.server_channel.send(message_builder(&blob_request))?;
+            self.server_channel.send(message_builder(&blob_request)?)?;
         }
 
         Ok(())

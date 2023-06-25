@@ -1,7 +1,10 @@
 use crate::errors::AnyError;
+use crate::mumble;
 use crate::protocol::serialize::message_container::FrontendMessage;
 use crate::utils::audio;
 use crate::utils::audio::player::Player;
+use crate::utils::audio::recorder::Recorder;
+use crate::utils::messages::message_builder;
 use crate::{connection::traits::Shutdown, errors::voice_error::VoiceError};
 use async_trait::async_trait;
 use serde::Serialize;
@@ -20,29 +23,39 @@ struct AudioInfo {
 
 pub struct Manager {
     frontend_channel: Sender<String>,
-    _server_channel: Sender<Vec<u8>>,
+    server_channel: Sender<Vec<u8>>,
     user_audio_info: HashMap<u32, AudioInfo>,
     audio_player: Player,
+    recoder: Recorder,
     decoder: audio::decoder::Decoder,
 }
 
 impl Manager {
-    pub fn new(send_to: Sender<String>, server_channel: Sender<Vec<u8>>) -> AnyError<Self> {
+    pub fn new(
+        send_to: Sender<String>,
+        server_channel: Sender<Vec<u8>>,
+        enable_recorder: bool,
+    ) -> AnyError<Self> {
         let mut player = Player::new();
         if let Err(error) = player.start() {
             error!("Failed to start audio player: {}", error);
         }
 
-        let mut recoder = audio::recorder::Recorder::new();
-        if let Err(error) = recoder.start() {
-            error!("Failed to start audio recorder: {}", error);
+        let server_channel_clone = server_channel.clone();
+
+        let mut recoder = audio::recorder::Recorder::new(server_channel_clone);
+        if enable_recorder {
+            if let Err(error) = recoder.start() {
+                error!("Failed to start audio recorder: {}", error);
+            }
         }
 
         Ok(Self {
             frontend_channel: send_to,
-            _server_channel: server_channel,
+            server_channel,
             user_audio_info: HashMap::new(),
             audio_player: player,
+            recoder,
             decoder: audio::decoder::Decoder::new(SAMPLE_RATE, CHANNELS)?,
         })
     }
@@ -95,12 +108,24 @@ impl Manager {
             }
         };
     }
+
+    pub(crate) fn deafen(&self) -> AnyError<()> {
+        let blob_request = mumble::proto::UserState {
+            self_deaf: Some(true),
+            self_mute: Some(true),
+            ..Default::default()
+        };
+        self.server_channel.send(message_builder(&blob_request)?)?;
+
+        Ok(())
+    }
 }
 
 #[async_trait]
 impl Shutdown for Manager {
     async fn shutdown(&mut self) -> AnyError<()> {
         self.audio_player.stop();
+        self.recoder.stop();
 
         Ok(())
     }
