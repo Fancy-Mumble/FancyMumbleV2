@@ -54,7 +54,7 @@ export function handleBackendMessage<T>(event: Event<T>, dispatch: Dispatch<AnyA
             break;
         }
         case MessageTypes.UserUpdate: {
-            dispatch(updateUser(message.data));
+            dispatch(updateUser(message.data) as any);
             break;
         }
         case MessageTypes.UserRemove: {
