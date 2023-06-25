@@ -13,7 +13,7 @@ import { TextMessage, deleteChatMessage } from "../store/features/users/chatMess
 import ClearIcon from '@mui/icons-material/Clear';
 import { useDispatch } from "react-redux";
 import UserInfo from "./UserInfo";
-import React from "react";
+import React, { useEffect } from "react";
 import { RootState } from "../store/store";
 import { useSelector } from "react-redux";
 import "./styles/ChatMessage.css";
@@ -25,63 +25,68 @@ interface ChatMessageProps {
     messageId: number,
 }
 
-function ChatMessage(props: ChatMessageProps) {
+const parseMessage = (message: string | undefined) => {
+    if (message && message.includes('<')) {
+        let messageParser = new MessageParser(message)
+            .parseMarkdown()
+            .parseDOM((dom) => dom
+                .parseForImages()
+                .parseForLinks()
+            )
+            .build();
+
+        return (
+            <div>
+                {messageParser}
+            </div>
+        )
+    }
+
+    return message;
+}
+
+const generateDate = (timestamp: number) => {
+    let day = dayjs(timestamp).locale('de-de');
+    if (day.isToday()) {
+        return day.format('HH:mm');
+    } else if (day.isYesterday()) {
+        return 'Yesterday ' + day.format('HH:mm');
+    } else if (day.isBefore(dayjs().subtract(7, 'day'))) {
+        return day.format('DD.MM.YYYY HH:mm');
+    } else {
+        return day.format('dddd HH:mm');
+    }
+}
+
+const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message, messageId }) => {
     const userList = useSelector((state: RootState) => state.reducer.userInfo);
     const dispatch = useDispatch();
-    const [userInfoAnchor, setUserInfoAnchor]: any = React.useState(null);
-    const user = userList.users.find(e => e.id === props.message.sender.user_id);
 
-    function parseMessage(message: string | undefined) {
-        if (message && message.includes('<')) {
-            let messageParser = new MessageParser(message)
-                .parseMarkdown()
-                .parseDOM((dom) => dom
-                    .parseForImages()
-                    .parseForLinks()
-                )
-                .build();
+    const user = React.useMemo(() =>
+        userList.users.find(e => e.id === message.sender.user_id)
+        , [userList, message.sender.user_id]);
 
-            return (
-                <div>
-                    {messageParser}
-                </div>
-            )
-        }
+    const parsedMessage = React.useMemo(() => parseMessage(message.message), [message.message]);
+    const date = React.useMemo(() => generateDate(message.timestamp), [message.timestamp]);
 
-        return message;
-    }
-
-    function generateDate(timestamp: number) {
-        let day = dayjs(timestamp).locale('de-de');
-        if (day.isToday()) {
-            return day.format('HH:mm');
-        } else if (day.isYesterday()) {
-            return 'Yesterday ' + day.format('HH:mm');
-        } else if (day.isBefore(dayjs().subtract(7, 'day'))) {
-            return day.format('DD.MM.YYYY HH:mm');
-        } else {
-            return day.format('dddd HH:mm');
-        }
-    }
-
-    function likeMessage(messageId: string) {
-        invoke('like_message', { messageId: messageId });
-    }
-
-    function deleteMessageEvent(messageId: number) {
+    const deleteMessageEvent = React.useCallback(() => {
         dispatch(deleteChatMessage(messageId));
-    }
+    }, [dispatch, messageId]);
+
+    const likeMessage = React.useCallback((messageId: string) => {
+        invoke('like_message', { messageId: messageId });
+    }, []);
 
     return (
         <Grid item xs={10} className="message-container">
             <Grid item className="message-container-inner">
                 <Box className={`message ${false ? "sender" : "receiver"}`}>
-                    {parseMessage(props.message.message)}
+                    {parsedMessage}
                 </Box>
             </Grid>
             <Grid item className="message-metadata">
                 <Typography variant="subtitle2" className="metadata">
-                    <Link className="user-info" href="#">{props.message.sender.user_name}</Link> - {generateDate(props.message.timestamp)}
+                    <Link className="user-info" href="#">{message.sender.user_name}</Link> - {date}
                 </Typography>
                 <Tooltip title="Like">
                     <IconButton aria-label="Example" size="small" onClick={e => likeMessage("abc")}>
@@ -89,14 +94,13 @@ function ChatMessage(props: ChatMessageProps) {
                     </IconButton>
                 </Tooltip>
                 <Tooltip title="Delete message locally">
-                    <IconButton aria-label="Example" size="small" onClick={e => deleteMessageEvent(props.messageId)}>
+                    <IconButton aria-label="Example" size="small" onClick={deleteMessageEvent}>
                         <ClearIcon fontSize="small" color="disabled" />
                     </IconButton>
                 </Tooltip>
             </Grid>
         </Grid>
     );
+});
 
-}
-
-export const MemoChatMessage = React.memo(ChatMessage);
+export const MemoChatMessage = ChatMessage;
