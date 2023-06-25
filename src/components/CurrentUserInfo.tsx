@@ -11,45 +11,52 @@ import './styles/CurrentUserInfo.css'
 import { invoke } from "@tauri-apps/api";
 import { UpdateableUserState, UsersState } from "../store/features/users/userSlice";
 import "./styles/common.css"
+import { useCallback, useEffect, useMemo } from "react";
+
 
 function CurrentUserInfo() {
     const dispatch = useDispatch();
     const userInfo = useSelector((state: RootState) => state.reducer.userInfo);
-    const userBackground = getBackgroundFromComment(userInfo.currentUser);
 
-    function updateUserValue(update: (currentUser: UsersState, operator: UpdateableUserState) => void) {
+    useEffect(() => {
+        console.log("CurrentUserInfo rendered");
+    });
+
+    const userBackground = useMemo(() => getBackgroundFromComment(userInfo.currentUser), [userInfo?.currentUser?.comment]);
+
+    const updateUserValue = useCallback((update: (currentUser: UsersState, operator: UpdateableUserState) => void) => {
         if (userInfo.currentUser) {
             let currentUser = userInfo.currentUser;
-            let currentUserClone: UpdateableUserState = { id: currentUser.id  };
+            let currentUserClone: UpdateableUserState = { id: currentUser.id };
 
             update(currentUser, currentUserClone);
             invoke('change_user_state', { userState: currentUserClone });
         }
-    }
+    }, [userInfo.currentUser]);
 
-    function muteToggleUser() {
+    const muteToggleUser = useCallback(() => {
         updateUserValue((currentUser, currentUserClone) => currentUserClone.self_mute = !currentUser.self_mute);
-    }
+    }, [userInfo?.currentUser?.self_mute]);
 
-    function deafToggleUser() {
+    const deafToggleUser = useCallback(() => {
         updateUserValue((currentUser, currentUserClone) => currentUserClone.self_deaf = !currentUser.self_deaf);
-    }
+    }, [userInfo?.currentUser?.self_deaf]);
 
-    function microphoneState() {
+    const MicrophoneState = useMemo(() => {
         if (userInfo.currentUser?.self_mute) {
             return (<MicOffIcon className="small_icon" />)
         } else {
             return (<MicIcon className="small_icon" />)
         }
-    }
+    }, [userInfo.currentUser?.self_mute]);
 
-    function volumeState() {
+    const VolumeState = useMemo(() => {
         if (userInfo.currentUser?.self_deaf) {
             return (<VolumeOffIcon className="small_icon" />)
         } else {
             return (<VolumeUpIcon className="small_icon" />)
         }
-    }
+    }, [userInfo.currentUser?.self_deaf]);
 
     return (
         <Box style={{
@@ -58,7 +65,7 @@ function CurrentUserInfo() {
             padding: '0 10px',
             backgroundSize: 'cover',
         }}
-        className={userBackground ? "" : "animated-background"}>
+            className={userBackground ? "" : "animated-background"}>
             <Box sx={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -74,11 +81,11 @@ function CurrentUserInfo() {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', padding: '2px 10px', flexDirection: 'column', alignItems: 'center', width: '100%', textShadow: '1px 1px #000' }}>
                     <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
                         {userInfo.currentUser?.name ?? 'Unknown'}
-                        <Box onClick={() => muteToggleUser()}>
-                            {microphoneState()}
+                        <Box onClick={muteToggleUser}>
+                            {MicrophoneState}
                         </Box>
-                        <Box onClick={() => deafToggleUser()}>
-                            {volumeState()}
+                        <Box onClick={deafToggleUser}>
+                            {VolumeState}
                         </Box>
                     </Box>
                 </Box>
