@@ -1,3 +1,17 @@
+@font-face {
+  font-family: 'Comfortaa';
+  src: url('static_fonts/Comfortaa/Comfortaa-Regular.ttf')  format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Comfortaa';
+  src: url('static_fonts/Comfortaa/Comfortaa-Bold.ttf')  format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

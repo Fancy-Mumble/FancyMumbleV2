@@ -35,16 +35,16 @@ function ChannelViewer() {
     }
 
     function joinChannel(channelId: number) {
-        invoke('change_user_state', { userState: { channel_id: channelId  }});
+        invoke('change_user_state', { userState: { channel_id: channelId } });
     }
 
     function displayUserInfo(user: UsersState): ReactNode {
         return (
-            <Box sx={{display: 'flex'}}>
-                {user.self_mute ? (<MicOffIcon fontSize="small" />) : (<span />)}
-                {user.self_deaf ? (<VolumeOffIcon fontSize="small" />) : (<span />)}
-                {user.mute ? (<MicOffIcon color="error" fontSize="small" />) : (<span />)}
-                {user.deaf ? (<VolumeOffIcon color="error" fontSize="small" />) : (<span />)}
+            <Box sx={{ display: 'flex' }}>
+                {user.self_mute ? (<MicOffIcon color="error" fontSize="small" />) : (<span />)}
+                {user.self_deaf ? (<VolumeOffIcon color="error" fontSize="small" />) : (<span />)}
+                {user.mute ? (<MicOffIcon color="info" fontSize="small" />) : (<span />)}
+                {user.deaf ? (<VolumeOffIcon color="info" fontSize="small" />) : (<span />)}
             </Box>
         )
     }

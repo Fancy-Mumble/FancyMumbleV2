@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../store/store";
 import { getBackgroundFromComment, getProfileImage } from "../helper/UserInfoHelper";
-import { Avatar, Badge, Box, Container } from "@mui/material";
+import { Avatar, Box, Typography } from "@mui/material";
 import ChannelSearch from "./ChannelSearch";
 import MicIcon from '@mui/icons-material/Mic';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
@@ -80,7 +80,7 @@ function CurrentUserInfo() {
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', padding: '2px 10px', flexDirection: 'column', alignItems: 'center', width: '100%', textShadow: '1px 1px #000' }}>
                     <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-                        {userInfo.currentUser?.name ?? 'Unknown'}
+                        <Typography sx={{ fontWeight: 'bold', textShadow: '2px 2px #000' }}>{userInfo.currentUser?.name ?? 'Unknown'}</Typography>
                         <Box onClick={muteToggleUser}>
                             {MicrophoneState}
                         </Box>
