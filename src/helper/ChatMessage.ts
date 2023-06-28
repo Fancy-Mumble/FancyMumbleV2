@@ -1,11 +1,14 @@
 import { invoke } from "@tauri-apps/api";
-import { TextMessage, addChatMessage } from "../store/features/users/chatMessageSlice";
+import { TextMessage, addChatMessage, deleteAllMessages } from "../store/features/users/chatMessageSlice";
 import { UsersState } from "../store/features/users/userSlice";
 import MessageParser from "./MessageParser";
 import { Dispatch } from "react";
 import { AnyAction } from "@reduxjs/toolkit";
 
 export class ChatMessageHandler {
+    deleteMessages() {
+        this.dispatch(deleteAllMessages());
+    }
 
     constructor(private dispatch: Dispatch<AnyAction>, private setChatMessage: any) {
 
