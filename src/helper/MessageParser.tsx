@@ -14,9 +14,9 @@ class DOMMessageParser {
     private replacementUrl: LinkReplacement[] = [
         { regex: /https:\/\/store\.steampowered\.com\/app\/([0-9]+)\/?.*/, replacement: 'steam://advertise/$1', inline: false },
         { regex: /https:\/\/www\.youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/, replacement: 'https://www.youtube.com/embed/$1', inline: true },
-        { regex: /https:\/\/www\.twitch\.tv\/videos\/([0-9]+)/, replacement: 'https://player.twitch.tv/?video=$1&parent='+(window.location.hostname), inline: true },
-        { regex: /https:\/\/clips\.twitch\.tv\/([a-zA-Z0-9_-]+)/, replacement: 'https://clips.twitch.tv/embed?clip=$1&parent='+(window.location.hostname), inline: true },
-        { regex: /https:\/\/www\.twitch\.tv\/([a-zA-Z0-9_-]+)/, replacement: 'https://player.twitch.tv/?channel=$1&parent='+(window.location.hostname), inline: true },
+        { regex: /https:\/\/www\.twitch\.tv\/videos\/([0-9]+)/, replacement: 'https://player.twitch.tv/?video=$1&parent=' + (window.location.hostname), inline: true },
+        { regex: /https:\/\/clips\.twitch\.tv\/([a-zA-Z0-9_-]+)/, replacement: 'https://clips.twitch.tv/embed?clip=$1&parent=' + (window.location.hostname), inline: true },
+        { regex: /https:\/\/www\.twitch\.tv\/([a-zA-Z0-9_-]+)/, replacement: 'https://player.twitch.tv/?channel=$1&parent=' + (window.location.hostname), inline: true },
         { regex: /https:\/\/twitter\.com\/([a-zA-Z0-9_]+)\/status\/([0-9]+)/, replacement: 'https://twitframe.com/show?url=https://twitter.com/$1/status/$2', inline: true },
         { regex: /https:\/\/twitter\.com\/([a-zA-Z0-9_]+)/, replacement: 'https://twitframe.com/show?url=https://twitter.com/$1', inline: true },
         { regex: /https:\/\/giphy.com\/gifs\/.*-([a-zA-Z0-9_-]+)/, replacement: 'https://giphy.com/embed/$1', inline: true },
@@ -58,7 +58,7 @@ class DOMMessageParser {
     }
 
     build() {
-        return this.document.documentElement.innerHTML;
+        return this.document.body.innerHTML;
     }
 }
 
