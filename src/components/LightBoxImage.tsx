@@ -3,7 +3,7 @@ import { UsersState } from "../store/features/users/userSlice";
 import "./styles/UserInfo.css";
 import "./styles/common.css"
 import UserInfo from "./UserInfo";
-import { useState } from "react";
+import React, { useState } from "react";
 import { openInBrowser } from "../helper/BrowserUtils";
 
 interface LightBoxImageProps {
@@ -19,7 +19,7 @@ function LightBoxImage(props: LightBoxImageProps) {
 
     return (
         <Box>
-            <img src={props.src} onClick={() => setOpen(true)} style={{ maxWidth: '100%', maxHeight: '100%', cursor: 'pointer' }} />
+            <img src={props.src} onClick={() => setOpen(true)} style={{ maxWidth: '100%', maxHeight: '600px', cursor: 'pointer' }} />
             <Backdrop
                 sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1, backdropFilter: 'blur(5px)', padding: '50px 10px 10px 10px' }}
                 open={open}
