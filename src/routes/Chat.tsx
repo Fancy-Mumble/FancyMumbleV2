@@ -1,8 +1,8 @@
-import { Box, Divider, IconButton, InputBase, Paper } from '@mui/material';
+import { Box, Divider, IconButton, InputBase, Paper, Tooltip } from '@mui/material';
 import { invoke } from '@tauri-apps/api';
 import { useEffect, useState } from 'react';
 import SendIcon from '@mui/icons-material/Send';
-import AddToPhotosIcon from '@mui/icons-material/AddToPhotos';
+import DeleteIcon from '@mui/icons-material/Delete';
 import ChatMessageContainer from '../components/ChatMessageContainer';
 import GifIcon from '@mui/icons-material/Gif';
 import GifSearch from '../components/GifSearch';
@@ -48,6 +48,10 @@ function Chat() {
             update(currentUser, currentUserClone);
             await invoke('change_user_state', { userState: currentUserClone }).catch(e => console.log(e));
         }
+    }
+
+    function deleteMessages() {
+        chatMessageHandler.deleteMessages();
     }
 
 
@@ -98,9 +102,11 @@ function Chat() {
                             component="form"
                             sx={{ p: '2px 4px', display: 'flex', alignItems: 'center', width: 400, flexGrow: 1 }}
                         >
-                            <IconButton sx={{ p: '10px' }} aria-label="menu" onClick={uploadFile}>
-                                <AddToPhotosIcon />
+                            <Tooltip title="Delete all messages">
+                            <IconButton sx={{ p: '10px' }} aria-label="menu" onClick={deleteMessages}>
+                                <DeleteIcon  />
                             </IconButton>
+                            </Tooltip>
                             <InputBase
                                 sx={{ ml: 1, flex: 1 }}
                                 placeholder={"Send Message to " + currentChannel}
