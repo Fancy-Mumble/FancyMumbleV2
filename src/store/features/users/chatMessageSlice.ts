@@ -35,10 +35,13 @@ export const chatMessageSlice = createSlice({
             let messageId = action.payload;
             let messageIndex = state.findIndex(e => e.timestamp === messageId);
             state.splice(messageIndex, 1);
+        },
+        deleteAllMessages: (state, action: PayloadAction<void>) => {
+            state.length = 0;
         }
     },
 })
 
-export const { addChatMessage, deleteChatMessage } = chatMessageSlice.actions
+export const { addChatMessage, deleteChatMessage, deleteAllMessages } = chatMessageSlice.actions
 
 export default chatMessageSlice.reducer

@@ -102,8 +102,20 @@ function Login() {
 
     return (
         <Box sx={{ height: '100%', display: 'flex', maxHeight: '100%', overflow: 'hidden' }}>
-            <Box className='login' sx={{ height: '100%', maxWidth: '40%', minWidth: '500px' }}>
-                <Typography align='center' variant='h3' gutterBottom>Fancy Mumble</Typography >
+            <Box className='login' sx={{ height: '100%', maxWidth: '40%', minWidth: '500px', marginLeft: 2 }}>
+                <Typography
+                    align='center'
+                    variant='h3'
+                    gutterBottom
+                    sx={{
+                        fontFamily: 'Comfortaa',
+                        fontWeight: 'bold',
+                        background: '-webkit-linear-gradient(right, #667db6, #0082c8, #0082c8, #667db6)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                    }}>
+                    Fancy Mumble
+                </Typography >
                 {errorBox}
                 <Accordion expanded={expanded === 'panel1'} onChange={handleChange('panel1')}>
                     <AccordionSummary aria-controls="panel2d-content" id="panel2d-header">

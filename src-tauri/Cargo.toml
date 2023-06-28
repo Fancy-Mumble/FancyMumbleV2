@@ -40,6 +40,7 @@ image = "0.24.6"
 directories = "5.0.1"
 num-traits = "0.2"
 brotli = "3.3.4"
+webbrowser = "0.8.10"
 
 [dev-dependencies]
 tempfile = "3.5.0"
