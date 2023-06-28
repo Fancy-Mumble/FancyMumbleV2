@@ -44,6 +44,7 @@ export interface UsersState {
   talking: boolean,
   mutedSince: number | undefined,
   deafenedSince: number | undefined,
+  joinedSince: number | undefined,
   commentData: UserCommentData
 }
 
@@ -81,6 +82,7 @@ export function defaultInitializeUser(): UsersState {
     talking: false,
     mutedSince: undefined,
     deafenedSince: undefined,
+    joinedSince: undefined,
     commentData: {
       comment: "",
       background_picture: "",
@@ -190,21 +192,23 @@ export const userSlice = createSlice({
           let deafened_since = action.payload.self_deaf && state.users[userIndex].self_deaf !== action.payload.self_deaf ? Date.now() : undefined;
           let profilePicture = state.users[userIndex].profile_picture;
           let comment = state.users[userIndex].comment;
-          let parsedComment = parseUserCommentForData(action.payload.comment);
+          let joined = state.users[userIndex].joinedSince;
 
           state.users[userIndex] = action.payload;
           state.users[userIndex].comment = comment;
           state.users[userIndex].profile_picture = profilePicture;
           state.users[userIndex].mutedSince = muted_since;
           state.users[userIndex].deafenedSince = deafened_since;
+          state.users[userIndex].joinedSince = joined;
         } else {
           // new user
           action.payload.talking = false;
+          action.payload.joinedSince = Date.now();
           state.users.push(action.payload);
         }
 
         if (state.currentUser?.id === userId) {
-          state.currentUser = action.payload;
+          state.currentUser = state.users[userIndex];
         }
       });
   }

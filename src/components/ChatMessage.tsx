@@ -18,6 +18,8 @@ import { RootState } from "../store/store";
 import { useSelector } from "react-redux";
 import "./styles/ChatMessage.css";
 import UserInfoPopover from "./UserInfoPopover";
+import MessageUIHelper from "../helper/MessageUIHelper";
+import { m } from "@tauri-apps/api/dialog-15855a2f";
 
 
 interface ChatMessageProps {
@@ -33,13 +35,18 @@ const parseMessage = (message: string | undefined) => {
                 .parseForImages()
                 .parseForLinks()
             )
-            .build();
+            .buildString();
 
-        return (
-            <div>
-                {messageParser}
-            </div>
-        )
+        return messageParser;
+    }
+
+    return message;
+}
+const parseUI = (message: string | undefined) => {
+    if (message && message.includes('<')) {
+        let messageParser = new MessageUIHelper(message);
+
+        return messageParser.build();
     }
 
     return message;
@@ -66,7 +73,7 @@ const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message, messageId
         userList.users.find(e => e.id === message.sender.user_id)
         , [userList, message.sender.user_id]);
 
-    const parsedMessage = React.useMemo(() => parseMessage(message.message), [message.message]);
+    const parsedMessage = React.useMemo(() => parseUI(parseMessage(message.message)), [message.message]);
     const date = React.useMemo(() => generateDate(message.timestamp), [message.timestamp]);
 
     const deleteMessageEvent = React.useCallback(() => {
