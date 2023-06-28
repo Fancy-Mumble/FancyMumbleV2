@@ -25,7 +25,8 @@ use tracing_subscriber::fmt;
 
 use crate::commands::{
     change_user_state, connect_to_server, get_audio_devices, get_server_list, like_message, logout,
-    save_server, send_message, set_user_image, unzip_data_from_utf8, zip_data_to_utf8,
+    open_browser, save_server, send_message, set_user_image, unzip_data_from_utf8,
+    zip_data_to_utf8,
 };
 
 fn init_logging() {
@@ -68,7 +69,8 @@ fn main() {
             change_user_state,
             get_audio_devices,
             zip_data_to_utf8,
-            unzip_data_from_utf8
+            unzip_data_from_utf8,
+            open_browser
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

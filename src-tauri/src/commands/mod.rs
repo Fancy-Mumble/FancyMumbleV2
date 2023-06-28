@@ -20,6 +20,7 @@ use base64::{engine::general_purpose, Engine};
 use tauri::State;
 use tokio::sync::Mutex;
 use tracing::{error, info, trace};
+use webbrowser::{Browser, BrowserOptions};
 
 pub struct ConnectionState {
     pub connection: Mutex<Option<Connection>>,
@@ -315,4 +316,17 @@ pub fn unzip_data_from_utf8(data: &str) -> Result<String, String> {
 
     let result = String::from_utf8(output).map_err(|e| e.to_string())?;
     Ok(result)
+}
+
+#[tauri::command]
+pub fn open_browser(url: &str) -> Result<(), String> {
+    if let Err(e) = webbrowser::open_browser_with_options(
+        Browser::Default,
+        url,
+        BrowserOptions::new().with_suppress_output(false),
+    ) {
+        return Err(format!("{e:?}"));
+    }
+
+    Ok(())
 }

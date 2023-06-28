@@ -26,6 +26,7 @@ function UserInfo(props: UserInfoProps) {
 
     let mutedText = props.userInfo?.mutedSince ? dayjs(props.userInfo?.mutedSince).fromNow() : '';
     let deafenedText = props.userInfo?.deafenedSince ? dayjs(props.userInfo?.deafenedSince).fromNow() : '';
+    let joinedText = props.userInfo?.joinedSince ? dayjs(props.userInfo?.joinedSince).fromNow() : '';
 
     function generateCardMedia() {
         if (background) {
@@ -95,6 +96,7 @@ function UserInfo(props: UserInfoProps) {
                         </Box>
                         {showStatusBox("Muted", mutedText)}
                         {showStatusBox("Deafened", deafenedText)}
+                        {showStatusBox("Joined", joinedText)}
                     </Box>
                     <Divider sx={{ margin: '10px 0' }} />
                     <Box className="user-info-text">
