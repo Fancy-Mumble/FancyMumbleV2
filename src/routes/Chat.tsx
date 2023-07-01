@@ -1,6 +1,6 @@
 import { Box, Divider, IconButton, InputBase, Paper, Tooltip } from '@mui/material';
 import { invoke } from '@tauri-apps/api';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import SendIcon from '@mui/icons-material/Send';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ChatMessageContainer from '../components/ChatMessageContainer';
@@ -14,6 +14,7 @@ import { formatBytes } from '../helper/Fomat';
 import { UpdateableUserState, UsersState } from '../store/features/users/userSlice';
 import { ChatMessageHandler } from '../helper/ChatMessage';
 import { unregister } from '@tauri-apps/api/globalShortcut';
+import { QuillEditor } from '../components/QuillEditor';
 
 function Chat() {
     const [chatMessage, setChatMessage] = useState("");
@@ -21,58 +22,30 @@ function Chat() {
     const [gifSearchAnchor, setGifSearchAnchor] = useState<HTMLElement>();
 
     const dispatch = useDispatch();
-    const userInfo = useSelector((state: RootState) => state.reducer.userInfo);
+    const currentUser = useSelector((state: RootState) => state.reducer.userInfo?.currentUser);
     const channelInfo = useSelector((state: RootState) => state.reducer.channel);
     const messageLog = useSelector((state: RootState) => state.reducer.chatMessage);
 
-    const currentChannel = channelInfo.find(e => e.channel_id === userInfo.currentUser?.channel_id)?.name;
+    const currentChannel = useMemo(() => channelInfo.find(e => e.channel_id === currentUser?.channel_id)?.name, [channelInfo, currentUser]);
+    const chatMessageHandler = useMemo(() => new ChatMessageHandler(dispatch, setChatMessage), [dispatch]);
 
-    const chatMessageHandler = new ChatMessageHandler(dispatch, setChatMessage);
-
-    useEffect(() => {
-        unregister('F13');
-        /*register('F13', () => {
-            console.log('F13 is pressed');
-            if (userInfo.currentUser)
-                updateUserValue((currentUser, currentUserClone) => currentUserClone.self_mute = !currentUser.self_mute);
-        });*/
-    });
-
- 
-
-    async function updateUserValue(update: (currentUser: UsersState, operator: UpdateableUserState) => void) {
-        if (userInfo.currentUser) {
-            let currentUser = userInfo.currentUser;
-            let currentUserClone: UpdateableUserState = { id: currentUser.id };
-
-            update(currentUser, currentUserClone);
-            await invoke('change_user_state', { userState: currentUserClone }).catch(e => console.log(e));
-        }
-    }
-
-    function deleteMessages() {
+    const deleteMessages = useCallback(() => {
         chatMessageHandler.deleteMessages();
-    }
+    }, [chatMessageHandler]);
 
-
-
-    function keyDownHandler(e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    const keyDownHandler = useCallback((e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         if (e && e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            chatMessageHandler.sendChatMessage(chatMessage, userInfo.currentUser);
+            chatMessageHandler.sendChatMessage(chatMessage, currentUser);
         }
-    }
+    }, [chatMessage, chatMessageHandler, currentUser]);
 
-    function uploadFile(e: any) {
-        //TODO
-    }
-
-    function showGifPreview(e: any) {
-        setShowGifSearch(!showGifSearch);
+    const showGifPreview = useCallback((e: any) => {
+        setShowGifSearch(prev => !prev);
         setGifSearchAnchor(e.currentTarget)
-    }
+    }, []);
 
-    function pasteEvent(event: any) {
+    const pasteEvent = useCallback((event: any) => {
         let items = event.clipboardData.items;
         for (const item of items) {
             if (item.type.indexOf('image') !== -1) {
@@ -81,15 +54,15 @@ function Chat() {
                 reader.readAsDataURL(file);
                 reader.onload = function () {
                     if (reader.result && (reader.result as string).length > 0x7fffff) {
-                        chatMessageHandler.sendCustomChatMessage("[[ Image too large ( " + formatBytes((reader.result as string).length) + " out of " + formatBytes(0x7fffff) + ") ]]", userInfo.currentUser);
+                        chatMessageHandler.sendCustomChatMessage("[[ Image too large ( " + formatBytes((reader.result as string).length) + " out of " + formatBytes(0x7fffff) + ") ]]", currentUser);
                         return;
                     }
                     let img = '<img src="' + reader.result + '" />';
-                    chatMessageHandler.sendCustomChatMessage(img, userInfo.currentUser);
+                    chatMessageHandler.sendCustomChatMessage(img, currentUser);
                 };
             }
         }
-    }
+    }, [chatMessageHandler, currentUser]);
 
     return (
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'row' }}>
@@ -103,9 +76,9 @@ function Chat() {
                             sx={{ p: '2px 4px', display: 'flex', alignItems: 'center', width: 400, flexGrow: 1 }}
                         >
                             <Tooltip title="Delete all messages">
-                            <IconButton sx={{ p: '10px' }} aria-label="menu" onClick={deleteMessages}>
-                                <DeleteIcon  />
-                            </IconButton>
+                                <IconButton sx={{ p: '10px' }} aria-label="menu" onClick={deleteMessages}>
+                                    <DeleteIcon />
+                                </IconButton>
                             </Tooltip>
                             <InputBase
                                 sx={{ ml: 1, flex: 1 }}
@@ -121,7 +94,7 @@ function Chat() {
                                 <GifIcon />
                             </IconButton>
                             <Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />
-                            <IconButton sx={{ p: '10px' }} aria-label="Send Message" onClick={() => chatMessageHandler.sendChatMessage(chatMessage, userInfo.currentUser)}>
+                            <IconButton sx={{ p: '10px' }} aria-label="Send Message" onClick={() => chatMessageHandler.sendChatMessage(chatMessage, currentUser)}>
                                 <SendIcon />
                             </IconButton>
                         </Paper>
