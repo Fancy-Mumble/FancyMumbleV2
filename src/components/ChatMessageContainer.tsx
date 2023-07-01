@@ -28,29 +28,53 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 	const prevPropsRef = useRef(props);
 
 	const scrollToBottom = () => {
-		//add some minor sleep to make sure the element is rendered
-		new Promise(r => setTimeout(r, 100)).then(() => {
-			messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-		});
+		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 	}
 
 	useEffect(() => {
-		if (chatContainer.current) {
-			let el = chatContainer.current;
-			if (el.scrollTop < el.scrollHeight - el.clientHeight * 2) {
-				console.log("User scrolled", el.scrollTop, el.scrollHeight - el.clientHeight);
-				setUserScrolled(true);
-			} else {
-				setUserScrolled(false);
+		let messages = props.messages;
+		if (messages.length > 0) {
+			const isScrolledToBottom = (chatContainer?.current?.scrollHeight || 0) - (chatContainer?.current?.scrollTop || 0) === chatContainer?.current?.clientHeight;
+
+			if (isScrolledToBottom) {
+				messagesEndRef?.current?.scrollIntoView({ behavior: 'smooth' });
 			}
 		}
-	}, [props, prevPropsRef]); // Depend on props
+	}, [props.messages]);
 
 	useEffect(() => {
 		if (!userScrolled && chatContainer?.current) {
 			scrollToBottom();
 		}
 	}, [props, userScrolled]); // Depend on props and userScrolled
+
+	useEffect(() => {
+		const images = Array.from(document.getElementsByTagName('img'));
+		let loadedImagesCount = 0;
+
+		const handleImageLoad = () => {
+			loadedImagesCount++;
+
+			if (loadedImagesCount === images.length) {
+				scrollToBottom();
+				console.log("All images loaded")
+			}
+		};
+
+		images.forEach((img) => {
+			if (img.complete) {
+				handleImageLoad();
+			} else {
+				img.addEventListener('load', handleImageLoad);
+			}
+		});
+
+		return () => {
+			images.forEach((img) => {
+				img.removeEventListener('load', handleImageLoad);
+			});
+		};
+	}, [props.messages]);
 
 	const userIdToUserMap = useMemo(() => {
 		if (!userList) return new Map<number, UsersState>();

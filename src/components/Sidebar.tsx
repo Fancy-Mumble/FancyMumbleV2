@@ -3,34 +3,32 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import InfoIcon from '@mui/icons-material/Info';
 import { invoke } from "@tauri-apps/api";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { LoadingButton } from "@mui/lab";
 import './Sidebar.css'
 import ChannelViewer from "./ChannelViewer";
 import CurrentUserInfo from "./CurrentUserInfo";
 import SettingsIcon from '@mui/icons-material/Settings';
+import React from "react";
 
-interface SidebarProps {
-}
-
-function Sidebar(props: SidebarProps) {
+function Sidebar() {
 
     const navigate = useNavigate();
     const [logoutInProgress, setLogoutInProgress] = useState(false);
 
-    function triggerLogout(event: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
+    const triggerLogout = useCallback((event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         event.preventDefault();
         setLogoutInProgress(true);
         invoke('logout').then(e => {
             setLogoutInProgress(false);
             navigate("/");
         })
-    }
+    }, [navigate]); // add dependencies here
 
-    function openSettings(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
+    const openSettings = useCallback((event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void => {
         event.preventDefault();
         navigate("/settings");
-    }
+    }, [navigate]); // add dependencies here
 
     return (
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', alignContent: 'center', width: '250px' }} className="sidebar">
@@ -53,4 +51,4 @@ function Sidebar(props: SidebarProps) {
     )
 }
 
-export default Sidebar
+export default React.memo(Sidebar);

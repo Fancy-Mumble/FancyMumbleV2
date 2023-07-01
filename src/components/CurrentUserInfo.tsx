@@ -13,50 +13,59 @@ import { UpdateableUserState, UsersState } from "../store/features/users/userSli
 import "./styles/common.css"
 import { useCallback, useEffect, useMemo } from "react";
 
+const selectCurrentUser = (state: RootState) => state.reducer.userInfo.currentUser;
+
+const customEqual = (oldUser: UsersState | undefined, newUser: UsersState | undefined) => {
+    if (oldUser === newUser) return true;
+    if (oldUser === undefined || newUser === undefined) return false;
+
+    return (
+        oldUser.comment === newUser.comment &&
+        oldUser.self_mute === newUser.self_mute &&
+        oldUser.self_deaf === newUser.self_deaf &&
+        oldUser.name === newUser.name &&
+        oldUser.id === newUser.id
+    );
+};
 
 function CurrentUserInfo() {
-    const dispatch = useDispatch();
-    const userInfo = useSelector((state: RootState) => state.reducer.userInfo);
+    const currentUser = useSelector(selectCurrentUser, customEqual);
 
-    useEffect(() => {
-        console.log("CurrentUserInfo rendered");
-    });
-
-    const userBackground = useMemo(() => getBackgroundFromComment(userInfo.currentUser), [userInfo?.currentUser?.comment]);
+    const userBackground = useMemo(() => getBackgroundFromComment(currentUser), [currentUser?.comment]);
 
     const updateUserValue = useCallback((update: (currentUser: UsersState, operator: UpdateableUserState) => void) => {
-        if (userInfo.currentUser) {
-            let currentUser = userInfo.currentUser;
+        if (currentUser) {
             let currentUserClone: UpdateableUserState = { id: currentUser.id };
 
             update(currentUser, currentUserClone);
             invoke('change_user_state', { userState: currentUserClone });
         }
-    }, [userInfo.currentUser]);
+    }, [currentUser]);
 
     const muteToggleUser = useCallback(() => {
         updateUserValue((currentUser, currentUserClone) => currentUserClone.self_mute = !currentUser.self_mute);
-    }, [userInfo?.currentUser?.self_mute]);
+    }, [updateUserValue, currentUser?.self_mute]);
 
     const deafToggleUser = useCallback(() => {
         updateUserValue((currentUser, currentUserClone) => currentUserClone.self_deaf = !currentUser.self_deaf);
-    }, [userInfo?.currentUser?.self_deaf]);
+    }, [updateUserValue, currentUser?.self_deaf]);
+
 
     const MicrophoneState = useMemo(() => {
-        if (userInfo.currentUser?.self_mute) {
+        if (currentUser?.self_mute) {
             return (<MicOffIcon className="small_icon" />)
         } else {
             return (<MicIcon className="small_icon" />)
         }
-    }, [userInfo.currentUser?.self_mute]);
+    }, [currentUser?.self_mute]);
 
     const VolumeState = useMemo(() => {
-        if (userInfo.currentUser?.self_deaf) {
+        if (currentUser?.self_deaf) {
             return (<VolumeOffIcon className="small_icon" />)
         } else {
             return (<VolumeUpIcon className="small_icon" />)
         }
-    }, [userInfo.currentUser?.self_deaf]);
+    }, [currentUser?.self_deaf]);
 
     return (
         <Box style={{
@@ -72,15 +81,15 @@ function CurrentUserInfo() {
                 justifyContent: 'center',
             }}>
                 <Avatar
-                    alt={userInfo.currentUser?.name}
-                    src={getProfileImage(userInfo.currentUser?.id || -1)}
+                    alt={currentUser?.name}
+                    src={getProfileImage(currentUser?.id || -1)}
                     sx={{ width: 48, height: 48 }}
                 />
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', padding: '2px 10px', flexDirection: 'column', alignItems: 'center', width: '100%', textShadow: '1px 1px #000' }}>
                     <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-                        <Typography sx={{ fontWeight: 'bold', textShadow: '2px 2px #000' }}>{userInfo.currentUser?.name ?? 'Unknown'}</Typography>
+                        <Typography sx={{ fontWeight: 'bold', textShadow: '2px 2px #000' }}>{currentUser?.name ?? 'Unknown'}</Typography>
                         <Box onClick={muteToggleUser}>
                             {MicrophoneState}
                         </Box>
