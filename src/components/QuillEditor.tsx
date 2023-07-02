@@ -6,6 +6,7 @@ import Quill, {
     BoundsStatic,
     StringMap,
     Sources,
+    TextChangeHandler,
 } from 'quill';
 
 import 'quill/dist/quill.snow.css';
