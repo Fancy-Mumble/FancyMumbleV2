@@ -1,6 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
-import Quill, { TextChangeHandler } from 'quill';
+
+import Quill, {
+    QuillOptionsStatic,
+    RangeStatic,
+    BoundsStatic,
+    StringMap,
+    Sources,
+    TextChangeHandler,
+} from 'quill';
+
 import 'quill/dist/quill.snow.css';
+
+Quill.register
 
 interface QuillEditorProps {
     theme?: 'bubble' | 'snow' | string;
@@ -26,7 +37,11 @@ export const QuillEditor: React.FC<QuillEditorProps> = ({
     bounds = 'document.body',
     debug = 'warn',
     formats = [],
-    modules = {},
+    modules = {
+        toolbar: {
+            toolbar: '#toolbar'
+        }
+    },
     scrollingContainer = undefined,
     style = {},
     onKeyDown,
@@ -44,6 +59,7 @@ export const QuillEditor: React.FC<QuillEditorProps> = ({
     // This runs once on component mount
     useEffect(() => {
         if (editorRef.current) {
+            console.log("editorRef.current", editorRef.current);
             quill = new Quill(editorRef.current, {
                 theme,
                 placeholder,
@@ -100,17 +116,6 @@ export const QuillEditor: React.FC<QuillEditorProps> = ({
             }
         };
     }, []); // Empty array means this effect runs once on mount and clean up on unmount
-
-
-    useEffect(() => {
-        if (editorRef.current) {
-
-
-            /*if (quillRef) {
-                quillRef.current = quill;
-            }*/
-        }
-    }, [theme, placeholder, readOnly, bounds, debug, formats, modules, scrollingContainer, quillRef]);
 
     return <div className="quill-wrapper" style={style}>
         {toolbarVisible && <div id="toolbar">/* Add toolbar contents here */</div>}

@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "0.1.9"
+version = "0.1.10"
 description = "Fancy Mumble"
 authors = ["you"]
 license = "MIT"
@@ -22,7 +22,7 @@ patch = "0.7.0"
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-tauri = { version = "1.4.0", features = ["dialog-open", "global-shortcut-all", "shell-open", "window-close", "window-hide", "window-maximize", "window-minimize", "window-start-dragging", "window-unmaximize", "window-unminimize"] }
+tauri = { version = "1.4.0", features = ["dialog-open", "global-shortcut-all", "shell-open", "updater", "window-close", "window-hide", "window-maximize", "window-minimize", "window-start-dragging", "window-unmaximize", "window-unminimize"] }
 futures = "0.3.4"
 tokio = { version = "1", features = ["full"] }
 tokio-native-tls = "0.3.1"
