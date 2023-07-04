@@ -1,6 +1,8 @@
 // clippy is detecting '_ as a underscore binding, which it shouldn't
 #![allow(clippy::used_underscore_binding)]
 
+mod helper;
+
 use std::{
     borrow::BorrowMut,
     collections::HashMap,
@@ -17,10 +19,14 @@ use crate::{
     },
 };
 use base64::{engine::general_purpose, Engine};
+use reqwest::header;
+use serde_json::json;
 use tauri::State;
 use tokio::sync::Mutex;
 use tracing::{error, info, trace};
 use webbrowser::{Browser, BrowserOptions};
+
+use self::helper::extract_og_property;
 
 pub struct ConnectionState {
     pub connection: Mutex<Option<Connection>>,
@@ -329,4 +335,38 @@ pub fn open_browser(url: &str) -> Result<(), String> {
     }
 
     Ok(())
+}
+
+#[tauri::command]
+pub async fn get_open_graph_data_from_website(url: &str) -> Result<String, String> {
+    let res = reqwest::get(url)
+        .await
+        .map_err(|_| "Failed to fetch website".to_string())?;
+    let body = res
+        .text()
+        .await
+        .map_err(|_| "Failed to read website body".to_string())?;
+
+    let title = extract_og_property(
+        &body,
+        r#"<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']"#,
+    )?;
+
+    let description = extract_og_property(
+        &body,
+        r#"<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']"#,
+    )?;
+
+    let image = extract_og_property(
+        &body,
+        r#"<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']"#,
+    )?;
+
+    let result = json!({
+        "title": title,
+        "description": description,
+        "image": image,
+    });
+
+    Ok(result.to_string())
 }

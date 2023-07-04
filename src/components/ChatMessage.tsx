@@ -40,6 +40,8 @@ const parseMessage = (message: string | undefined) => {
         return messageParser;
     }
 
+    console.log(message);
+
     return message;
 }
 const parseUI = (message: string | undefined) => {
