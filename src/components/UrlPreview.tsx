@@ -7,6 +7,7 @@ import { s } from "@tauri-apps/api/app-373d24a3";
 
 interface UrlPreviewProps {
     href: string;
+    onLoaded?: () => void;
 }
 
 
@@ -20,24 +21,40 @@ function UrlPreview(props: UrlPreviewProps) {
 
     let [urlPreviewData, setUrlPreviewData] = useState<UrlPreviewData | undefined>(undefined);
 
+    const random_rgba = () => {
+        var o = Math.round, r = Math.random, s = 255;
+        return 'rgba(' + o(r()*s) + ',' + o(r()*s) + ',' + o(r()*s) + ',' + r().toFixed(1) + ')';
+    }
+
     useEffect(() => {
         invoke<string>('get_open_graph_data_from_website', { url: props.href }).then((data) => {
             setUrlPreviewData(JSON.parse(data));
+            props.onLoaded?.();
         });
     }, []);
 
-    const createOpenGraphData = useMemo(() => {
-        console.log(urlPreviewData);
-        if (urlPreviewData) {
+    const cardMedia = useMemo(() => {
+        if (urlPreviewData?.image) {
             return (
-                <Card sx={{ maxWidth: 345 }}>
-                    <CardActionArea onClick={() => window.open(props.href, '_blank')}>
-                        <CardMedia
+                <CardMedia
                             component="img"
                             height="140"
                             image={urlPreviewData.image}
                             alt={urlPreviewData.title}
                         />
+            )
+        } else {
+            return (<Box height="140" sx={{backgroundColor: random_rgba()}}></Box>);
+        }
+    }, [urlPreviewData?.image]);
+
+    const createOpenGraphData = useMemo(() => {
+        console.log(urlPreviewData);
+        if (urlPreviewData && (urlPreviewData.title || urlPreviewData.description)) {
+            return (
+                <Card sx={{ maxWidth: 345 }}>
+                    <CardActionArea onClick={() => window.open(props.href, '_blank')}>
+                        {cardMedia}
                         <CardContent>
                             <Typography gutterBottom variant="h5" component="div">
                                 {urlPreviewData.title}
@@ -57,7 +74,7 @@ function UrlPreview(props: UrlPreviewProps) {
         } else {
             return (
                 <Box>
-                    <Link href={props.href}>{props.href}</Link>
+                    <Link href={props.href} target="_blank">{props.href}</Link>
                 </Box>
             );
         }
