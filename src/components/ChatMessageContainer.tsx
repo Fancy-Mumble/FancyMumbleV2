@@ -34,7 +34,7 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 	useEffect(() => {
 		let messages = props.messages;
 		if (messages.length > 0) {
-			const isScrolledToBottom = (chatContainer?.current?.scrollHeight || 0) - (chatContainer?.current?.scrollTop || 0) === chatContainer?.current?.clientHeight;
+			const isScrolledToBottom = (chatContainer?.current?.scrollHeight || 0) - (chatContainer?.current?.scrollTop || 0) >= (chatContainer?.current?.clientHeight || 0) * 1.2;
 
 			if (isScrolledToBottom) {
 				messagesEndRef?.current?.scrollIntoView({ behavior: 'smooth' });
