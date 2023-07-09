@@ -28,7 +28,9 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 	const prevPropsRef = useRef(props);
 
 	const scrollToBottom = () => {
-		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+		new Promise(r => setTimeout(r, 100)).then(() => {
+			messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+		});
 	}
 
 	useEffect(() => {
@@ -101,6 +103,7 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 					messageId={el.timestamp}
 					key={el.timestamp}
 					message={el}
+					onLoaded={() => { scrollToBottom(); }}
 				/>
 			);
 

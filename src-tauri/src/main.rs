@@ -16,7 +16,7 @@ mod tests;
 
 use std::collections::HashMap;
 
-use commands::ConnectionState;
+use commands::{ConnectionState, CrawlerState};
 use tokio::sync::Mutex;
 
 use tauri::Manager;
@@ -59,6 +59,9 @@ fn main() {
                 package_info: Mutex::new(app.package_info().clone()),
                 message_handler: Mutex::new(HashMap::new()),
                 device_manager: Mutex::new(None),
+            });
+            app.manage(CrawlerState {
+                crawler: Mutex::new(None),
             });
 
             Ok(())
