@@ -16,17 +16,20 @@ mod tests;
 
 use std::collections::HashMap;
 
-use commands::ConnectionState;
+use commands::{ConnectionState, CrawlerState};
 use tokio::sync::Mutex;
 
 use tauri::Manager;
 use tracing::Level;
-use tracing_subscriber::fmt;
+use tracing_subscriber::{
+    fmt::{self, format::FmtSpan},
+    EnvFilter,
+};
 
 use crate::commands::{
-    change_user_state, connect_to_server, get_audio_devices, get_server_list, like_message, logout,
-    open_browser, save_server, send_message, set_user_image, unzip_data_from_utf8,
-    zip_data_to_utf8,
+    change_user_state, connect_to_server, get_audio_devices, get_open_graph_data_from_website,
+    get_server_list, like_message, logout, open_browser, save_server, send_message, set_user_image,
+    unzip_data_from_utf8, zip_data_to_utf8,
 };
 
 fn init_logging() {
@@ -40,6 +43,8 @@ fn init_logging() {
     tracing_subscriber::fmt()
         .with_max_level(Level::TRACE)
         .event_format(format)
+        .with_env_filter(EnvFilter::from_default_env().add_directive(Level::INFO.into()))
+        .with_span_events(FmtSpan::CLOSE)
         .init();
 }
 
@@ -54,6 +59,9 @@ fn main() {
                 package_info: Mutex::new(app.package_info().clone()),
                 message_handler: Mutex::new(HashMap::new()),
                 device_manager: Mutex::new(None),
+            });
+            app.manage(CrawlerState {
+                crawler: Mutex::new(None),
             });
 
             Ok(())
@@ -70,7 +78,8 @@ fn main() {
             get_audio_devices,
             zip_data_to_utf8,
             unzip_data_from_utf8,
-            open_browser
+            open_browser,
+            get_open_graph_data_from_website
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,6 +1,8 @@
 // clippy is detecting '_ as a underscore binding, which it shouldn't
 #![allow(clippy::used_underscore_binding)]
 
+mod helper;
+
 use std::{
     borrow::BorrowMut,
     collections::HashMap,
@@ -17,10 +19,13 @@ use crate::{
     },
 };
 use base64::{engine::general_purpose, Engine};
+use serde_json::json;
 use tauri::State;
 use tokio::sync::Mutex;
 use tracing::{error, info, trace};
 use webbrowser::{Browser, BrowserOptions};
+
+use self::helper::OpenGraphCrawler;
 
 pub struct ConnectionState {
     pub connection: Mutex<Option<Connection>>,
@@ -329,4 +334,32 @@ pub fn open_browser(url: &str) -> Result<(), String> {
     }
 
     Ok(())
+}
+
+pub struct CrawlerState {
+    pub crawler: Mutex<Option<OpenGraphCrawler>>,
+}
+
+#[tauri::command]
+pub async fn get_open_graph_data_from_website(
+    state: State<'_, CrawlerState>,
+    url: &str,
+) -> Result<String, String> {
+    // setup crawler if not already done
+    let result = {
+        let mut client = state.crawler.lock().await;
+        if client.is_none() {
+            *client = OpenGraphCrawler::try_new();
+        }
+
+        client
+            .as_ref()
+            .ok_or_else(|| "Failed to read website body".to_string())?
+            .crawl(url)
+            .await
+    };
+
+    let result = json!(result);
+
+    Ok(result.to_string())
 }

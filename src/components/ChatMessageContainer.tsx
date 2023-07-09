@@ -28,13 +28,15 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 	const prevPropsRef = useRef(props);
 
 	const scrollToBottom = () => {
-		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+		new Promise(r => setTimeout(r, 100)).then(() => {
+			messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+		});
 	}
 
 	useEffect(() => {
 		let messages = props.messages;
 		if (messages.length > 0) {
-			const isScrolledToBottom = (chatContainer?.current?.scrollHeight || 0) - (chatContainer?.current?.scrollTop || 0) === chatContainer?.current?.clientHeight;
+			const isScrolledToBottom = (chatContainer?.current?.scrollHeight || 0) - (chatContainer?.current?.scrollTop || 0) >= (chatContainer?.current?.clientHeight || 0) * 1.2;
 
 			if (isScrolledToBottom) {
 				messagesEndRef?.current?.scrollIntoView({ behavior: 'smooth' });
@@ -101,6 +103,7 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 					messageId={el.timestamp}
 					key={el.timestamp}
 					message={el}
+					onLoaded={() => { scrollToBottom(); }}
 				/>
 			);
 

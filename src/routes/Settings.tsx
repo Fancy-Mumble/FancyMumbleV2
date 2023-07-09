@@ -7,6 +7,7 @@ import KeyIcon from '@mui/icons-material/Key';
 import SecurityIcon from '@mui/icons-material/Security';
 import Profile from "../components/settings/Profile";
 import AudioSettings from "../components/settings/Audio";
+import AdditionalFeatures from "../components/settings/AdditionalFeatures";
 
 function Settings() {
     const navigate = useNavigate();
@@ -66,7 +67,7 @@ function Settings() {
                 <Box sx={{ p: 0 }}>
                     {selectedIndex === 0 && <AudioSettings />}
                     {selectedIndex === 1 && <Profile />}
-                    {selectedIndex === 2 && <div>Additional Features</div>}
+                    {selectedIndex === 2 && <AdditionalFeatures />}
                     {selectedIndex === 3 && <div>Privacy</div>}
                 </Box>
             </Box>
