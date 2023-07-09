@@ -346,16 +346,18 @@ pub async fn get_open_graph_data_from_website(
     url: &str,
 ) -> Result<String, String> {
     // setup crawler if not already done
-    let mut client = state.crawler.lock().await;
-    if client.is_none() {
-        *client = Some(OpenGraphCrawler::new());
-    }
+    let result = {
+        let mut client = state.crawler.lock().await;
+        if client.is_none() {
+            *client = OpenGraphCrawler::try_new();
+        }
 
-    let client = client
-        .as_ref()
-        .ok_or("Failed to read website body".to_string())?;
-
-    let result = client.crawl(url).await;
+        client
+            .as_ref()
+            .ok_or_else(|| "Failed to read website body".to_string())?
+            .crawl(url)
+            .await
+    };
 
     let result = json!(result);
 

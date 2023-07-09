@@ -14,14 +14,14 @@ pub struct OpenGraphCrawler {
 }
 
 impl OpenGraphCrawler {
-    pub fn new() -> Self {
+    pub fn try_new() -> Option<Self> {
         let client = reqwest::Client::builder()
             .redirect(Policy::limited(10))
             .user_agent("FancyMumbleClient/0.1.0")
             //.cookie_store(true)
             .build()
-            .unwrap();
-        OpenGraphCrawler { client }
+            .ok()?;
+        Some(Self { client })
     }
 
     pub async fn crawl(&self, url: &str) -> Option<OpenGraphMetadata> {
@@ -29,12 +29,12 @@ impl OpenGraphCrawler {
         let body = response.text().await.ok()?;
         let document = Html::parse_document(&body);
 
-        let mut title = self.extract_metadata(&document, "og:title");
-        let description = self.extract_metadata(&document, "og:description");
-        let image = self.extract_metadata(&document, "og:image");
+        let mut title = Self::extract_metadata(&document, "og:title");
+        let description = Self::extract_metadata(&document, "og:description");
+        let image = Self::extract_metadata(&document, "og:image");
 
         if title.is_none() {
-            title = self.extract_property(&document, "title");
+            title = Self::extract_property(&document, "title");
         }
 
         Some(OpenGraphMetadata {
@@ -44,14 +44,14 @@ impl OpenGraphCrawler {
         })
     }
 
-    fn extract_metadata(&self, document: &Html, property: &str) -> Option<String> {
-        let selector = Selector::parse(&format!("meta[property='{}']", property)).unwrap();
+    fn extract_metadata(document: &Html, property: &str) -> Option<String> {
+        let selector = Selector::parse(&format!("meta[property='{property}']")).ok()?;
         let element = document.select(&selector).next()?;
         element.value().attr("content").map(String::from)
     }
 
-    fn extract_property(&self, document: &Html, property: &str) -> Option<String> {
-        let selector = Selector::parse(property).unwrap();
+    fn extract_property(document: &Html, property: &str) -> Option<String> {
+        let selector = Selector::parse(property).ok()?;
         let element = document.select(&selector).next()?;
         Some(element.children().next()?.value().as_text()?.to_string())
     }
