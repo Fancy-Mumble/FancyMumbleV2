@@ -1,107 +1,85 @@
-import { Box, Divider, IconButton, InputBase, Paper, Tooltip } from '@mui/material';
-import { invoke } from '@tauri-apps/api';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import SendIcon from '@mui/icons-material/Send';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { Box, IconButton, Paper, Tooltip } from '@mui/material';
+
 import ChatMessageContainer from '../components/ChatMessageContainer';
-import GifIcon from '@mui/icons-material/Gif';
-import GifSearch from '../components/GifSearch';
-import React from 'react';
+
 import Sidebar from '../components/Sidebar';
 import { RootState } from '../store/store';
-import { useDispatch, useSelector } from 'react-redux';
-import { formatBytes } from '../helper/Fomat';
-import { UpdateableUserState, UsersState } from '../store/features/users/userSlice';
-import { ChatMessageHandler } from '../helper/ChatMessage';
-import { unregister } from '@tauri-apps/api/globalShortcut';
-import { QuillEditor } from '../components/QuillEditor';
+import { useSelector } from 'react-redux';
+import ChatInput from '../components/ChatInput';
+import { useEffect, useMemo, useState } from 'react';
+import AutoStoriesIcon from '@mui/icons-material/AutoStories';
+import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
+
 
 function Chat() {
-    const [chatMessage, setChatMessage] = useState("");
-    const [showGifSearch, setShowGifSearch] = useState(false);
-    const [gifSearchAnchor, setGifSearchAnchor] = useState<HTMLElement>();
+    const [showLog, setShowLog] = useState(false);
 
-    const dispatch = useDispatch();
-    const currentUser = useSelector((state: RootState) => state.reducer.userInfo?.currentUser);
-    const channelInfo = useSelector((state: RootState) => state.reducer.channel);
     const messageLog = useSelector((state: RootState) => state.reducer.chatMessage);
+    const currentChannelId = useSelector((state: RootState) => state.reducer.userInfo.currentUser?.channel_id);
+    const channelInfo = useSelector((state: RootState) => state.reducer.channel.find(e => e.channel_id === currentChannelId));
+    const eventLog = useSelector((state: RootState) => state.eventLog);
 
-    const currentChannel = useMemo(() => channelInfo.find(e => e.channel_id === currentUser?.channel_id)?.name, [channelInfo, currentUser]);
-    const chatMessageHandler = useMemo(() => new ChatMessageHandler(dispatch, setChatMessage), [dispatch]);
+    const eventLogBox = useMemo(() => {
+        if (!showLog) return null;
 
-    const deleteMessages = useCallback(() => {
-        chatMessageHandler.deleteMessages();
-    }, [chatMessageHandler]);
+        return (
+            <Box sx={{
+                maxWidth: '300px',
+                display: 'flex',
+                flexDirection: 'column'
+            }}>
+                <Paper elevation={0} sx={{ flexGrow: 1 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', height: '100%' }}>
+                        <Box sx={{ flexGrow: 1, paddingLeft: 1 }}>
+                            {eventLog.map((e, i) => {
+                                return (
+                                    <Box key={i} sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+                                        <Box sx={{ flexGrow: 1, fontSize: '0.75rem' }}>
+                                            {e.logMessage}
+                                        </Box>
+                                    </Box>
+                                )
+                            })}
+                        </Box>
+                    </Box>
+                </Paper>
+            </Box>
+        )
+    }, [showLog, eventLog]);
 
-    const keyDownHandler = useCallback((e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        if (e && e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            chatMessageHandler.sendChatMessage(chatMessage, currentUser);
-        }
-    }, [chatMessage, chatMessageHandler, currentUser]);
-
-    const showGifPreview = useCallback((e: any) => {
-        setShowGifSearch(prev => !prev);
-        setGifSearchAnchor(e.currentTarget)
-    }, []);
-
-    const pasteEvent = useCallback((event: any) => {
-        let items = event.clipboardData.items;
-        for (const item of items) {
-            if (item.type.indexOf('image') !== -1) {
-                const file = item.getAsFile();
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = function () {
-                    if (reader.result && (reader.result as string).length > 0x7fffff) {
-                        chatMessageHandler.sendCustomChatMessage("[[ Image too large ( " + formatBytes((reader.result as string).length) + " out of " + formatBytes(0x7fffff) + ") ]]", currentUser);
-                        return;
-                    }
-                    let img = '<img src="' + reader.result + '" />';
-                    chatMessageHandler.sendCustomChatMessage(img, currentUser);
-                };
-            }
-        }
-    }, [chatMessageHandler, currentUser]);
+    const eventLogIcon = useMemo(() => {
+        if (!showLog) return (<AutoStoriesIcon sx={{ fontSize: 20 }} />);
+        else return (<KeyboardDoubleArrowRightIcon sx={{ fontSize: 20 }} />);
+    }, [showLog]);
 
     return (
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'row' }}>
             <Sidebar />
             <Box sx={{ flex: 1, overflowY: 'auto' }}>
                 <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                    <ChatMessageContainer messages={messageLog}></ChatMessageContainer>
-                    <Box m={2} sx={{ display: 'flex' }}>
-                        <Paper
-                            component="form"
-                            sx={{ p: '2px 4px', display: 'flex', alignItems: 'center', width: 400, flexGrow: 1 }}
-                        >
-                            <Tooltip title="Delete all messages">
-                                <IconButton sx={{ p: '10px' }} aria-label="menu" onClick={deleteMessages}>
-                                    <DeleteIcon />
-                                </IconButton>
-                            </Tooltip>
-                            <InputBase
-                                sx={{ ml: 1, flex: 1 }}
-                                placeholder={"Send Message to " + currentChannel}
-                                inputProps={{ 'aria-label': 'Send Message to ' + currentChannel }}
-                                onChange={e => setChatMessage(e.target.value)}
-                                onKeyDown={keyDownHandler}
-                                value={chatMessage}
-                                onPaste={pasteEvent}
-                                multiline
-                            />
-                            <IconButton onClick={showGifPreview}>
-                                <GifIcon />
-                            </IconButton>
-                            <Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />
-                            <IconButton sx={{ p: '10px' }} aria-label="Send Message" onClick={() => chatMessageHandler.sendChatMessage(chatMessage, currentUser)}>
-                                <SendIcon />
-                            </IconButton>
+                    <Box sx={{ flexShrink: 1 }}>
+                        <Paper elevation={0} sx={{ backgroundImage: `url(${channelInfo?.channelImage})`, backgroundSize: 'contain' }}>
+                            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', backdropFilter: 'blur(20px)', textShadow: '1px 1px #000' }}>
+                                <Box sx={{ flexGrow: 1, paddingLeft: 1 }}>
+                                    {channelInfo?.name}
+                                </Box>
+                                <Box sx={{ flexGrow: 0 }}>
+                                    <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+                                        <Tooltip title={showLog ? 'Hide Log' : 'Show Log'}>
+                                            <IconButton size="small" onClick={() => setShowLog(!showLog)}>
+                                                {eventLogIcon}
+                                            </IconButton>
+                                        </Tooltip>
+                                    </Box>
+                                </Box>
+                            </Box>
                         </Paper>
                     </Box>
+                    <ChatMessageContainer messages={messageLog}></ChatMessageContainer>
+                    <ChatInput />
                 </Box>
-                <GifSearch open={showGifSearch} anchor={gifSearchAnchor} />
             </Box>
+            {eventLogBox}
         </Box>
     )
 }

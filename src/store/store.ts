@@ -2,6 +2,7 @@ import { combineReducers, configureStore } from '@reduxjs/toolkit'
 import userReducer from './features/users/userSlice';
 import channelReducer from './features/users/channelSlice';
 import chatMessageReducer from './features/users/chatMessageSlice';
+import eventLogReducer, { checkStatusChangedMiddleware } from './features/users/eventLogReducer';
 
 const combinedReducer = combineReducers({
   channel: channelReducer,
@@ -20,10 +21,11 @@ const rootReducer = (state: any, action: any) => {
 export const store = configureStore({
   reducer: {
     reducer: rootReducer,
+    eventLog: eventLogReducer
   },
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(checkStatusChangedMiddleware),
 })
 
-//TODO: clear on logout
 // Infer the `RootState` and `AppDispatch` types from the store itself
 export type RootState = ReturnType<typeof store.getState>
 // Inferred type: {posts: PostsState, comments: CommentsState, users: UsersState}
