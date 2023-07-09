@@ -19,14 +19,13 @@ use crate::{
     },
 };
 use base64::{engine::general_purpose, Engine};
-use reqwest::redirect::Policy;
 use serde_json::json;
 use tauri::State;
 use tokio::sync::Mutex;
 use tracing::{error, info, trace};
 use webbrowser::{Browser, BrowserOptions};
 
-use self::helper::extract_og_property;
+use self::helper::OpenGraphCrawler;
 
 pub struct ConnectionState {
     pub connection: Mutex<Option<Connection>>,
@@ -337,50 +336,28 @@ pub fn open_browser(url: &str) -> Result<(), String> {
     Ok(())
 }
 
+pub struct CrawlerState {
+    pub crawler: Mutex<Option<OpenGraphCrawler>>,
+}
+
 #[tauri::command]
-pub async fn get_open_graph_data_from_website(url: &str) -> Result<String, String> {
-    let client = reqwest::Client::builder()
-        .redirect(Policy::limited(10))
-        .user_agent("FancyMumbleClient/0.1.0")
-        .build()
-        .map_err(|e| format!("{e:?}"))?;
+pub async fn get_open_graph_data_from_website(
+    state: State<'_, CrawlerState>,
+    url: &str,
+) -> Result<String, String> {
+    // setup crawler if not already done
+    let mut client = state.crawler.lock().await;
+    if client.is_none() {
+        *client = Some(OpenGraphCrawler::new());
+    }
 
-    let request = client
-        .get(url)
-        .build()
-        .map_err(|_| "Failed to build request".to_string())?;
-    let res = client
-        .execute(request)
-        .await
-        .map_err(|_| "Failed to fetch website".to_string())?;
+    let client = client
+        .as_ref()
+        .ok_or("Failed to read website body".to_string())?;
 
-    let body = res
-        .text()
-        .await
-        .map_err(|_| "Failed to read website body".to_string())?;
+    let result = client.crawl(url).await;
 
-    trace!("Got body: {:?}", body);
-
-    let title = extract_og_property(
-        &body,
-        r#"<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']"#,
-    )?;
-
-    let description = extract_og_property(
-        &body,
-        r#"<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:description["']"#,
-    )?;
-
-    let image = extract_og_property(
-        &body,
-        r#"<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']"#,
-    )?;
-
-    let result = json!({
-        "title": title,
-        "description": description,
-        "image": image,
-    });
+    let result = json!(result);
 
     Ok(result.to_string())
 }
