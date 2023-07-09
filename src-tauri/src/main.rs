@@ -21,7 +21,10 @@ use tokio::sync::Mutex;
 
 use tauri::Manager;
 use tracing::Level;
-use tracing_subscriber::fmt;
+use tracing_subscriber::{
+    fmt::{self, format::FmtSpan},
+    EnvFilter,
+};
 
 use crate::commands::{
     change_user_state, connect_to_server, get_audio_devices, get_open_graph_data_from_website,
@@ -40,6 +43,8 @@ fn init_logging() {
     tracing_subscriber::fmt()
         .with_max_level(Level::TRACE)
         .event_format(format)
+        .with_env_filter(EnvFilter::from_default_env().add_directive(Level::INFO.into()))
+        .with_span_events(FmtSpan::CLOSE)
         .init();
 }
 

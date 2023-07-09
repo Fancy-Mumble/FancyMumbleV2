@@ -10,13 +10,13 @@ function Titlebar() {
     return (
         <Paper data-tauri-drag-region sx={{ width: '100%', display: 'flex', justifyContent: 'end', zIndex: 9999}}>
             <IconButton size="small" onClick={(e) => appWindow.minimize()} className="titlebar-button" >
-                <MinimizeIcon/>
+                <MinimizeIcon sx={{ fontSize: 18 }}/>
             </IconButton >
             <IconButton size="small" onClick={(e) => appWindow.toggleMaximize()} className="titlebar-button">
-                <FilterNoneIcon />
+                <FilterNoneIcon sx={{ fontSize: 18 }}/>
             </IconButton >
             <IconButton size="small" onClick={(e) => appWindow.close()} className="titlebar-button" color="error">
-                <CloseIcon />
+                <CloseIcon sx={{ fontSize: 18 }}/>
             </IconButton >
         </Paper>
     )

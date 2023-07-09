@@ -19,7 +19,7 @@ use crate::{
     },
 };
 use base64::{engine::general_purpose, Engine};
-use reqwest::header;
+use reqwest::redirect::Policy;
 use serde_json::json;
 use tauri::State;
 use tokio::sync::Mutex;
@@ -339,27 +339,41 @@ pub fn open_browser(url: &str) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn get_open_graph_data_from_website(url: &str) -> Result<String, String> {
-    let res = reqwest::get(url)
+    let client = reqwest::Client::builder()
+        .redirect(Policy::limited(10))
+        .user_agent("FancyMumbleClient/0.1.0")
+        .build()
+        .map_err(|e| format!("{e:?}"))?;
+
+    let request = client
+        .get(url)
+        .build()
+        .map_err(|_| "Failed to build request".to_string())?;
+    let res = client
+        .execute(request)
         .await
         .map_err(|_| "Failed to fetch website".to_string())?;
+
     let body = res
         .text()
         .await
         .map_err(|_| "Failed to read website body".to_string())?;
 
+    trace!("Got body: {:?}", body);
+
     let title = extract_og_property(
         &body,
-        r#"<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']"#,
+        r#"<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']"#,
     )?;
 
     let description = extract_og_property(
         &body,
-        r#"<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']"#,
+        r#"<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:description["']"#,
     )?;
 
     let image = extract_og_property(
         &body,
-        r#"<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']"#,
+        r#"<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']"#,
     )?;
 
     let result = json!({
