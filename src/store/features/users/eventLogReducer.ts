@@ -8,54 +8,77 @@ interface EventLogState {
     logMessage: string
 }
 
+interface CheckData {
+    condition: (userInfo: UsersState | null, payload: UsersState) => boolean;
+    message: (userInfo: UsersState | null, payload: UsersState, storeAPI?: any) => string;
+    stopAfter?: (userInfo: UsersState | null) => boolean;
+}
+
+const checks: CheckData[] = [
+    {
+        condition: (userInfo, payload) => !userInfo,
+        message: (userInfo, payload) => `${payload.name} joined the server`,
+        stopAfter: (userInfo) => !userInfo
+    },
+    {
+        condition: (userInfo, payload) => userInfo?.self_deaf !== payload.self_deaf && userInfo?.self_mute !== payload.self_mute,
+        message: (userInfo, payload) => `${userInfo?.name} ${payload.self_deaf ? "deafened" : "undeafened"} and ${payload.self_mute ? "muted" : "unmuted"}`
+    },
+    {
+        condition: (userInfo, payload) => userInfo?.self_deaf !== payload.self_deaf,
+        message: (userInfo, payload) => `${userInfo?.name} ${payload.self_deaf ? "deafened" : "undeafened"}`
+    },
+    {
+        condition: (userInfo, payload) => userInfo?.self_mute !== payload.self_mute,
+        message: (userInfo, payload) => `${userInfo?.name} ${payload.self_mute ? "muted" : "unmuted"}`
+    },
+    {
+        condition: (userInfo, payload) => userInfo?.mute !== payload.mute,
+        message: (userInfo, payload) => `${userInfo?.name} ${payload.mute ? "was muted" : "was unmuted"} by unknown`
+    },
+    {
+        condition: (userInfo, payload) => userInfo?.deaf !== payload.deaf,
+        message: (userInfo, payload) => `${userInfo?.name} ${payload.deaf ? "was deafened" : "was undeafened"} by unknown`
+    },
+    {
+        condition: (userInfo, payload) => userInfo?.channel_id !== payload.channel_id,
+        message: (userInfo, payload, storeAPI: any) => {
+            const channelInfo = findChannelById(payload.channel_id, storeAPI);
+            const oldChannel = findChannelById(userInfo?.channel_id || -1, storeAPI);
+            return `${userInfo?.name} joined ${channelInfo?.name} from ${oldChannel?.name}`;
+        }
+    },
+    {
+        condition: (userInfo, payload) => userInfo?.priority_speaker !== payload.priority_speaker,
+        message: (userInfo, payload) => `${userInfo?.name} ${payload.priority_speaker ? "is now a priority speaker" : "is no longer a priority speaker"}`
+    },
+    {
+        condition: (userInfo, payload) => userInfo?.suppress !== payload.suppress,
+        message: (userInfo, payload) => `${userInfo?.name} ${payload.suppress ? "is now suppressed" : "is no longer suppressed"}`
+    },
+    {
+        condition: (userInfo, payload) => userInfo?.name !== payload.name,
+        message: (userInfo, payload) => `${userInfo?.name} changed their name to ${payload.name}`
+    },
+    {
+        condition: (userInfo, payload) => userInfo?.recording !== payload.recording,
+        message: (userInfo, payload) => `${userInfo?.name} ${payload.recording ? "started recording" : "stopped recording"}`
+    }
+];
+
 // Handle function for updateUser.fulfilled
 function handleUpdateUser(action: { payload: UsersState }, storeAPI: any) {
     const userState: UserInfoState = storeAPI.getState().reducer.userInfo;
     const userId = action.payload.id;
     const userInfo = getUserInfo(userState, userId);
 
-    if (!userInfo) {
-        storeAPI.dispatch(eventLogSlice.actions.dispatchEventLog({ message: `${action.payload.name} joined the server` }));
-        return
-    };
-
-    if(userInfo.self_deaf !== action.payload.self_deaf && userInfo.self_mute !== action.payload.self_mute) {
-        storeAPI.dispatch(eventLogSlice.actions.dispatchEventLog({ message: `${userInfo.name} ${action.payload.self_deaf ? "deafened" : "undeafened"} and ${action.payload.self_mute ? "muted" : "unmuted"}` }));
-    } else if (userInfo.self_deaf !== action.payload.self_deaf) {
-        storeAPI.dispatch(eventLogSlice.actions.dispatchEventLog({ message: `${userInfo.name} ${action.payload.self_deaf ? "deafened" : "undeafened"}` }));
-    } else if (userInfo.self_mute !== action.payload.self_mute) {
-        storeAPI.dispatch(eventLogSlice.actions.dispatchEventLog({ message: `${userInfo.name} ${action.payload.self_mute ? "muted" : "unmuted"}` }));
-    }
-
-    if (userInfo.mute !== action.payload.mute) {
-        storeAPI.dispatch(eventLogSlice.actions.dispatchEventLog({ message: `${userInfo.name} ${action.payload.mute ? "was muted" : "was unmuted"} by unkonwn` }));
-    }
-
-    if (userInfo.deaf !== action.payload.deaf) {
-        storeAPI.dispatch(eventLogSlice.actions.dispatchEventLog({ message: `${userInfo.name} ${action.payload.deaf ? "was deafened" : "was undeafened"} by unkonwn` }));
-    }
-
-    if (userInfo.channel_id !== action.payload.channel_id) {
-        const channelInfo = findChannelById(action.payload.channel_id, storeAPI);
-        const oldChannel = findChannelById(userInfo.channel_id, storeAPI);
-        storeAPI.dispatch(eventLogSlice.actions.dispatchEventLog({ message: `${userInfo.name} joined ${channelInfo?.name} from ${oldChannel?.name}` }));
-    }
-
-    if(userInfo.priority_speaker !== action.payload.priority_speaker) {
-        storeAPI.dispatch(eventLogSlice.actions.dispatchEventLog({ message: `${userInfo.name} ${action.payload.priority_speaker ? "is now a priority speaker" : "is no longer a priority speaker"}` }));
-    }
-
-    if(userInfo.suppress !== action.payload.suppress) {
-        storeAPI.dispatch(eventLogSlice.actions.dispatchEventLog({ message: `${userInfo.name} ${action.payload.suppress ? "is now suppressed" : "is no longer suppressed"}` }));
-    }
-
-    if(userInfo.name !== action.payload.name) {
-        storeAPI.dispatch(eventLogSlice.actions.dispatchEventLog({ message: `${userInfo.name} changed their name to ${action.payload.name}` }));
-    }
-
-    if(userInfo.recording !== action.payload.recording) {
-        storeAPI.dispatch(eventLogSlice.actions.dispatchEventLog({ message: `${userInfo.name} ${action.payload.recording ? "started recording" : "stopped recording"}` }));
-    }
+    checks.every(({condition, message, stopAfter}) => {
+        if(condition(userInfo, action.payload)) {
+            storeAPI.dispatch(eventLogSlice.actions.dispatchEventLog({ message: message(userInfo, action.payload, storeAPI) }));
+        }
+        if(stopAfter && stopAfter(userInfo)) return false;
+        return true;
+    });
 }
 
 // Handle function for deleteUser
