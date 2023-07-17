@@ -16,7 +16,7 @@ mod tests;
 
 use std::collections::HashMap;
 
-use commands::{ConnectionState, CrawlerState};
+use commands::{web_cmd::CrawlerState, ConnectionState};
 use tokio::sync::Mutex;
 
 use tauri::Manager;
@@ -27,9 +27,11 @@ use tracing_subscriber::{
 };
 
 use crate::commands::{
-    change_user_state, connect_to_server, get_audio_devices, get_open_graph_data_from_website,
-    get_server_list, like_message, logout, open_browser, save_server, send_message, set_user_image,
-    unzip_data_from_utf8, zip_data_to_utf8,
+    change_user_state, connect_to_server, get_audio_devices, like_message, logout, send_message,
+    set_user_image,
+    settings_cmd::{get_frontend_settings, get_server_list, save_frontend_settings, save_server},
+    web_cmd::{get_open_graph_data_from_website, open_browser},
+    zip_cmd::{unzip_data_from_utf8, zip_data_to_utf8},
 };
 
 fn init_logging() {
@@ -79,7 +81,9 @@ fn main() {
             zip_data_to_utf8,
             unzip_data_from_utf8,
             open_browser,
-            get_open_graph_data_from_website
+            get_open_graph_data_from_website,
+            save_frontend_settings,
+            get_frontend_settings
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
