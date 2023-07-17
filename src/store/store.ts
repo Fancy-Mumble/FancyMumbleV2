@@ -3,11 +3,13 @@ import userReducer from './features/users/userSlice';
 import channelReducer from './features/users/channelSlice';
 import chatMessageReducer from './features/users/chatMessageSlice';
 import eventLogReducer, { checkStatusChangedMiddleware } from './features/users/eventLogReducer';
+import frontendSettingsReducer from './features/users/frontendSettings';
 
 const combinedReducer = combineReducers({
   channel: channelReducer,
   userInfo: userReducer,
-  chatMessage: chatMessageReducer
+  chatMessage: chatMessageReducer,
+  frontendSettings: frontendSettingsReducer
 })
 
 const rootReducer = (state: any, action: any) => {

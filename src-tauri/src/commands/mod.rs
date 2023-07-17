@@ -2,30 +2,22 @@
 #![allow(clippy::used_underscore_binding)]
 
 mod helper;
+pub mod settings_cmd;
+pub mod web_cmd;
+pub mod zip_cmd;
 
-use std::{
-    borrow::BorrowMut,
-    collections::HashMap,
-    io::{Seek, SeekFrom, Write},
-};
+use std::{borrow::BorrowMut, collections::HashMap};
 
 use crate::{
     connection::{traits::Shutdown, Connection},
     errors::string_convertion::ErrorString,
     manager::user::UpdateableUserState,
     protocol::message_transmitter::MessageTransmitter,
-    utils::{
-        audio::device_manager::AudioDeviceManager, constants::get_project_dirs, server::Server,
-    },
+    utils::audio::device_manager::AudioDeviceManager,
 };
-use base64::{engine::general_purpose, Engine};
-use serde_json::json;
 use tauri::State;
 use tokio::sync::Mutex;
 use tracing::{error, info, trace};
-use webbrowser::{Browser, BrowserOptions};
-
-use self::helper::OpenGraphCrawler;
 
 pub struct ConnectionState {
     pub connection: Mutex<Option<Connection>>,
@@ -80,91 +72,6 @@ pub async fn connect_to_server(
     add_message_handler(&state, "transmitter".to_string(), Box::new(transmitter)).await;
 
     Ok(())
-}
-
-#[tauri::command]
-pub fn save_server(
-    description: &str,
-    server_host: &str,
-    server_port: u16,
-    username: &str,
-) -> Result<(), String> {
-    info!("Saving server: {server_host}:{server_port}");
-    let project_dirs = get_project_dirs().ok_or("Unable to load project dir")?;
-
-    let data_dir = project_dirs.config_dir();
-
-    // create config dir if it doesn't exist
-    std::fs::create_dir_all(data_dir).map_err(|e| format!("{e:?}"))?;
-
-    // open server.json or create it if it doesn't exist
-    let mut server_file = std::fs::OpenOptions::new()
-        .read(true)
-        .write(true)
-        .create(true)
-        .open(data_dir.join("server.json"))
-        .map_err(|e| format!("Error opening file: {e:?}"))?;
-
-    // read the json content using serde and append the new server
-    let mut server_list =
-        serde_json::from_reader::<&std::fs::File, Vec<Server>>(&server_file).unwrap_or_default();
-
-    // check if the server is already in the list
-    for server in &server_list {
-        if server.host == server_host && server.port == server_port {
-            return Err("Server already exists".to_string());
-        }
-    }
-
-    server_list.push(Server {
-        description: description.to_string(),
-        host: server_host.to_string(),
-        port: server_port,
-        username: username.to_string(),
-    });
-
-    trace!("Server list: {:#?}", server_list);
-
-    // write the new json content
-    server_file
-        .seek(SeekFrom::Start(0))
-        .map_err(|e| format!("{e:?}"))?;
-    server_file
-        .write_all(
-            serde_json::to_string_pretty(&server_list)
-                .map_err(|e| format!("{e:?}"))?
-                .as_bytes(),
-        )
-        .map_err(|e| format!("{e:?}"))?;
-
-    Ok(())
-}
-
-#[tauri::command]
-pub fn get_server_list() -> Result<Vec<Server>, String> {
-    info!("Getting server list");
-    let project_dirs = get_project_dirs().ok_or("Unable to load project dir")?;
-
-    let data_dir = project_dirs.config_dir();
-
-    // create config dir if it doesn't exist
-    std::fs::create_dir_all(data_dir).map_err(|e| format!("{e:?}"))?;
-
-    // open server.json or create it if it doesn't exist
-    let server_file = std::fs::OpenOptions::new()
-        .read(true)
-        .write(true)
-        .create(true)
-        .open(data_dir.join("server.json"))
-        .map_err(|e| format!("Error opening file: {e:?}"))?;
-
-    // read the json content using serde
-    let server_list =
-        serde_json::from_reader::<&std::fs::File, Vec<Server>>(&server_file).unwrap_or_default();
-
-    trace!("Server list: {:#?}", server_list);
-
-    Ok(server_list)
 }
 
 #[tauri::command]
@@ -288,78 +195,4 @@ pub async fn get_audio_devices(
     }
 
     Err(ErrorString("Failed to get audio devices".to_string()))
-}
-
-#[tauri::command]
-pub fn zip_data_to_utf8(data: &str, quality: u32) -> Result<String, String> {
-    trace!("zipping data {:?}", data);
-
-    let mut buffer = Vec::new();
-    let lg_windows_size = 22;
-
-    {
-        let cursor = std::io::Cursor::new(&mut buffer);
-        let mut writer = brotli::CompressorWriter::new(cursor, 4096, quality, lg_windows_size);
-        writer
-            .write_all(data.as_bytes())
-            .map_err(|e| e.to_string())?;
-        writer.flush().map_err(|e| e.to_string())?;
-    }
-
-    let encoded = general_purpose::STANDARD.encode(buffer);
-    Ok(encoded)
-}
-
-#[tauri::command]
-pub fn unzip_data_from_utf8(data: &str) -> Result<String, String> {
-    let decoded_data = general_purpose::STANDARD
-        .decode(data)
-        .map_err(|e| e.to_string())?;
-    let mut writer = brotli::DecompressorWriter::new(Vec::new(), 4096);
-    writer.write_all(&decoded_data).map_err(|e| e.to_string())?;
-    let output = writer.into_inner().map_err(|_| "Decompress Error")?;
-
-    let result = String::from_utf8(output).map_err(|e| e.to_string())?;
-    Ok(result)
-}
-
-#[tauri::command]
-pub fn open_browser(url: &str) -> Result<(), String> {
-    if let Err(e) = webbrowser::open_browser_with_options(
-        Browser::Default,
-        url,
-        BrowserOptions::new().with_suppress_output(false),
-    ) {
-        return Err(format!("{e:?}"));
-    }
-
-    Ok(())
-}
-
-pub struct CrawlerState {
-    pub crawler: Mutex<Option<OpenGraphCrawler>>,
-}
-
-#[tauri::command]
-pub async fn get_open_graph_data_from_website(
-    state: State<'_, CrawlerState>,
-    url: &str,
-) -> Result<String, String> {
-    // setup crawler if not already done
-    let result = {
-        let mut client = state.crawler.lock().await;
-        if client.is_none() {
-            *client = OpenGraphCrawler::try_new();
-        }
-
-        client
-            .as_ref()
-            .ok_or_else(|| "Failed to read website body".to_string())?
-            .crawl(url)
-            .await
-    };
-
-    let result = json!(result);
-
-    Ok(result.to_string())
 }
