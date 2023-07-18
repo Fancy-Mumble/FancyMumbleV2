@@ -137,10 +137,10 @@ jobs:
         run: |
           # Define URLs
           $urlToCheck = "https://nasm.us/"
-          $fileToDownload = "http://mirrors.kodi.tv/build-deps/win32/nasm-2.12.02-win32.zip"
+          $fileToDownload = "https://github.com/microsoft/vcpkg/files/12073957/nasm-2.16.01-win64.zip"
 
           # Define download location
-          $downloadFolder = "D:\a\FancyMumbleV2\FancyMumbleV2\vcpkg\downloads"
+          $downloadFolder = Join-Path -Path $env:VCPKG_ROOT -ChildPath "downloads"
 
           # Check if website is available
           try {
