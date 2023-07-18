@@ -126,6 +126,40 @@ jobs:
         env:
           VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg_installed
 
+      - name: workaround for nasm.us's potato pc (windows only)
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: |
+          # Define URLs
+          $urlToCheck = "https://nasm.us/"
+          $fileToDownload = "https://github.com/microsoft/vcpkg/files/12073957/nasm-2.16.01-win64.zip"
+
+          # Define download location
+          $downloadFolder = Join-Path -Path $env:VCPKG_ROOT -ChildPath "downloads"
+
+          # Check if website is available
+          try {
+              $response = Invoke-WebRequest -Uri $urlToCheck -Method Head -ErrorAction Stop
+              if ($response.StatusCode -ne 200) {
+                  throw
+              }
+              Write-Host "$urlToCheck is available."
+          }
+          catch {
+              Write-Host "$urlToCheck is not available. Downloading file..."
+
+              # Create download folder if it doesn't exist
+              if (!(Test-Path -Path $downloadFolder)) {
+                  New-Item -ItemType Directory -Path $downloadFolder
+              }
+
+              # Download file
+              $filePath = Join-Path -Path $downloadFolder -ChildPath (Split-Path -Path $fileToDownload -Leaf)
+              Invoke-WebRequest -Uri $fileToDownload -OutFile $filePath
+
+              Write-Host "File downloaded to $filePath."
+          }
+
       - name: Install dependencies (windows only)
         if: matrix.platform == 'windows-latest'
         run: |
