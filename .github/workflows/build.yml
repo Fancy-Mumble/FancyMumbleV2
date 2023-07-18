@@ -131,6 +131,40 @@ jobs:
         env:
           VCPKG_INSTALLED_DIR: ${{ github.workspace }}/vcpkg_installed
 
+      - name: workaround for nasm.us's potato pc (windows only)
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: |
+          # Define URLs
+          $urlToCheck = "https://nasm.us/"
+          $fileToDownload = "http://mirrors.kodi.tv/build-deps/win32/nasm-2.12.02-win32.zip"
+
+          # Define download location
+          $downloadFolder = "D:\a\FancyMumbleV2\FancyMumbleV2\vcpkg\downloads"
+
+          # Check if website is available
+          try {
+              $response = Invoke-WebRequest -Uri $urlToCheck -Method Head -ErrorAction Stop
+              if ($response.StatusCode -ne 200) {
+                  throw
+              }
+              Write-Host "$urlToCheck is available."
+          }
+          catch {
+              Write-Host "$urlToCheck is not available. Downloading file..."
+
+              # Create download folder if it doesn't exist
+              if (!(Test-Path -Path $downloadFolder)) {
+                  New-Item -ItemType Directory -Path $downloadFolder
+              }
+
+              # Download file
+              $filePath = Join-Path -Path $downloadFolder -ChildPath (Split-Path -Path $fileToDownload -Leaf)
+              Invoke-WebRequest -Uri $fileToDownload -OutFile $filePath
+
+              Write-Host "File downloaded to $filePath."
+          }
+
       - name: Install dependencies (windows only)
         if: matrix.platform == 'windows-latest'
         run: |
