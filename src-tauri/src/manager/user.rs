@@ -15,8 +15,7 @@ use crate::{
 };
 
 use super::Update;
-use tokio::sync::broadcast::Sender;
-
+use std::sync::mpsc::Sender as StdSender;
 #[derive(Debug, Clone, Copy, Serialize, PartialEq)]
 enum HashUserFields {
     ProfilePicture,
@@ -93,12 +92,12 @@ impl Update<mumble::proto::UserState> for User {
 pub struct Manager {
     users: HashMap<u32, User>,
     current_user_id: Option<u32>,
-    frontend_channel: Sender<String>,
-    server_channel: Sender<Vec<u8>>,
+    frontend_channel: StdSender<String>,
+    server_channel: StdSender<Vec<u8>>,
 }
 
 impl Manager {
-    pub fn new(send_to: Sender<String>, server_channel: Sender<Vec<u8>>) -> Self {
+    pub fn new(send_to: StdSender<String>, server_channel: StdSender<Vec<u8>>) -> Self {
         Self {
             users: HashMap::new(),
             current_user_id: None,

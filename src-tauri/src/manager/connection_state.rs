@@ -3,15 +3,15 @@ use tracing::error;
 
 use crate::protocol::serialize::message_container::FrontendMessage;
 
-use tokio::sync::broadcast::Sender;
+use std::sync::mpsc::Sender as StdSender;
 
 pub struct Manager {
-    frontend_channel: Sender<String>,
-    _server_channel: Sender<Vec<u8>>,
+    frontend_channel: StdSender<String>,
+    _server_channel: StdSender<Vec<u8>>,
 }
 
 impl Manager {
-    pub fn new(send_to: Sender<String>, server_channel: Sender<Vec<u8>>) -> Self {
+    pub fn new(send_to: StdSender<String>, server_channel: StdSender<Vec<u8>>) -> Self {
         Self {
             frontend_channel: send_to,
             _server_channel: server_channel,

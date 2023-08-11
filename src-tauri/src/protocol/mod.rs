@@ -6,8 +6,8 @@ pub mod stream_reader;
 use std::cmp;
 
 use crate::{mumble, utils::messages::message_builder};
+use std::sync::mpsc::Sender as StdSender;
 use tauri::PackageInfo;
-use tokio::sync::broadcast::Sender;
 
 const OFFSET_MAJOR: u64 = 48;
 const OFFSET_MINOR: u64 = 32;
@@ -45,7 +45,7 @@ fn to_legacy_version(version: u64) -> u32 {
     major | minor | patch
 }
 
-pub fn init_connection(username: &str, channel: &Sender<Vec<u8>>, package_info: &PackageInfo) {
+pub fn init_connection(username: &str, channel: &StdSender<Vec<u8>>, package_info: &PackageInfo) {
     let version = from_components(
         package_info.version.major + 2,
         package_info.version.minor,

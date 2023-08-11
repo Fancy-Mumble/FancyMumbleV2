@@ -26,6 +26,7 @@ tauri = { version = "1.4.0", features = ["dialog-open", "global-shortcut-all", "
 futures = "0.3.4"
 tokio = { version = "1", features = ["full"] }
 tokio-native-tls = "0.3.1"
+native-tls = "0.2"
 prost = "0.11"
 byteorder = "1.4.3"
 async-trait = "0.1.68"

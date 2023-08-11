@@ -44,6 +44,7 @@ const AdditionalFeatures: React.FC<AdditionalFeaturesProps> = React.memo(({ }) =
     function updateAllowedUrls(urls: string[]) {
         updateLinkPreviewState((state) => {
             state.urls = urls;
+            console.log(state);
             return state;
         });
     }
@@ -87,7 +88,7 @@ const AdditionalFeatures: React.FC<AdditionalFeaturesProps> = React.memo(({ }) =
                     <Typography variant="h6">Link Preview Urls</Typography>
                 </Grid>
                 <Grid item xs={4} sm={8} md={6} lg={6}>
-                    <TextField {...label} value={linkPreview.urls.join('\n')} multiline onChange={(text) => updateAllowedUrls(text.target.value.split(/\r?\n/))} maxRows={10} />
+                    <TextField {...label} value={linkPreview.urls.join('\n')} multiline onChange={(text) => updateAllowedUrls(text.target.value.split(/\r?\n/).map((e) => e.trim()))} maxRows={10} />
                 </Grid>
             </Grid>
         )

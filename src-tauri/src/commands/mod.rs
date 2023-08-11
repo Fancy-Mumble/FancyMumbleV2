@@ -17,7 +17,7 @@ use crate::{
 };
 use tauri::State;
 use tokio::sync::Mutex;
-use tracing::{error, info, trace};
+use tracing::{debug, error, info, trace};
 
 pub struct ConnectionState {
     pub connection: Mutex<Option<Connection>>,
@@ -42,16 +42,18 @@ pub async fn connect_to_server(
     username: String,
     state: State<'_, ConnectionState>,
 ) -> Result<(), String> {
-    info!("Connecting to server: {server_host}:{server_port}");
+    info!("Connecting to server: {server_host}:{server_port}!");
 
     let mut guard = state.connection.lock().await;
     if let Some(guard) = guard.as_mut() {
+        debug!("Found old connection, closing it");
         // close old connection
-        if let Err(e) = guard.shutdown().await {
+        if let Err(e) = guard.shutdown() {
             return Err(format!("{e:?}"));
         }
     }
 
+    trace!("Finished closing old connection, creating new one");
     let app_info = state.package_info.lock().await.clone();
     let connection = guard.insert(Connection::new(
         &server_host,
@@ -68,7 +70,7 @@ pub async fn connect_to_server(
     let mut transmitter = MessageTransmitter::new(connection.get_message_channel(), window.clone());
     drop(guard);
 
-    transmitter.start_message_transmit_handler().await;
+    transmitter.start_message_transmit_handler();
     add_message_handler(&state, "transmitter".to_string(), Box::new(transmitter)).await;
 
     Ok(())
@@ -105,7 +107,7 @@ pub async fn logout(state: State<'_, ConnectionState>) -> Result<(), String> {
         let mut lock_guard = state.message_handler.lock().await;
         #[allow(clippy::significant_drop_in_scrutinee)]
         for (name, thread) in lock_guard.iter_mut() {
-            if let Err(e) = thread.shutdown().await {
+            if let Err(e) = thread.shutdown() {
                 error!("Failed to shutdown thread {}: {}", name, e);
             }
             trace!("Joined {}", name.to_string());
@@ -116,7 +118,6 @@ pub async fn logout(state: State<'_, ConnectionState>) -> Result<(), String> {
         .as_mut()
         .ok_or("No connection is available, but logout called")?
         .shutdown()
-        .await
     {
         return Err(format!("{e:?}"));
     }

@@ -1,4 +1,7 @@
-use std::io::{Read, Seek, SeekFrom, Write};
+use std::{
+    fs::{self, File},
+    io::Write,
+};
 
 use tracing::{info, trace};
 
@@ -28,7 +31,7 @@ pub fn save_server(
     username: &str,
 ) -> Result<(), String> {
     info!("Saving server: {server_host}:{server_port}");
-    let mut server_file = get_settings_file(SERVER_SETTINS_FILE)?;
+    let mut server_file = File::create(SERVER_SETTINS_FILE).map_err(|e| format!("{e:?}"))?;
 
     // read the json content using serde and append the new server
     let mut server_list =
@@ -51,9 +54,6 @@ pub fn save_server(
     trace!("Server list: {:#?}", server_list);
 
     // write the new json content
-    server_file
-        .seek(SeekFrom::Start(0))
-        .map_err(|e| format!("{e:?}"))?;
     server_file
         .write_all(
             serde_json::to_string_pretty(&server_list)
@@ -103,17 +103,14 @@ pub struct LinkPreview {
 #[tauri::command]
 pub fn save_frontend_settings(settings_name: &str, data: LinkPreview) -> Result<(), String> {
     info!("Saving frontend settings: {settings_name}");
-    let mut settings_file = get_settings_file(&format!("{settings_name}_{FRONTEND_SETTINS_FILE}"))?;
+    let mut settings_file = File::create(format!("{settings_name}_{FRONTEND_SETTINS_FILE}"))
+        .map_err(|e| format!("{e:?}"))?;
 
     trace!("Settings data: {:#?}", data);
 
-    // write the new json content
-    settings_file
-        .seek(SeekFrom::Start(0))
-        .map_err(|e| format!("{e:?}"))?;
     settings_file
         .write_all(
-            serde_json::to_string_pretty(&data)
+            serde_json::to_string(&data)
                 .map_err(|e| format!("{e:?}"))?
                 .as_bytes(),
         )
@@ -125,14 +122,12 @@ pub fn save_frontend_settings(settings_name: &str, data: LinkPreview) -> Result<
 #[tauri::command]
 pub fn get_frontend_settings(settings_name: &str) -> Result<String, String> {
     info!("Getting frontend settings: {settings_name}");
-    let mut settings_file = get_settings_file(&format!("{settings_name}_{FRONTEND_SETTINS_FILE}"))?;
-
-    let mut settings_data = String::new();
-    settings_file
-        .read_to_string(&mut settings_data)
+    let settings_data = fs::read(format!("{settings_name}_{FRONTEND_SETTINS_FILE}"))
         .map_err(|e| format!("{e:?}"))?;
 
-    trace!("Settings data: {:#?}", settings_data);
+    let settings_str = String::from_utf8(settings_data).map_err(|e| format!("{e:?}"))?;
 
-    Ok(settings_data)
+    trace!("Settings data: {:#?}", settings_str);
+
+    Ok(settings_str)
 }

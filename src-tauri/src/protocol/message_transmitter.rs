@@ -1,33 +1,31 @@
-use std::sync::{Arc, RwLock};
+use std::sync::Mutex;
+use std::sync::{mpsc::Receiver as StdReceiver, Arc, RwLock};
+use std::thread;
+use tauri::{Manager, Window};
+use tracing::{debug, trace};
 
 use crate::connection::threads::DEADMAN_INTERVAL;
 use crate::connection::traits::{HandleMessage, Shutdown};
 use crate::errors::AnyError;
-use async_trait::async_trait;
-use tauri::Manager;
-use tokio::task::JoinHandle;
-use tokio::time;
-use tokio::{select, sync::broadcast::Receiver};
-use tracing::{debug, trace};
 
 pub struct MessageTransmitter {
-    recv_channel: Receiver<String>,
-    window: tauri::Window,
-    transmitter_thread: Option<JoinHandle<()>>,
+    recv_channel: Option<Arc<Mutex<StdReceiver<String>>>>,
+    window: Window,
+    transmitter_thread: Option<thread::JoinHandle<()>>,
     running: Arc<RwLock<bool>>,
 }
 
 impl MessageTransmitter {
-    pub fn new(recv_channel: Receiver<String>, window: tauri::Window) -> Self {
+    pub fn new(recv_channel: Arc<Mutex<StdReceiver<String>>>, window: Window) -> Self {
         Self {
-            recv_channel,
+            recv_channel: Some(recv_channel),
             window,
             transmitter_thread: None,
             running: Arc::new(RwLock::new(false)),
         }
     }
 
-    pub async fn start_message_transmit_handler(&mut self) {
+    pub fn start_message_transmit_handler(&mut self) {
         debug!("Starting MessageTransmitter");
 
         {
@@ -36,36 +34,39 @@ impl MessageTransmitter {
             }
         }
 
-        let mut channel = self.recv_channel.resubscribe();
+        let channel = self.recv_channel.take().unwrap();
         let window_clone = self.window.clone();
         let running_clone = self.running.clone();
 
-        self.transmitter_thread = Some(tokio::spawn(async move {
-            let mut interval = time::interval(DEADMAN_INTERVAL);
+        self.transmitter_thread = Some(thread::spawn(move || {
+            let interval = DEADMAN_INTERVAL;
 
             while *running_clone.read().expect("Failed to get running state") {
-                select! {
-                    Ok(result) = channel.recv() => {
+                match channel.lock().unwrap().recv() {
+                    Ok(result) => {
                         trace!("backend_update received");
                         _ = window_clone.emit_all("backend_update", result);
                     }
-                    _ = interval.tick() => {}
+                    Err(_) => {}
                 }
+
+                thread::sleep(interval);
             }
         }));
     }
 }
 
-#[async_trait]
 impl Shutdown for MessageTransmitter {
-    async fn shutdown(&mut self) -> AnyError<()> {
+    fn shutdown(&mut self) -> AnyError<()> {
         trace!("Sending Shutdown Request");
         if let Ok(mut running) = self.running.write() {
             *running = false;
         }
 
-        if let Some(transmitter_thread) = self.transmitter_thread.as_mut() {
-            transmitter_thread.await?;
+        if let Some(transmitter_thread) = self.transmitter_thread.take() {
+            transmitter_thread
+                .join()
+                .expect("Failed to join transmitter_thread");
             trace!("Joined transmitter_thread");
         }
 
@@ -73,5 +74,4 @@ impl Shutdown for MessageTransmitter {
     }
 }
 
-#[async_trait]
 impl HandleMessage for MessageTransmitter {}

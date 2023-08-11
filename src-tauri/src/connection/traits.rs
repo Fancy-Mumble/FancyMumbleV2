@@ -4,7 +4,7 @@ use crate::errors::AnyError;
 
 #[async_trait]
 pub trait Shutdown {
-    async fn shutdown(&mut self) -> AnyError<()>;
+    fn shutdown(&mut self) -> AnyError<()>;
 }
 
 #[async_trait]

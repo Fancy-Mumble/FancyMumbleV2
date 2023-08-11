@@ -32,12 +32,12 @@ struct SettingsChannel {
 pub struct Recorder {
     audio_thread: Option<thread::JoinHandle<()>>,
     playing: Arc<AtomicBool>,
-    server_channel: Option<broadcast::Sender<Vec<u8>>>,
+    server_channel: Option<mpsc::Sender<Vec<u8>>>,
     settings_channel: SettingsChannel,
 }
 
 impl Recorder {
-    pub fn new(server_channel: broadcast::Sender<Vec<u8>>) -> Self {
+    pub fn new(server_channel: mpsc::Sender<Vec<u8>>) -> Self {
         let (tx, rx) = mpsc::channel();
         let settings_channel = SettingsChannel {
             rx_channel: Some(rx),

@@ -12,16 +12,24 @@ use crate::utils::messages::message_builder;
 use async_trait::async_trait;
 use base64::engine::general_purpose;
 use base64::Engine;
+use native_tls::TlsConnector;
 use std::collections::HashMap;
+use std::error::Error;
+use std::net::TcpStream;
 use std::sync::atomic::AtomicBool;
+use std::sync::mpsc::channel as StdChannel;
+use std::sync::mpsc::Receiver as StdReceiver;
+use std::sync::mpsc::Sender as StdSender;
 use std::sync::Arc;
+use std::sync::Mutex as StdMutex;
+use std::thread::JoinHandle as StdJoinHandle;
 use tauri::PackageInfo;
 use threads::{InputThread, MainThread, OutputThread, PingThread};
-use tokio::net::TcpStream;
 use tokio::sync::broadcast::{self, Receiver, Sender};
 use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
-use tokio_native_tls::native_tls::TlsConnector;
+//use tokio_native_tls::native_tls::TlsConnector;
+use native_tls::{Identity, TlsAcceptor, TlsStream};
 use tracing::{info, trace};
 
 use self::threads::ConnectionThread;
@@ -35,9 +43,10 @@ struct ServerData {
     server_port: u16,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct MessageChannels {
-    pub message_channel: Sender<String>,
+    pub tx_message_channel: StdSender<String>,
+    pub rx_message_channel: Option<StdReceiver<String>>,
 }
 
 #[derive(Debug, Clone)]
@@ -49,16 +58,19 @@ pub struct TextMessage {
 
 pub struct Connection {
     server_data: ServerData,
-    tx_in: Sender<Vec<u8>>,
-    tx_out: Sender<Vec<u8>>,
+    tx_in: StdSender<Vec<u8>>,
+    rx_in: Option<StdReceiver<Vec<u8>>>,
+    tx_out: StdSender<Vec<u8>>,
+    rx_out: Option<StdReceiver<Vec<u8>>>,
 
-    tx_message_channel: Sender<TextMessage>,
+    tx_message_channel: StdSender<TextMessage>,
+    rx_message_channel: Option<StdReceiver<TextMessage>>,
 
     running: Arc<AtomicBool>,
-    threads: HashMap<ConnectionThread, JoinHandle<()>>,
+    threads: HashMap<ConnectionThread, StdJoinHandle<()>>,
     message_channels: MessageChannels,
     package_info: PackageInfo,
-    stream_reader: Arc<Mutex<Option<StreamReader>>>,
+    stream_reader: Arc<StdMutex<Option<StreamReader>>>,
 }
 
 impl Connection {
@@ -68,12 +80,16 @@ impl Connection {
         username: &str,
         package_info: PackageInfo,
     ) -> Self {
-        let (tx_in, _): (Sender<Vec<u8>>, Receiver<Vec<u8>>) = broadcast::channel(QUEUE_SIZE);
-        let (tx_out, _): (Sender<Vec<u8>>, Receiver<Vec<u8>>) = broadcast::channel(QUEUE_SIZE);
-        let (tx_message_channel, _): (Sender<TextMessage>, Receiver<TextMessage>) =
-            broadcast::channel(QUEUE_SIZE);
-        let (message_channel, _): (Sender<String>, Receiver<String>) =
-            broadcast::channel(QUEUE_SIZE);
+        let (tx_in, rx_in): (StdSender<Vec<u8>>, StdReceiver<Vec<u8>>) = StdChannel();
+        let (tx_out, rx_out): (StdSender<Vec<u8>>, StdReceiver<Vec<u8>>) = StdChannel();
+        let (tx_message_channel, rx_message_channel): (
+            StdSender<TextMessage>,
+            StdReceiver<TextMessage>,
+        ) = StdChannel();
+        let (tx_message_channel_group, rx_message_channel_group): (
+            StdSender<String>,
+            StdReceiver<String>,
+        ) = StdChannel();
 
         Self {
             package_info,
@@ -83,18 +99,22 @@ impl Connection {
                 server_port,
             },
             tx_in,
+            rx_in: Some(rx_in),
             tx_out,
+            rx_out: Some(rx_out),
             tx_message_channel,
+            rx_message_channel: Some(rx_message_channel),
             running: Arc::new(AtomicBool::new(false)),
             threads: HashMap::new(),
-            message_channels: MessageChannels { message_channel },
-            stream_reader: Arc::new(Mutex::new(None)),
+            message_channels: MessageChannels {
+                tx_message_channel: tx_message_channel_group,
+                rx_message_channel: Some(rx_message_channel_group),
+            },
+            stream_reader: Arc::new(StdMutex::new(None)),
         }
     }
 
-    async fn setup_connection(
-        &mut self,
-    ) -> AnyError<Option<tokio_native_tls::TlsStream<TcpStream>>> {
+    fn setup_connection(&mut self) -> AnyError<Option<native_tls::TlsStream<TcpStream>>> {
         let server_uri = format!(
             "{}:{}",
             self.server_data.server_host, self.server_data.server_port
@@ -105,16 +125,14 @@ impl Connection {
             .store_to_project_dir(true)
             .build()?;
 
-        let socket = TcpStream::connect(server_uri).await?;
+        let socket = TcpStream::connect(server_uri)?;
         let cx = TlsConnector::builder()
             .identity(certificate_store.get_client_certificate()?)
             .danger_accept_invalid_certs(true)
             .build()?;
-        let cx = tokio_native_tls::TlsConnector::from(cx);
+        let cx = native_tls::TlsConnector::from(cx);
 
-        Ok(Some(
-            cx.connect(&self.server_data.server_host, socket).await?,
-        ))
+        Ok(Some(cx.connect(&self.server_data.server_host, socket)?))
     }
 
     pub async fn connect(&mut self) -> AnyError<()> {
@@ -122,13 +140,14 @@ impl Connection {
             self.running
                 .store(true, std::sync::atomic::Ordering::Relaxed);
         }
-        let stream = self.setup_connection().await?;
+        trace!("Connecting to server: setup_connection()");
+        let stream = self.setup_connection()?;
 
         self.spawn_ping_thread();
         self.spawn_input_thread();
         self.spawn_output_thread();
 
-        self.init_main_thread(stream).await?;
+        self.init_main_thread(stream)?;
         init_connection(&self.server_data.username, &self.tx_out, &self.package_info);
 
         Ok(())
@@ -149,8 +168,10 @@ impl Connection {
         Ok(())
     }
 
-    pub fn get_message_channel(&self) -> Receiver<String> {
-        self.message_channels.message_channel.subscribe()
+    pub fn get_message_channel(&mut self) -> Arc<StdMutex<StdReceiver<String>>> {
+        Arc::new(StdMutex::new(
+            self.message_channels.rx_message_channel.take().unwrap(),
+        ))
     }
 
     //TODO: Move to output Thread
@@ -237,19 +258,19 @@ impl Connection {
 
 #[async_trait]
 impl Shutdown for Connection {
-    async fn shutdown(&mut self) -> AnyError<()> {
+    fn shutdown(&mut self) -> Result<(), Box<dyn Error>> {
         info!("Sending Shutdown Request");
         self.running
             .store(false, std::sync::atomic::Ordering::Relaxed);
         trace!("Joining Threads");
-        if let Some(mut reader) = self.stream_reader.lock().await.take() {
-            reader.shutdown().await?;
+        /*if let Some(mut reader) = self.stream_reader.lock()?.take() {
+            reader.shutdown();
         }
 
         for (name, thread) in &mut self.threads {
-            thread.await?;
+            thread.join();
             trace!("Joined {}", name.to_string());
-        }
+        }*/
 
         self.threads.clear();
 

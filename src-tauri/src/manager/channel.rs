@@ -12,7 +12,7 @@ use crate::{
 };
 
 use super::Update;
-use tokio::sync::broadcast::Sender;
+use std::sync::mpsc::Sender as StdSender;
 
 #[derive(Debug, Default, Serialize)]
 pub struct Data {
@@ -63,12 +63,12 @@ impl Update<mumble::proto::ChannelState> for Data {
 
 pub struct Manager {
     channels: HashMap<u32, Data>,
-    frontend_channel: Sender<String>,
-    server_channel: Sender<Vec<u8>>,
+    frontend_channel: StdSender<String>,
+    server_channel: StdSender<Vec<u8>>,
 }
 
 impl Manager {
-    pub fn new(send_to: Sender<String>, server_channel: Sender<Vec<u8>>) -> Self {
+    pub fn new(send_to: StdSender<String>, server_channel: StdSender<Vec<u8>>) -> Self {
         Self {
             channels: HashMap::new(),
             frontend_channel: send_to,

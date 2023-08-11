@@ -1,7 +1,7 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::Serialize;
-use tokio::sync::broadcast::Sender;
+use std::sync::mpsc::Sender as StdSender;
 use tracing::error;
 
 use crate::{errors::AnyError, mumble, protocol::serialize::message_container::FrontendMessage};
@@ -23,11 +23,11 @@ struct TextMessage {
 
 pub struct Manager {
     message_log: Vec<TextMessage>,
-    frontend_channel: Sender<String>,
+    frontend_channel: StdSender<String>,
 }
 
 impl Manager {
-    pub fn new(send_to: Sender<String>) -> Self {
+    pub fn new(send_to: StdSender<String>) -> Self {
         Self {
             message_log: Vec::new(),
             frontend_channel: send_to,

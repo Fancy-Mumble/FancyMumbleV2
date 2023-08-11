@@ -45,7 +45,7 @@ fn init_logging() {
     tracing_subscriber::fmt()
         .with_max_level(Level::TRACE)
         .event_format(format)
-        .with_env_filter(EnvFilter::from_default_env().add_directive(Level::INFO.into()))
+        .with_env_filter(EnvFilter::from_default_env().add_directive(Level::TRACE.into()))
         .with_span_events(FmtSpan::CLOSE)
         .init();
 }

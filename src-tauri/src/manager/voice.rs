@@ -9,7 +9,7 @@ use crate::{connection::traits::Shutdown, errors::voice_error::VoiceError};
 use async_trait::async_trait;
 use serde::Serialize;
 use std::collections::{hash_map::Entry, HashMap};
-use tokio::sync::broadcast::Sender;
+use std::sync::mpsc::Sender as StdSender;
 use tracing::error;
 
 const SAMPLE_RATE: u32 = 48000;
@@ -22,8 +22,8 @@ struct AudioInfo {
 }
 
 pub struct Manager {
-    frontend_channel: Sender<String>,
-    server_channel: Sender<Vec<u8>>,
+    frontend_channel: StdSender<String>,
+    server_channel: StdSender<Vec<u8>>,
     user_audio_info: HashMap<u32, AudioInfo>,
     audio_player: Player,
     recoder: Recorder,
@@ -32,8 +32,8 @@ pub struct Manager {
 
 impl Manager {
     pub fn new(
-        send_to: Sender<String>,
-        server_channel: Sender<Vec<u8>>,
+        send_to: StdSender<String>,
+        server_channel: StdSender<Vec<u8>>,
         enable_recorder: bool,
     ) -> AnyError<Self> {
         let mut player = Player::new();
@@ -123,7 +123,7 @@ impl Manager {
 
 #[async_trait]
 impl Shutdown for Manager {
-    async fn shutdown(&mut self) -> AnyError<()> {
+    fn shutdown(&mut self) -> AnyError<()> {
         self.audio_player.stop();
         self.recoder.stop();
 

@@ -2,11 +2,11 @@
 
 use std::error::Error;
 
-use tokio::sync::broadcast::Sender;
+use std::sync::mpsc::Sender as StdSender;
 use tracing::{error, trace, warn};
 
 use crate::{
-    connection::{traits::Shutdown, MessageChannels},
+    connection::traits::Shutdown,
     errors::{application_error::ApplicationError, AnyError},
     manager::{
         channel::{self},
@@ -27,22 +27,16 @@ pub struct MessageRouter {
 }
 
 impl MessageRouter {
-    pub fn new(sender: MessageChannels, server_channel: Sender<Vec<u8>>) -> AnyError<Self> {
+    pub fn new(sender: StdSender<String>, server_channel: StdSender<Vec<u8>>) -> AnyError<Self> {
         Ok(Self {
-            user_manager: user::Manager::new(
-                sender.message_channel.clone(),
-                server_channel.clone(),
-            ),
-            channel_manager: channel::Manager::new(
-                sender.message_channel.clone(),
-                server_channel.clone(),
-            ),
-            text_manager: text_message::Manager::new(sender.message_channel.clone()),
+            user_manager: user::Manager::new(sender.clone(), server_channel.clone()),
+            channel_manager: channel::Manager::new(sender.clone(), server_channel.clone()),
+            text_manager: text_message::Manager::new(sender.clone()),
             connection_manager: connection_state::Manager::new(
-                sender.message_channel.clone(),
+                sender.clone(),
                 server_channel.clone(),
             ),
-            voice_manager: voice::Manager::new(sender.message_channel, server_channel, false)?,
+            voice_manager: voice::Manager::new(sender, server_channel, false)?,
         })
     }
 
@@ -154,7 +148,7 @@ impl MessageRouter {
     }
 
     pub async fn shutdown(&mut self) -> AnyError<()> {
-        self.voice_manager.shutdown().await?;
+        self.voice_manager.shutdown()?;
 
         Ok(())
     }
