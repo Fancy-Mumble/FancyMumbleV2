@@ -50,7 +50,8 @@ fn init_logging() {
         .init();
 }
 
-fn main() {
+#[tokio::main(flavor = "multi_thread", worker_threads = 10)]
+async fn main() {
     init_logging();
 
     tauri::Builder::default()
