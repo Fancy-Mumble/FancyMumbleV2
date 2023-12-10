@@ -147,7 +147,7 @@ impl MessageRouter {
         Ok(())
     }
 
-    pub async fn shutdown(&mut self) -> AnyError<()> {
+    pub fn shutdown(&mut self) -> AnyError<()> {
         self.voice_manager.shutdown()?;
 
         Ok(())

@@ -1,10 +1,11 @@
 use std::sync::{atomic::Ordering, Arc, Mutex};
 use std::thread;
+use std::time::Duration;
 
 use crate::{connection::Connection, mumble, utils::messages::message_builder};
 use tracing::{debug, error, trace};
 
-use super::{ConnectionThread, OutputThread, DEADMAN_INTERVAL};
+use super::{ConnectionThread, OutputThread};
 
 impl OutputThread for Connection {
     fn spawn_output_thread(&mut self) {
@@ -18,10 +19,12 @@ impl OutputThread for Connection {
         let rx_message_channel = Arc::new(Mutex::new(self.rx_message_channel.take().unwrap()));
 
         let thread_handle = thread::spawn(move || {
-            let interval = DEADMAN_INTERVAL;
-
             while running.load(Ordering::Relaxed) {
-                if let Ok(result) = rx_message_channel.lock().unwrap().recv() {
+                if let Ok(result) = rx_message_channel
+                    .lock()
+                    .unwrap()
+                    .recv_timeout(Duration::from_millis(1000))
+                {
                     debug!("Sending text message to channel: {:?}", result.channel_id);
                     let message = mumble::proto::TextMessage {
                         actor: None,
@@ -37,8 +40,6 @@ impl OutputThread for Connection {
                         error!("Unable to send message: {}", error);
                     }
                 }
-
-                thread::sleep(interval);
             }
         });
 

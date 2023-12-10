@@ -10,12 +10,12 @@ use openssl::{
         X509NameBuilder, X509,
     },
 };
-use tokio_native_tls::native_tls::{self, Identity};
 use tracing::trace;
 
 use crate::errors::{certificate_error::CertificateError, AnyError};
 
 use super::constants::get_project_dirs;
+use native_tls::Identity;
 
 pub struct CertificateBuilder {
     load_or_generate_new: bool,

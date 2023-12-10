@@ -1,11 +1,14 @@
 use std::sync::{atomic::Ordering, Arc};
 use std::thread;
+use std::time::Duration;
+
+use tracing::error;
 
 use crate::connection::Connection;
 use crate::protocol::message_router::MessageRouter;
 use crate::protocol::stream_reader::StreamReader;
 
-use super::{ConnectionThread, InputThread, DEADMAN_INTERVAL};
+use super::{ConnectionThread, InputThread};
 
 impl InputThread for Connection {
     fn spawn_input_thread(&mut self) {
@@ -16,8 +19,6 @@ impl InputThread for Connection {
         let reader_copy = Arc::clone(&self.stream_reader);
 
         let thread_handle = thread::spawn(move || {
-            let interval = DEADMAN_INTERVAL;
-
             {
                 let mut reader = reader_copy.lock().unwrap();
                 let message_reader = MessageRouter::new(message_channels.clone(), back_channel);
@@ -27,23 +28,18 @@ impl InputThread for Connection {
                         *reader = Some(StreamReader::new(message_reader));
                     }
                     Err(e) => {
-                        eprintln!("Failed to create message reader: {e}");
+                        error!("Failed to create message reader: {e}");
                     }
                 }
             }
 
             while running.load(Ordering::Relaxed) {
-                match rx_in.recv() {
-                    Ok(mut result) => {
-                        let mut reader = reader_copy.lock().unwrap();
-                        if let Some(reader) = reader.as_mut() {
-                            reader.read_next(&mut result);
-                        }
+                if let Ok(mut result) = rx_in.recv_timeout(Duration::from_millis(1000)) {
+                    let mut reader = reader_copy.lock().unwrap();
+                    if let Some(reader) = reader.as_mut() {
+                        reader.read_next(&mut result);
                     }
-                    _ => {}
                 }
-
-                thread::sleep(interval);
             }
         });
 

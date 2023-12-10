@@ -1,6 +1,6 @@
 use byteorder::{BigEndian, ReadBytesExt};
 use std::io::Cursor;
-use tracing::error;
+use tracing::{error, trace};
 
 use crate::{
     errors::AnyError,
@@ -41,6 +41,8 @@ impl StreamReader {
             .read_u32::<BigEndian>()
             .ok()?;
 
+        trace!("Message type: {}, size: {}", message_type, message_size);
+
         let message_size = message_size as usize;
         if message_size + 6 > self.stream_buffer.len() {
             // we don't have enough data yet
@@ -60,7 +62,9 @@ impl StreamReader {
             });
         }
 
-        get_message(message_type, buffer.as_slice()).ok()
+        get_message(message_type, buffer.as_slice())
+            .map_err(|e| error!("An error occurred: {:?}", e))
+            .ok()
     }
 
     fn get_n(&self, n: usize) -> &[u8] {
@@ -71,9 +75,9 @@ impl StreamReader {
         &self.stream_buffer[start..(n + start)]
     }
 
-    pub async fn shutdown(&mut self) -> AnyError<()> {
+    pub fn shutdown(&mut self) -> AnyError<()> {
         self.stream_buffer.clear();
-        self.message_handler.shutdown().await?;
+        self.message_handler.shutdown()?;
 
         Ok(())
     }

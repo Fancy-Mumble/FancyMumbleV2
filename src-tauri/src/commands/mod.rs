@@ -61,7 +61,8 @@ pub async fn connect_to_server(
         &username,
         app_info,
     ));
-    if let Err(e) = connection.connect().await {
+    if let Err(e) = connection.connect() {
+        error!("Failed to connect to server: {e:?}");
         return Err(format!("{e:?}"));
     }
 

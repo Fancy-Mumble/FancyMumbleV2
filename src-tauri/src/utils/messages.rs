@@ -3,6 +3,7 @@ use byteorder::{BigEndian, ByteOrder};
 use prost::{DecodeError, Message};
 use serde::Serialize;
 use std::any::Any;
+use tracing::trace;
 
 #[derive(Debug)]
 pub struct MessageInfo {
@@ -37,6 +38,7 @@ macro_rules! message_builder {
         }
 
         pub fn get_message(id: u16, buf: &[u8]) -> Result<MessageInfo, DecodeError> {
+            trace!("Message ID: {id}");
             match id {
                 $( $value => {
                     let value = <mumble::proto::$proto>::decode(buf);

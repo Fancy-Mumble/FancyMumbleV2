@@ -67,10 +67,10 @@ pub fn save_server(
 
 #[tauri::command]
 pub fn get_server_list() -> Result<Vec<Server>, String> {
-    info!("Getting server list");
     let project_dirs = get_project_dirs().ok_or("Unable to load project dir")?;
 
     let data_dir = project_dirs.config_dir();
+    info!("Getting server list from {data_dir:?}");
 
     // create config dir if it doesn't exist
     std::fs::create_dir_all(data_dir).map_err(|e| format!("{e:?}"))?;

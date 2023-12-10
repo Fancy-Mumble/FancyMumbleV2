@@ -1,6 +1,7 @@
 pub mod threads;
 pub mod traits;
 use crate::connection::traits::Shutdown;
+use crate::errors::application_error::ApplicationError;
 use crate::errors::AnyError;
 use crate::manager::user::UpdateableUserState;
 use crate::mumble;
@@ -12,9 +13,14 @@ use crate::utils::messages::message_builder;
 use async_trait::async_trait;
 use base64::engine::general_purpose;
 use base64::Engine;
+use native_tls::Protocol;
+use native_tls::TlsAcceptor;
 use native_tls::TlsConnector;
+use native_tls::TlsConnectorBuilder;
 use std::collections::HashMap;
 use std::error::Error;
+use std::io::Read;
+use std::io::Write;
 use std::net::TcpStream;
 use std::sync::atomic::AtomicBool;
 use std::sync::mpsc::channel as StdChannel;
@@ -23,14 +29,10 @@ use std::sync::mpsc::Sender as StdSender;
 use std::sync::Arc;
 use std::sync::Mutex as StdMutex;
 use std::thread::JoinHandle as StdJoinHandle;
+use tauri::App;
 use tauri::PackageInfo;
 use threads::{InputThread, MainThread, OutputThread, PingThread};
-use tokio::sync::broadcast::{self, Receiver, Sender};
-use tokio::sync::Mutex;
-use tokio::task::JoinHandle;
-//use tokio_native_tls::native_tls::TlsConnector;
-use native_tls::{Identity, TlsAcceptor, TlsStream};
-use tracing::{info, trace};
+use tracing::{error, info, trace};
 
 use self::threads::ConnectionThread;
 
@@ -114,28 +116,39 @@ impl Connection {
         }
     }
 
-    fn setup_connection(&mut self) -> AnyError<Option<native_tls::TlsStream<TcpStream>>> {
+    fn setup_connection(&mut self) -> AnyError<native_tls::TlsStream<TcpStream>> {
         let server_uri = format!(
             "{}:{}",
             self.server_data.server_host, self.server_data.server_port
         );
+        info!("connecting to mumble: {}", server_uri);
 
         let mut certificate_store = CertificateBuilder::new()
             .load_or_generate_new(true)
             .store_to_project_dir(true)
             .build()?;
 
-        let socket = TcpStream::connect(server_uri)?;
-        let cx = TlsConnector::builder()
-            .identity(certificate_store.get_client_certificate()?)
+        let cx: TlsConnector = TlsConnector::builder()
             .danger_accept_invalid_certs(true)
+            .identity(certificate_store.get_client_certificate()?)
             .build()?;
-        let cx = native_tls::TlsConnector::from(cx);
 
-        Ok(Some(cx.connect(&self.server_data.server_host, socket)?))
+        let socket = TcpStream::connect(server_uri)?;
+        let mut stream = cx.connect(&self.server_data.server_host, socket);
+
+        match stream {
+            Ok(stream) => {
+                info!("Connection established");
+                Ok(stream)
+            }
+            Err(e) => Err(Box::new(ApplicationError::new(&format!(
+                "Connection failed: {}",
+                e
+            )))),
+        }
     }
 
-    pub async fn connect(&mut self) -> AnyError<()> {
+    pub fn connect(&mut self) -> AnyError<()> {
         {
             self.running
                 .store(true, std::sync::atomic::Ordering::Relaxed);
@@ -263,14 +276,20 @@ impl Shutdown for Connection {
         self.running
             .store(false, std::sync::atomic::Ordering::Relaxed);
         trace!("Joining Threads");
-        /*if let Some(mut reader) = self.stream_reader.lock()?.take() {
-            reader.shutdown();
+        let lock = self.stream_reader.lock();
+        if lock.is_err() {
+            return Err("Unable to lock stream_reader".into());
         }
 
-        for (name, thread) in &mut self.threads {
-            thread.join();
+        if let Some(mut reader) = lock.unwrap().take() {
+            reader.shutdown()?;
+        }
+
+        for (name, thread) in self.threads.drain() {
+            trace!("Joining {}", name.to_string());
+            thread.join().expect("Thread failed");
             trace!("Joined {}", name.to_string());
-        }*/
+        }
 
         self.threads.clear();
 

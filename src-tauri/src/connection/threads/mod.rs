@@ -14,7 +14,8 @@ pub enum ConnectionThread {
     Ping,
     Output,
     Input,
-    Main,
+    MainRead,
+    MainWrite,
 }
 
 impl ToString for ConnectionThread {
@@ -23,7 +24,8 @@ impl ToString for ConnectionThread {
             Self::Ping => "PingThread".to_string(),
             Self::Output => "OutputThread".to_string(),
             Self::Input => "InputThread".to_string(),
-            Self::Main => "MainThread".to_string(),
+            Self::MainRead => "MainReaderThread".to_string(),
+            Self::MainWrite => "MainWriterThread".to_string(),
         }
     }
 }
@@ -41,8 +43,5 @@ pub trait InputThread {
 }
 
 pub trait MainThread {
-    fn init_main_thread(
-        &mut self,
-        stream: Option<native_tls::TlsStream<TcpStream>>,
-    ) -> AnyError<()>;
+    fn init_main_thread(&mut self, stream: native_tls::TlsStream<TcpStream>) -> AnyError<()>;
 }

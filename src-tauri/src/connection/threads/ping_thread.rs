@@ -10,7 +10,7 @@ use std::{
 };
 use tracing::error;
 
-use super::{ConnectionThread, DEADMAN_INTERVAL};
+use super::ConnectionThread;
 
 const PING_INTERVAL: Duration = Duration::from_millis(5000);
 
@@ -26,7 +26,6 @@ impl PingThread for Connection {
 
         let thread_handle = thread::spawn(move || {
             let ping_interval = PING_INTERVAL;
-            let deadman_interval = DEADMAN_INTERVAL;
 
             while running.load(Ordering::Relaxed) {
                 let now = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
@@ -57,8 +56,6 @@ impl PingThread for Connection {
                     Ok(_) => {}
                     Err(error) => error!("Unable to send Ping: {}", error),
                 }
-
-                thread::sleep(deadman_interval);
             }
         });
 
