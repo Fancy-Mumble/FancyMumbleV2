@@ -76,10 +76,7 @@ impl Manager {
     pub fn notify_audio(&mut self, audio_data: &[u8]) -> AnyError<()> {
         let audio_data = self.decoder.decode_audio(audio_data)?;
         self.send_taking_information(audio_data.user_id, audio_data.talking);
-        if let Err(error) = self
-            .audio_player
-            .add_to_queue(audio_data.data, audio_data.user_id)
-        {
+        if let Err(error) = self.audio_player.add_to_queue(audio_data) {
             return Err(VoiceError::new(format!("Failed to add audio to queue: {error}")).into());
         }
 
