@@ -1,8 +1,8 @@
 use std::{
-    collections::{hash_map::Entry, HashMap},
+    collections::{btree_map::Entry, BTreeMap},
     sync::{
         atomic::{AtomicBool, Ordering},
-        mpsc::{self, Receiver, Sender},
+        mpsc::{self, Receiver, SyncSender},
         Arc,
     },
     thread,
@@ -19,13 +19,13 @@ use super::decoder::DecodedMessage;
 pub struct Player {
     audio_thread: Option<thread::JoinHandle<()>>,
     queue_rx: Option<Receiver<DecodedMessage>>,
-    queue_tx: Sender<DecodedMessage>,
+    queue_tx: SyncSender<DecodedMessage>,
     playing: Arc<AtomicBool>,
 }
 
 impl Player {
     pub fn new() -> Self {
-        let (tx, rx) = mpsc::channel();
+        let (tx, rx) = mpsc::sync_channel(4);
 
         Self {
             audio_thread: None,
@@ -46,13 +46,7 @@ impl Player {
         self.audio_thread = Some(thread::spawn(move || {
             trace!("Starting audio thread");
 
-            let stream = rodio::OutputStream::try_default();
-            if let Err(e) = stream {
-                error!("Failed to create audio stream: {}", e);
-                return;
-            }
-
-            let (_stream, handle) = match stream {
+            let (_stream, handle) = match rodio::OutputStream::try_default() {
                 Ok(s) => s,
                 Err(e) => {
                     error!("Failed to create audio stream: {}", e);
@@ -63,7 +57,7 @@ impl Player {
             let mut sink_map = SinkMap::new(handle);
 
             while playing_clone.load(Ordering::Relaxed) {
-                if let Ok(queue_value) = audio_queue_ref.recv_timeout(Duration::from_millis(2000)) {
+                if let Ok(queue_value) = audio_queue_ref.recv_timeout(Duration::from_millis(100)) {
                     if let Ok(sink) = sink_map.get_sink(queue_value.user_id) {
                         sink.append(rodio::buffer::SamplesBuffer::<i16>::new(
                             1,
@@ -81,7 +75,7 @@ impl Player {
     pub fn add_to_queue(&mut self, data: DecodedMessage) -> AnyError<()> {
         if self.playing.load(Ordering::Relaxed) {
             //todo add user id to audio data
-            self.queue_tx.send(data)?;
+            self.queue_tx.try_send(data)?;
         }
 
         Ok(())
@@ -108,36 +102,30 @@ impl Drop for Player {
 
 struct SinkMap {
     handle: OutputStreamHandle,
-    sink_map: HashMap<u32, Sink>,
+    sink_map: BTreeMap<u32, Sink>,
 }
 
 impl SinkMap {
-    fn new(handle: OutputStreamHandle) -> SinkMap {
-        SinkMap {
+    fn new(handle: OutputStreamHandle) -> Self {
+        Self {
             handle,
-            sink_map: HashMap::new(),
+            sink_map: BTreeMap::new(),
         }
     }
 
     fn get_sink(&mut self, user_id: u32) -> Result<&Sink, String> {
         let result = match self.sink_map.entry(user_id) {
             Entry::Occupied(entry) => entry.into_mut(),
-            Entry::Vacant(entry) => entry.insert(SinkMap::create_sink(&self.handle)?),
+            Entry::Vacant(entry) => entry.insert(Self::create_sink(&self.handle)?),
         };
 
         Ok(result)
     }
 
     fn create_sink(handle: &OutputStreamHandle) -> Result<Sink, String> {
-        let sink = rodio::Sink::try_new(handle);
-        if let Err(e) = sink {
-            return Err(format!("Failed to create sink: {}", e));
+        match rodio::Sink::try_new(handle) {
+            Ok(s) => Ok(s),
+            Err(e) => Err(format!("Failed to create sink: {e}")),
         }
-        Ok(match sink {
-            Ok(s) => s,
-            Err(e) => {
-                return Err(format!("Failed to create sink: {}", e));
-            }
-        })
     }
 }

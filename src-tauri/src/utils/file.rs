@@ -1,5 +1,6 @@
 use std::fmt::Display;
-use std::io::{Read, Write};
+use std::fmt::Write;
+use std::io::Read;
 
 use image::codecs::gif::GifDecoder;
 use image::{AnimationDecoder, GenericImageView};
@@ -27,8 +28,7 @@ pub struct ImageFormat {
 pub async fn get_file_as_byte_vec(filename: &str) -> AnyError<Vec<u8>> {
     let mut f = BufReader::new(File::open(&filename).await?);
     let metadata = fs::metadata(&filename).await?;
-    let mut buffer = vec![];
-    buffer.reserve(metadata.len() as usize);
+    let mut buffer = Vec::with_capacity(metadata.len() as usize);
 
     if buffer.len() > u32::MAX as usize {
         return Err(Box::new(std::io::Error::new(
@@ -120,7 +120,10 @@ impl From<image::ImageFormat> for ImageFormat {
 fn get_cache_path_from_hash(hash: &[u8]) -> AnyError<std::path::PathBuf> {
     let project_dir =
         get_project_dirs().ok_or_else(|| ApplicationError::new("Unable to obtain project dir"))?;
-    let hash_string = hash.iter().map(|x| format!("{x:x}")).collect::<String>();
+    let hash_string = hash.iter().fold(String::new(), |mut output, b| {
+        let _ = write!(output, "{b:x}");
+        output
+    });
 
     let path = project_dir
         .cache_dir()
@@ -145,6 +148,8 @@ pub fn read_data_from_cache(hash: &[u8]) -> AnyError<Option<Vec<u8>>> {
 }
 
 pub fn store_data_in_cache(hash: &[u8], data: &[u8]) -> AnyError<()> {
+    use std::io::Write;
+
     if hash.is_empty() {
         return Err(Box::new(ApplicationError::new(
             "We are unable to update cache, because hash is empty",
@@ -164,6 +169,7 @@ pub fn store_data_in_cache(hash: &[u8], data: &[u8]) -> AnyError<()> {
     let mut file = std::fs::File::create(path.clone()).map_err(|_| {
         ApplicationError::new(format!("Unable to create cache file: {path:?}").as_str())
     })?;
+
     file.write_all(data)?;
     Ok(())
 }

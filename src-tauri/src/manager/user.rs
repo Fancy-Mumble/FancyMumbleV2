@@ -360,7 +360,7 @@ fn update_user_comment_and_pfp_from_cache(
     .collect::<Vec<_>>()
 }
 
-fn has_texture(user_info: &mut mumble::proto::UserState) -> AnyError<bool> {
+fn has_texture(user_info: &mumble::proto::UserState) -> AnyError<bool> {
     let has_texture = user_info.texture.is_some()
         && !user_info
             .texture
@@ -370,7 +370,7 @@ fn has_texture(user_info: &mut mumble::proto::UserState) -> AnyError<bool> {
     Ok(has_texture)
 }
 
-fn has_comment(user_info: &mut mumble::proto::UserState) -> AnyError<bool> {
+fn has_comment(user_info: &mumble::proto::UserState) -> AnyError<bool> {
     let has_comment = user_info.comment.is_some()
         && !user_info
             .comment

@@ -50,8 +50,7 @@ impl Encoder {
         audio_buffer.extend(sequence_number_bytes.parsed_vec());
         *sequence_number += 1;
 
-        let mut size_pre = output.len() as i128;
-        size_pre |= 1 << 14;
+        let size_pre = (output.len() as i128) | 1 << 14;
 
         if *sequence_number > MAXIMUM_SAMPLES_PER_TALK {
             *sequence_number = 0;

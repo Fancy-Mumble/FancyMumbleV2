@@ -8,7 +8,7 @@ use std::{
 };
 
 use tokio::sync::broadcast;
-use tracing::{error, trace};
+use tracing::{error, trace, warn};
 
 use crate::{
     errors::AnyError,
@@ -77,7 +77,7 @@ impl Recorder {
             let mut microphone = Microphone::new(tx).expect("Failed to create microphone");
             let mut encoder = Encoder::new(microphone.config());
             match microphone.start() {
-                Ok(_) => {}
+                Ok(()) => {}
                 Err(e) => {
                     error!("Failed to start microphone: {}", e);
                     return;
@@ -89,7 +89,7 @@ impl Recorder {
 
             let mut sequence_number = 0u64;
             while playing_clone.load(Ordering::Relaxed) {
-                update_settings(&settings_channel, &mut encoder);
+                update_settings(&settings_channel, &encoder);
 
                 let value = rx.recv().expect("Failed to receive audio data");
 
@@ -97,9 +97,10 @@ impl Recorder {
 
                 let result_buffer =
                     raw_message_builder::<UdpTunnel>(&audio_buffer).unwrap_or_default();
-                audio_queue_ref
-                    .send(result_buffer)
-                    .expect("Failed to send audio data");
+                if let Err(e) = audio_queue_ref
+                    .send(result_buffer) {
+                        warn!("Failed to send audio data: {e}");
+                    }
             }
             microphone.stop().expect("Failed to stop microphone");
         }));
@@ -119,7 +120,7 @@ impl Recorder {
     }
 }
 
-fn update_settings(settings_channel: &Receiver<Settings>, encoder: &mut Encoder) {
+fn update_settings(settings_channel: &Receiver<Settings>, encoder: &Encoder) {
     match settings_channel.try_recv() {
         Ok(settings) => {
             encoder.update_settings(&settings);

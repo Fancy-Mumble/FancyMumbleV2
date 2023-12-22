@@ -42,7 +42,7 @@ impl MessageRouter {
                 sender.message_channel.clone(),
                 server_channel.clone(),
             ),
-            voice_manager: voice::Manager::new(sender.message_channel, server_channel, false)?,
+            voice_manager: voice::Manager::new(sender.message_channel, server_channel, true)?,
         })
     }
 

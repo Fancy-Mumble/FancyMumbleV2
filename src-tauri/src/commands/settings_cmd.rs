@@ -1,5 +1,9 @@
-use std::io::{Read, Seek, SeekFrom, Write};
+use std::{
+    io::{Read, Seek, SeekFrom, Write},
+    sync::RwLock,
+};
 
+use tauri::State;
 use tracing::{info, trace};
 
 use crate::utils::{constants::get_project_dirs, server::Server};
@@ -92,20 +96,42 @@ pub fn get_server_list() -> Result<Vec<Server>, String> {
     Ok(server_list)
 }
 
+pub struct FrontendSettingsState {
+    pub state: RwLock<bool>,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Debug)]
+pub struct FrontendSettings {
+    link_preview: LinkPreview,
+    api_keys: ApiKeys,
+}
+
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
 pub struct LinkPreview {
-    enabled: bool,
-    allow_all: bool,
-    urls: Vec<String>,
+    enabled: Option<bool>,
+    allow_all: Option<bool>,
+    urls: Option<Vec<String>>,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Debug)]
+pub struct ApiKeys {
+    tenor: String,
 }
 
 #[allow(clippy::needless_pass_by_value)] // LinkPreview needs to be deserialized
 #[tauri::command]
-pub fn save_frontend_settings(settings_name: &str, data: LinkPreview) -> Result<(), String> {
+pub fn save_frontend_settings(
+    state: State<'_, FrontendSettingsState>,
+    settings_name: &str,
+    data: FrontendSettings,
+) -> Result<(), String> {
     info!("Saving frontend settings: {settings_name}");
     let mut settings_file = get_settings_file(&format!("{settings_name}_{FRONTEND_SETTINS_FILE}"))?;
 
     trace!("Settings data: {:#?}", data);
+    if let Err(e) = state.state.write() {
+        return Err(format!("Error locking write state: {}", e.get_ref()));
+    }
 
     // write the new json content
     settings_file
@@ -122,10 +148,19 @@ pub fn save_frontend_settings(settings_name: &str, data: LinkPreview) -> Result<
     Ok(())
 }
 
+// State is passed by value by tauri
+#[allow(clippy::needless_pass_by_value)]
 #[tauri::command]
-pub fn get_frontend_settings(settings_name: &str) -> Result<String, String> {
+pub fn get_frontend_settings(
+    state: State<'_, FrontendSettingsState>,
+    settings_name: &str,
+) -> Result<String, String> {
     info!("Getting frontend settings: {settings_name}");
     let mut settings_file = get_settings_file(&format!("{settings_name}_{FRONTEND_SETTINS_FILE}"))?;
+
+    if let Err(e) = state.state.read() {
+        return Err(format!("Error locking write state: {}", e.get_ref()));
+    }
 
     let mut settings_data = String::new();
     settings_file

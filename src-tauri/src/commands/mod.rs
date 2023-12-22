@@ -67,13 +67,16 @@ pub async fn connect_to_server(
 
     let mut transmitter = MessageTransmitter::new(connection.get_message_channel(), window.clone());
     drop(guard);
+    drop(window);
 
-    transmitter.start_message_transmit_handler().await;
+    transmitter.start_message_transmit_handler();
     add_message_handler(&state, "transmitter".to_string(), Box::new(transmitter)).await;
 
     Ok(())
 }
 
+// guard can't be dropped any earlier
+#[allow(clippy::significant_drop_tightening)]
 #[tauri::command]
 pub async fn send_message(
     chat_message: String,
@@ -126,6 +129,8 @@ pub async fn logout(state: State<'_, ConnectionState>) -> Result<(), String> {
     Ok(())
 }
 
+// guard can't be dropped any earlier
+#[allow(clippy::significant_drop_tightening)]
 #[tauri::command]
 pub async fn like_message(
     message_id: String,
@@ -141,6 +146,8 @@ pub async fn like_message(
     Ok(())
 }
 
+// guard can't be dropped any earlier
+#[allow(clippy::significant_drop_tightening)]
 #[tauri::command]
 pub async fn set_user_image(
     image_path: &str,
@@ -159,6 +166,8 @@ pub async fn set_user_image(
     Ok(())
 }
 
+// guard can't be dropped any earlier
+#[allow(clippy::significant_drop_tightening)]
 #[tauri::command]
 pub async fn change_user_state(
     mut user_state: UpdateableUserState,
@@ -193,6 +202,7 @@ pub async fn get_audio_devices(
             return Ok(devices.drain().map(|d| d.1).collect());
         }
     }
+    drop(guard);
 
     Err(ErrorString("Failed to get audio devices".to_string()))
 }
