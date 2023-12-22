@@ -7,16 +7,24 @@ export interface LinkPreviewSettings {
   urls: string[]
 }
 
+export interface ApiKeys {
+  tenor: string
+}
+
 export interface FrontendSettings {
-  linkPreview: LinkPreviewSettings
+  api_keys: ApiKeys;
+  link_preview: LinkPreviewSettings
 }
 
 
 const initialState: FrontendSettings = {
-  linkPreview: {
+  link_preview: {
     enabled: true,
     allow_all: false,
     urls: []
+  },
+  api_keys: {
+    tenor: ''
   }
 };
 
@@ -25,11 +33,17 @@ export const frontendSettings = createSlice({
   initialState,
   reducers: {
     updateLinkPreview: (state, action) => {
-      state.linkPreview = action.payload;
-    }
+      state.link_preview = action.payload;
+    },
+    updateApiKey: (state, action) => {
+      state.api_keys = action.payload;
+    },
+    updateFrontendSettings: (state, action) => {
+      state = action.payload;
+    },
   },
 })
 
-export const { updateLinkPreview } = frontendSettings.actions
+export const { updateFrontendSettings, updateLinkPreview, updateApiKey } = frontendSettings.actions
 
 export default frontendSettings.reducer

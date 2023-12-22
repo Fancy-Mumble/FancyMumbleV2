@@ -9,6 +9,8 @@ use tokio::time;
 use super::{ConnectionThread, InputThread, DEADMAN_INTERVAL};
 
 impl InputThread for Connection {
+    // reader can'T be moved further in, because otherwise message_reader Result type is causing issues
+    #[allow(clippy::significant_drop_tightening)]
     fn spawn_input_thread(&mut self) {
         let mut rx_in = self.tx_in.subscribe();
         let running = self.running.clone();

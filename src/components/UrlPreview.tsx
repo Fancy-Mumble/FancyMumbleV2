@@ -23,7 +23,7 @@ interface UrlPreviewData {
 function UrlPreview(props: UrlPreviewProps) {
 
     let [urlPreviewData, setUrlPreviewData] = useState<UrlPreviewData | undefined>(undefined);
-    const linkPreview = useSelector((state: RootState) => state.reducer.frontendSettings).linkPreview;
+    const linkPreview = useSelector((state: RootState) => state.reducer.frontendSettings).link_preview;
 
     const random_rgba = () => {
         var o = Math.round, r = Math.random, s = 255;

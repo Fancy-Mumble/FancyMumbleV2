@@ -1,3 +1,5 @@
+use std::collections::{btree_map::Entry, BTreeMap};
+
 use crate::{
     errors::AnyError,
     utils::varint::{self},
@@ -10,19 +12,18 @@ pub struct DecodedMessage {
 }
 
 pub struct Decoder {
-    decoder: opus::Decoder,
+    decoder_map: DecoderMap,
     sample_rate: u32,
     channels: opus::Channels,
 }
 
 impl Decoder {
-    pub fn new(sample_rate: u32, channels: opus::Channels) -> AnyError<Self> {
-        let decoder = opus::Decoder::new(sample_rate, channels)?;
-        Ok(Self {
-            decoder,
+    pub fn new(sample_rate: u32, channels: opus::Channels) -> Self {
+        Self {
+            decoder_map: DecoderMap::new(sample_rate, channels),
             sample_rate,
             channels,
-        })
+        }
     }
 
     // we want a downcast, because we are reading from a stream
@@ -60,8 +61,6 @@ impl Decoder {
         let talking = (opus_header.0 & 0x2000) <= 0;
         let user_id = session_id.0 as u32;
 
-        //self.send_taking_information(user_id, talking);
-
         // = SampleRate * 60ms = 48000Hz * 0.06s = 2880, ~12KB
         let mut audio_buffer_size = self.sample_rate * 60 / 1000;
         if self.channels == opus::Channels::Stereo {
@@ -71,17 +70,46 @@ impl Decoder {
 
         let payload_size = opus_header.0 & 0x1FFF;
         let payload = &audio_data[position..position + payload_size as usize];
-        let num_decoded_samples = self.decoder.decode(payload, &mut decoded_data, false)?;
+        // each user needs their own decoder, because the opus decoder seems to have a bug, which keeps prev. entries. This causes audio glitches
+        let decoder = self.decoder_map.get_decoder(user_id)?;
+        let num_decoded_samples = decoder.decode(payload, &mut decoded_data, false)?;
         decoded_data.truncate(num_decoded_samples);
-
-        /*if let Err(error) = self.audio_player.add_to_queue(decoded_data, user_id) {
-            return Err(VoiceError::new(format!("Failed to add audio to queue: {}", error)).into());
-        }*/
 
         Ok(DecodedMessage {
             user_id,
             talking,
             data: decoded_data,
         })
+    }
+}
+
+struct DecoderMap {
+    sample_rate: u32,
+    channels: opus::Channels,
+    sink_map: BTreeMap<u32, opus::Decoder>,
+}
+
+impl DecoderMap {
+    fn new(sample_rate: u32, channels: opus::Channels) -> Self {
+        Self {
+            sample_rate,
+            channels,
+            sink_map: BTreeMap::new(),
+        }
+    }
+
+    fn get_decoder(&mut self, user_id: u32) -> AnyError<&mut opus::Decoder> {
+        let result = match self.sink_map.entry(user_id) {
+            Entry::Occupied(entry) => entry.into_mut(),
+            Entry::Vacant(entry) => {
+                entry.insert(Self::create_sink(self.sample_rate, self.channels)?)
+            }
+        };
+
+        Ok(result)
+    }
+
+    fn create_sink(sample_rate: u32, channels: opus::Channels) -> AnyError<opus::Decoder> {
+        Ok(opus::Decoder::new(sample_rate, channels)?)
     }
 }

@@ -27,7 +27,7 @@ impl MessageTransmitter {
         }
     }
 
-    pub async fn start_message_transmit_handler(&mut self) {
+    pub fn start_message_transmit_handler(&mut self) {
         debug!("Starting MessageTransmitter");
 
         {
