@@ -2,6 +2,7 @@ import { Box } from "@mui/material";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
 import { createEmbeddedIFrame } from "./DOMHelper";
+import { UsersState } from "../store/features/users/userSlice";
 
 interface LinkReplacement {
     regex: RegExp;
@@ -82,13 +83,13 @@ class MessageParser {
         return this;
     }
 
-    parseCommands() {
-        const commandRegex = /^@[A-Za-z]+/
+    parseCommands(userInfo: UsersState | undefined, messageCall: (data: string, userInfo: UsersState | undefined) => void) {
+        const commandRegex = /^(@[A-Za-z]+)\s*(.*)/
         let foundCommand = this.input.match(commandRegex);
         if (!foundCommand) return this;
 
         //TODO: Move this to the backend
-        switch (foundCommand[0]) {
+        switch (foundCommand[1]) {
             case "@dice":
                 let diceRoll = Math.floor(Math.random() * 6) + 1;
                 this.input = this.input.replace(commandRegex, "The dice rolled: \n # " + diceRoll);
@@ -97,9 +98,49 @@ class MessageParser {
                 let coinFlip = Math.floor(Math.random() * 2) + 1;
                 this.input = this.input.replace(commandRegex, "Coin flip: " + (coinFlip === 1 ? "Heads" : "Tails"));
                 break;
+            case "@timer":
+                this.input = 'Timer has been set to ' + foundCommand[2];
+                this.waitAndExecute(foundCommand[2], (remainingStr: string) => {
+                    messageCall("Timer: " + remainingStr, userInfo);
+                });
+                break;
+            default:
+                console.log("Unknown command: ", foundCommand);
         }
 
         return this;
+    }
+
+    waitAndExecute(timeStr: string, callback: (remainingStr: string) => void): void {
+        let time = 0;
+        let remainingStr = '';
+        let timeUnits = timeStr.split(' ');
+
+        for (let i = 0; i < timeUnits.length; i++) {
+            let unitTime = parseInt(timeUnits[i]);
+            let unit = timeUnits[i].replace(unitTime.toString(), '');
+
+            switch (unit) {
+                case 'ms':
+                    time += unitTime;
+                    break;
+                case 's':
+                    time += unitTime * 1000;
+                    break;
+                case 'm':
+                    time += unitTime * 60000;
+                    break;
+                case 'h':
+                    time += unitTime * 3600000;
+                    break;
+                default:
+                    remainingStr = timeUnits.slice(i).join(' ');
+                    i = timeUnits.length;
+                    break;
+            }
+        }
+
+        setTimeout(() => callback(remainingStr), time);
     }
 
     parseMarkdown() {

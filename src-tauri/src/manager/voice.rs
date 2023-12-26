@@ -1,5 +1,5 @@
-use crate::errors::AnyError;
 use crate::errors::application_error::ApplicationError;
+use crate::errors::AnyError;
 use crate::mumble;
 use crate::protocol::serialize::message_container::FrontendMessage;
 use crate::utils::audio;
@@ -39,7 +39,9 @@ impl Manager {
     ) -> AnyError<Self> {
         let mut player = Player::new();
         if let Err(error) = player.start() {
-            return Err(Box::new(ApplicationError::new(&format!("Failed to start audio player: {error}"))));
+            return Err(Box::new(ApplicationError::new(&format!(
+                "Failed to start audio player: {error}"
+            ))));
         }
 
         let server_channel_clone = server_channel.clone();
@@ -47,7 +49,9 @@ impl Manager {
         let mut recoder = audio::recorder::Recorder::new(server_channel_clone);
         if enable_recorder {
             if let Err(error) = recoder.start() {
-                return Err(Box::new(ApplicationError::new(&format!("Failed to start audio recorder: {error}"))));
+                return Err(Box::new(ApplicationError::new(&format!(
+                    "Failed to start audio recorder: {error}"
+                ))));
             }
         }
 

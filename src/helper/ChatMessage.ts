@@ -45,7 +45,9 @@ export class ChatMessageHandler {
 
         let message = new MessageParser(chatMessage)
             .parseLinks()
-            .parseCommands()
+            .parseCommands(userInfo, (chatMessage: string, userInfo: UsersState | undefined) => {
+                this.sendCustomChatMessage(chatMessage, userInfo);
+            })
             .parseMarkdown()
             .buildString();
         this.sendCustomChatMessage(message, userInfo);
