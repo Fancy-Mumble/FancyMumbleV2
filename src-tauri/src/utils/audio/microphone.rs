@@ -29,7 +29,7 @@ struct InputSettings {
 
 pub struct Microphone {
     input_device: cpal::Device,
-    device_config: Option<cpal::StreamConfig>,
+    pub device_config: Option<cpal::StreamConfig>,
     tx: Option<Sender<Vec<f32>>>,
     device_info: DeviceConfig,
     stream: Option<cpal::Stream>,
@@ -67,7 +67,7 @@ impl Microphone {
             sample_rate: config.sample_rate.0,
         };
 
-        let decibel_adjustment = 20.0;
+        let decibel_adjustment = 15.0;
         Ok(Self {
             input_device,
             device_config: Some(config),
@@ -112,7 +112,7 @@ impl Microphone {
                 .expect("Failed to send audio data");
         };
         let err_fn = |err| error!("an error occurred on stream: {}", err);
-        let device_config = self.device_config.take().ok_or("No device config")?;
+        let device_config = self.device_config.clone().ok_or("No device config")?;
 
         let stream = self.input_device.build_input_stream(
             &device_config,

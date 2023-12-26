@@ -13,7 +13,7 @@ rust-version = "1.59"
 
 [build-dependencies]
 tauri-build = { version = "1.4.0", features = [] }
-prost-build = "0.11.8"
+prost-build = "0.12.3"
 reqwest = { version = "0.11", features = ["cookies"] }
 sha2 = "0.10.6"
 tokio = { version = "1", features = ["full"] }
@@ -26,7 +26,7 @@ tauri = { version = "1.4.0", features = ["dialog-open", "global-shortcut-all", "
 futures = "0.3.4"
 tokio = { version = "1", features = ["full"] }
 tokio-native-tls = "0.3.1"
-prost = "0.11"
+prost = "0.12.3"
 byteorder = "1.4.3"
 async-trait = "0.1.68"
 tracing = "0.1"
@@ -42,11 +42,11 @@ num-traits = "0.2"
 brotli = "3.3.4"
 webbrowser = "0.8.10"
 reqwest = "0.11"
-scraper = "0.17.1"
+scraper = "0.18.1"
 
 [dev-dependencies]
 tempfile = "3.5.0"
-mockall = "0.11.4"
+mockall = "0.12.1"
 tokio-test = "0.4.2"
 xshell = "0.2.3"
 

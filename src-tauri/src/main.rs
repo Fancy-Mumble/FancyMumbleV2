@@ -16,7 +16,7 @@ mod tests;
 
 use std::{collections::HashMap, sync::RwLock};
 
-use commands::{web_cmd::CrawlerState, ConnectionState, settings_cmd::FrontendSettingsState};
+use commands::{settings_cmd::FrontendSettingsState, web_cmd::CrawlerState, ConnectionState};
 use tokio::sync::Mutex;
 
 use tauri::Manager;
@@ -67,7 +67,7 @@ async fn main() {
                 crawler: Mutex::new(None),
             });
             app.manage(FrontendSettingsState {
-                state: RwLock::new(false)
+                state: RwLock::new(false),
             });
 
             Ok(())
