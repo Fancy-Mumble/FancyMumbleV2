@@ -2,10 +2,11 @@
 
 use std::error::Error;
 
-use tokio::sync::broadcast::Sender;
+use tokio::sync::broadcast::{Receiver, Sender};
 use tracing::{error, trace, warn};
 
 use crate::{
+    commands::Settings,
     connection::{traits::Shutdown, MessageChannels},
     errors::{application_error::ApplicationError, AnyError},
     manager::{
@@ -27,7 +28,11 @@ pub struct MessageRouter {
 }
 
 impl MessageRouter {
-    pub fn new(sender: MessageChannels, server_channel: Sender<Vec<u8>>) -> AnyError<Self> {
+    pub fn new(
+        sender: MessageChannels,
+        server_channel: Sender<Vec<u8>>,
+        settings_channel: Receiver<Settings>,
+    ) -> AnyError<Self> {
         Ok(Self {
             user_manager: user::Manager::new(
                 sender.message_channel.clone(),
@@ -42,7 +47,11 @@ impl MessageRouter {
                 sender.message_channel.clone(),
                 server_channel.clone(),
             ),
-            voice_manager: voice::Manager::new(sender.message_channel, server_channel, true)?,
+            voice_manager: voice::Manager::new(
+                sender.message_channel,
+                server_channel,
+                settings_channel,
+            )?,
         })
     }
 

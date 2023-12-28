@@ -1,5 +1,4 @@
 use opus::Channels;
-use tracing::trace;
 
 use crate::utils::varint;
 
@@ -66,9 +65,5 @@ impl Encoder {
         audio_buffer.extend(output);
 
         audio_buffer
-    }
-
-    pub(crate) fn update_settings(&self, _settings: &super::recorder::Settings) {
-        trace!("Updating settings, {}", self.audio_buffer_size);
     }
 }

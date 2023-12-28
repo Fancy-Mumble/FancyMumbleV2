@@ -18,13 +18,15 @@ impl InputThread for Connection {
         let back_channel = self.tx_out.clone();
 
         let reader_copy = self.stream_reader.clone();
+        let settings_channel_copy = self.settings_channel.resubscribe();
         self.threads.insert(
             ConnectionThread::Input,
             tokio::spawn(async move {
                 let mut interval = time::interval(DEADMAN_INTERVAL);
                 {
                     let mut reader = reader_copy.lock().await;
-                    let message_reader = MessageRouter::new(message_channels, back_channel);
+                    let message_reader =
+                        MessageRouter::new(message_channels, back_channel, settings_channel_copy);
 
                     match message_reader {
                         Ok(message_reader) => {

@@ -1,3 +1,4 @@
+use crate::commands::Settings;
 use crate::errors::application_error::ApplicationError;
 use crate::errors::AnyError;
 use crate::mumble;
@@ -10,7 +11,7 @@ use crate::{connection::traits::Shutdown, errors::voice_error::VoiceError};
 use async_trait::async_trait;
 use serde::Serialize;
 use std::collections::{hash_map::Entry, HashMap};
-use tokio::sync::broadcast::Sender;
+use tokio::sync::broadcast::{Receiver, Sender};
 use tracing::error;
 
 const SAMPLE_RATE: u32 = 48000;
@@ -35,7 +36,7 @@ impl Manager {
     pub fn new(
         send_to: Sender<String>,
         server_channel: Sender<Vec<u8>>,
-        enable_recorder: bool,
+        settings_channel: Receiver<Settings>,
     ) -> AnyError<Self> {
         let mut player = Player::new();
         if let Err(error) = player.start() {
@@ -46,14 +47,14 @@ impl Manager {
 
         let server_channel_clone = server_channel.clone();
 
-        let mut recoder = audio::recorder::Recorder::new(server_channel_clone);
-        if enable_recorder {
-            if let Err(error) = recoder.start() {
-                return Err(Box::new(ApplicationError::new(&format!(
-                    "Failed to start audio recorder: {error}"
-                ))));
-            }
+        let mut recoder = audio::recorder::Recorder::new(server_channel_clone, settings_channel);
+        //if enable_recorder {
+        if let Err(error) = recoder.start() {
+            return Err(Box::new(ApplicationError::new(&format!(
+                "Failed to start audio recorder: {error}"
+            ))));
         }
+        //}
 
         Ok(Self {
             frontend_channel: send_to,

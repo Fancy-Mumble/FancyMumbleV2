@@ -15,9 +15,28 @@ use crate::{
     protocol::message_transmitter::MessageTransmitter,
     utils::audio::device_manager::AudioDeviceManager,
 };
+use serde::Deserialize;
 use tauri::State;
-use tokio::sync::Mutex;
+use tokio::sync::{
+    broadcast::{self, Receiver, Sender},
+    Mutex,
+};
 use tracing::{error, info, trace};
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct AudioOptions {
+    pub amplification: f32,
+    pub voice_hold: f32,
+    pub fade_out_duration: usize,
+    pub voice_hysteresis_lower_threshold: f32,
+    pub voice_hysteresis_upper_threshold: f32,
+}
+
+#[derive(Clone, Debug)]
+pub enum Settings {
+    AudioSettings(AudioOptions),
+    None
+}
 
 pub struct ConnectionState {
     pub connection: Mutex<Option<Connection>>,
@@ -25,6 +44,7 @@ pub struct ConnectionState {
     pub package_info: Mutex<tauri::PackageInfo>,
     pub message_handler: Mutex<HashMap<String, Box<dyn Shutdown + Send>>>,
     pub device_manager: Mutex<Option<AudioDeviceManager>>,
+    pub settings_channel: Mutex<Option<Sender<Settings>>>,
 }
 
 async fn add_message_handler(
@@ -33,6 +53,15 @@ async fn add_message_handler(
     handler: Box<dyn Shutdown + Send>,
 ) {
     state.message_handler.lock().await.insert(name, handler);
+}
+
+async fn create_settings_channel(state: &State<'_, ConnectionState>) -> Receiver<Settings> {
+    let (sender, recv): (Sender<Settings>, Receiver<Settings>) = broadcast::channel(20);
+    let mut guard: tokio::sync::MutexGuard<'_, Option<Sender<Settings>>> =
+        state.settings_channel.lock().await;
+    let _ = guard.insert(sender);
+
+    recv
 }
 
 #[tauri::command]
@@ -52,12 +81,15 @@ pub async fn connect_to_server(
         }
     }
 
+    let settings_channel = create_settings_channel(&state).await;
+
     let app_info = state.package_info.lock().await.clone();
     let connection = guard.insert(Connection::new(
         &server_host,
         server_port,
         &username,
         app_info,
+        settings_channel,
     ));
     if let Err(e) = connection.connect().await {
         return Err(format!("{e:?}"));
@@ -205,4 +237,19 @@ pub async fn get_audio_devices(
     drop(guard);
 
     Err(ErrorString("Failed to get audio devices".to_string()))
+}
+
+#[tauri::command]
+pub async fn set_setting(
+    state: State<'_, ConnectionState>,
+    settings: AudioOptions,
+) -> Result<(), String> {
+    info!("Set setting: {:?}", settings);
+    state
+        .settings_channel
+        .lock()
+        .await
+        .as_ref()
+        .map(|x| x.send(Settings::AudioSettings(settings)));
+    Ok(())
 }

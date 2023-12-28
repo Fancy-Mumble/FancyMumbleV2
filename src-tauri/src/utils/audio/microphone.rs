@@ -12,7 +12,7 @@ use rodio::{
 };
 use tracing::{error, trace};
 
-use crate::errors::AnyError;
+use crate::errors::{to_error, AnyError};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DeviceConfig {
@@ -23,8 +23,6 @@ pub struct DeviceConfig {
 
 struct InputSettings {
     volume_adjustment: f32,
-    _voice_hold: Duration,
-    _voice_threshold: f32,
 }
 
 pub struct Microphone {
@@ -76,10 +74,17 @@ impl Microphone {
             stream: None,
             input_settings: Arc::new(Mutex::new(InputSettings {
                 volume_adjustment: f32::powf(10.0, decibel_adjustment / 20.0),
-                _voice_hold: Duration::from_millis(20),
-                _voice_threshold: 0.03,
             })),
         })
+    }
+
+    pub fn volume_adjustment(&self, adjustment: f32) -> AnyError<()> {
+        match self.input_settings.lock() {
+            Ok(guard) => guard,
+            Err(e) => return to_error(&e.to_string()),
+        }
+        .volume_adjustment = f32::powf(10.0, adjustment / 20.0);
+        Ok(())
     }
 
     pub const fn config(&self) -> DeviceConfig {
