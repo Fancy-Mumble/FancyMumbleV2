@@ -2,7 +2,7 @@ use std::{
     ops::MulAssign,
     sync::{
         atomic::{AtomicBool, Ordering},
-        mpsc::{self, Receiver},
+        mpsc::{self},
         Arc,
     },
     thread,
@@ -10,43 +10,30 @@ use std::{
 };
 
 use num_traits::{NumCast, Signed};
-use tokio::sync::broadcast;
-use tracing::{error, trace, warn};
+use tokio::sync::broadcast::{self, Receiver};
+use tracing::{error, info, trace, warn};
 
 use crate::{
+    commands::{self, Settings},
     errors::AnyError,
     mumble::proto::UdpTunnel,
     utils::{audio::microphone::Microphone, messages::raw_message_builder},
 };
 
-use super::encoder::Encoder;
-
-pub struct Settings {
-    pub sample_rate: u32,
-    pub channels: u8,
-    pub frame_size: usize,
-}
-
-struct SettingsChannel {
-    rx_channel: Option<mpsc::Receiver<Settings>>,
-    _tx_channel: mpsc::Sender<Settings>,
-}
+use super::{encoder::Encoder};
 
 pub struct Recorder {
     audio_thread: Option<thread::JoinHandle<()>>,
     playing: Arc<AtomicBool>,
     server_channel: Option<broadcast::Sender<Vec<u8>>>,
-    settings_channel: SettingsChannel,
+    settings_channel: broadcast::Receiver<commands::Settings>,
 }
 
 impl Recorder {
-    pub fn new(server_channel: broadcast::Sender<Vec<u8>>) -> Self {
-        let (tx, rx) = mpsc::channel();
-        let settings_channel = SettingsChannel {
-            rx_channel: Some(rx),
-            _tx_channel: tx,
-        };
-
+    pub fn new(
+        server_channel: broadcast::Sender<Vec<u8>>,
+        settings_channel: broadcast::Receiver<commands::Settings>,
+    ) -> Self {
         Self {
             audio_thread: None,
             playing: Arc::new(AtomicBool::new(false)),
@@ -67,11 +54,7 @@ impl Recorder {
             .take()
             .ok_or("failed to get audio queue")
             .expect("failed to get audio queue");
-        let settings_channel = self
-            .settings_channel
-            .rx_channel
-            .take()
-            .ok_or("failed to get settings channel")?;
+        let mut settings_channel = self.settings_channel.resubscribe();
 
         self.audio_thread = Some(thread::spawn(move || {
             trace!("Starting audio thread");
@@ -95,10 +78,16 @@ impl Recorder {
                 config.sample_rate.0.try_into().unwrap_or_default()
             });
 
-            let mut va = VoiceActivation::new(sample_rate, Duration::from_millis(2000), 0.6, 0.3);
+            let mut va: VoiceActivation<f32> = VoiceActivation::new(
+                sample_rate,
+                Duration::from_millis(100),
+                Duration::from_secs(1),
+                0.6,
+                0.3,
+            );
 
             while playing_clone.load(Ordering::Relaxed) {
-                update_settings(&settings_channel, &encoder);
+                update_settings(&mut settings_channel, &mut va, &mut microphone);
 
                 let mut value = rx.recv().expect("Failed to receive audio data");
                 va.process(&mut value);
@@ -129,16 +118,27 @@ impl Recorder {
     }
 }
 
-fn update_settings(settings_channel: &Receiver<Settings>, encoder: &Encoder) {
-    match settings_channel.try_recv() {
-        Ok(settings) => {
-            encoder.update_settings(&settings);
+fn update_settings<T: VoiceActivationType>(
+    settings_channel: &mut Receiver<Settings>,
+    va: &mut VoiceActivation<T>,
+    microphone: &mut Microphone,
+) {
+    if let Ok(settings) = settings_channel.try_recv() {
+        info!("Received settings: {:?}", settings);
+
+        if let Settings::AudioSettings(audio_settings) = settings {
+            audio_settings.voice_hold;
+            va.set_durations(
+                Duration::from_millis(audio_settings.fade_out_duration as u64),
+                Duration::from_millis(audio_settings.voice_hold as u64),
+            );
+            va.set_thresholds(
+                T::from(audio_settings.voice_hysteresis_upper_threshold).unwrap_or_else(T::zero),
+                T::from(audio_settings.voice_hysteresis_lower_threshold).unwrap_or_else(T::zero),
+            );
+            let _ = microphone.volume_adjustment(audio_settings.amplification);
         }
-        Err(mpsc::TryRecvError::Empty) => {}
-        Err(mpsc::TryRecvError::Disconnected) => {
-            error!("Failed to receive settings");
-        }
-    };
+    }
 }
 
 impl Drop for Recorder {
@@ -147,14 +147,25 @@ impl Drop for Recorder {
     }
 }
 
-pub struct VoiceActivation<T: Signed + Copy + Default + PartialOrd + MulAssign + NumCast> {
+pub trait VoiceActivationType:
+    Signed + Copy + Default + PartialOrd + MulAssign + NumCast + core::fmt::Debug
+{
+}
+impl<T: Signed + Copy + Default + PartialOrd + MulAssign + NumCast + core::fmt::Debug>
+    VoiceActivationType for T
+{
+}
+
+pub struct VoiceActivation<T: VoiceActivationType> {
     upper_threshold: T,
     lower_threshold: T,
     fade_out_samples: usize,
     fade_out_count: usize,
+    voice_activation_hold_offset: f32,
+    sample_rate: usize,
 }
 
-impl<T: Signed + Default + Copy + PartialOrd + MulAssign + NumCast> VoiceActivation<T> {
+impl<T: VoiceActivationType> VoiceActivation<T> {
     // fade_out samples are only whole values
     #[allow(clippy::cast_precision_loss)]
     #[allow(clippy::cast_possible_truncation)]
@@ -162,18 +173,56 @@ impl<T: Signed + Default + Copy + PartialOrd + MulAssign + NumCast> VoiceActivat
     pub fn new(
         sample_rate: usize,
         fadeout_duration: Duration,
+        voice_activation_hold: Duration,
         upper_threshold: T,
         lower_threshold: T,
     ) -> Self {
-        let fade_out_samples: usize =
-            (fadeout_duration.as_secs_f32() * sample_rate as f32) as usize; // Number of samples for fading out the signal
+        let (voice_activation_hold_offset, fade_out_samples) =
+            VoiceActivation::<T>::calculate_voice_activation_hold_offset(
+                fadeout_duration,
+                voice_activation_hold,
+                sample_rate,
+            );
 
         Self {
             upper_threshold,
             lower_threshold,
             fade_out_samples,
             fade_out_count: 0,
+            voice_activation_hold_offset,
+            sample_rate,
         }
+    }
+
+    fn calculate_voice_activation_hold_offset(
+        fadeout_duration: Duration,
+        voice_activation_hold: Duration,
+        sample_rate: usize,
+    ) -> (f32, usize) {
+        let total_duration = voice_activation_hold + fadeout_duration;
+        let fade_out_samples: usize = (total_duration.as_secs_f32() * sample_rate as f32) as usize; // Number of samples for fading out the signal
+        let voice_hold_samples: usize =
+            (voice_activation_hold.as_secs_f32() * sample_rate as f32) as usize;
+        (
+            voice_hold_samples as f32 / fade_out_samples as f32,
+            fade_out_samples,
+        )
+    }
+
+    pub fn set_thresholds(&mut self, upper_threshold: T, lower_threshold: T) {
+        self.upper_threshold = upper_threshold;
+        self.lower_threshold = lower_threshold;
+    }
+
+    pub fn set_durations(&mut self, fadeout_duration: Duration, voice_activation_hold: Duration) {
+        let (voice_activation_hold_offset, fade_out_samples) =
+            VoiceActivation::<T>::calculate_voice_activation_hold_offset(
+                fadeout_duration,
+                voice_activation_hold,
+                self.sample_rate,
+            );
+        self.voice_activation_hold_offset = voice_activation_hold_offset;
+        self.fade_out_samples = fade_out_samples;
     }
 
     pub fn process(&mut self, new_data: &mut [T]) {
@@ -194,9 +243,9 @@ impl<T: Signed + Default + Copy + PartialOrd + MulAssign + NumCast> VoiceActivat
             if vad.update(&amplitude) {
                 // If the VAD is on, reset the fade out counter
                 self.fade_out_count = 0;
-            } else {
+            } else if self.fade_out_count < self.fade_out_samples {
                 // If the VAD is off, increment the fade out counter
-                self.fade_out_count += 1;
+                self.fade_out_count += FRAME_SIZE;
                 if self.fade_out_count > self.fade_out_samples {
                     // If the fade out counter exceeds the fade out samples, clamp it
                     self.fade_out_count = self.fade_out_samples;
@@ -206,14 +255,16 @@ impl<T: Signed + Default + Copy + PartialOrd + MulAssign + NumCast> VoiceActivat
                     // Multiply each sample by the fade out factor
                     *x *= fade_out_factor;
                 }
-            } // Append the frame to the output queue
+            } else {
+                frame.fill(T::zero());
+            }
         }
     }
 
     // precision-loss is intended
     #[allow(clippy::cast_precision_loss)]
     fn calculate_fadeout(&self) -> T {
-        let voice_activation_hold_offset = 0.1;
+        let voice_activation_hold_offset = self.voice_activation_hold_offset;
         let inverse_offset = 1.0 - voice_activation_hold_offset;
 
         let ratio = self.fade_out_count as f32 / self.fade_out_samples as f32;
