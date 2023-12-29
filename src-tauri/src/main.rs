@@ -28,7 +28,7 @@ use tracing_subscriber::{
 
 use crate::commands::{
     change_user_state, connect_to_server, get_audio_devices, like_message, logout, send_message,
-    set_setting, set_user_image,
+    set_audio_input_setting, set_audio_output_setting, set_user_image,
     settings_cmd::{get_frontend_settings, get_server_list, save_frontend_settings, save_server},
     web_cmd::{get_open_graph_data_from_website, open_browser},
     zip_cmd::{unzip_data_from_utf8, zip_data_to_utf8},
@@ -89,7 +89,8 @@ async fn main() {
             get_open_graph_data_from_website,
             save_frontend_settings,
             get_frontend_settings,
-            set_setting
+            set_audio_input_setting,
+            set_audio_output_setting
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -8,6 +8,8 @@ use tracing::{info, trace};
 
 use crate::utils::{constants::get_project_dirs, server::Server};
 
+use super::utils::settings::FrontendSettings;
+
 const SERVER_SETTINS_FILE: &str = "server.json";
 const FRONTEND_SETTINS_FILE: &str = "frontend_settings.json";
 
@@ -98,24 +100,6 @@ pub fn get_server_list() -> Result<Vec<Server>, String> {
 
 pub struct FrontendSettingsState {
     pub state: RwLock<bool>,
-}
-
-#[derive(serde::Deserialize, serde::Serialize, Debug)]
-pub struct FrontendSettings {
-    link_preview: LinkPreview,
-    api_keys: ApiKeys,
-}
-
-#[derive(serde::Deserialize, serde::Serialize, Debug)]
-pub struct LinkPreview {
-    enabled: Option<bool>,
-    allow_all: Option<bool>,
-    urls: Option<Vec<String>>,
-}
-
-#[derive(serde::Deserialize, serde::Serialize, Debug)]
-pub struct ApiKeys {
-    tenor: String,
 }
 
 #[allow(clippy::needless_pass_by_value)] // LinkPreview needs to be deserialized

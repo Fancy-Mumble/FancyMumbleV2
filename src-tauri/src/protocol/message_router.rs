@@ -6,7 +6,6 @@ use tokio::sync::broadcast::{Receiver, Sender};
 use tracing::{error, trace, warn};
 
 use crate::{
-    commands::Settings,
     connection::{traits::Shutdown, MessageChannels},
     errors::{application_error::ApplicationError, AnyError},
     manager::{
@@ -16,7 +15,7 @@ use crate::{
         voice::{self},
     },
     mumble,
-    utils::messages::MessageInfo,
+    utils::messages::MessageInfo, commands::utils::settings::GlobalSettings,
 };
 
 pub struct MessageRouter {
@@ -31,7 +30,7 @@ impl MessageRouter {
     pub fn new(
         sender: MessageChannels,
         server_channel: Sender<Vec<u8>>,
-        settings_channel: Receiver<Settings>,
+        settings_channel: Receiver<GlobalSettings>,
     ) -> AnyError<Self> {
         Ok(Self {
             user_manager: user::Manager::new(

@@ -12,6 +12,7 @@ import { UpdateableUserState, UsersState, defaultInitializeUser, updateUser, upd
 import { encodeUserCommentData } from "../../helper/ProfileDataHelper";
 import { useTheme } from '@mui/material/styles';
 import './styles/Profile.css'
+import FloatingApply from "./components/FloatingApply";
 
 enum ImageType {
     Profile = 'profile',
@@ -160,16 +161,7 @@ function Profile() {
                     </Grid>
                 </Grid>
             </Container >
-            <Box sx={{ position: 'sticky', bottom: theme.spacing(2), display: 'flex', justifyContent: 'center' }}>
-                <Paper sx={{ maxWidth: '600px', padding: 2, display: "flex", justifyContent: "end", margin: 2, borderRadius: 2, flexGrow: 1 }}>
-                    <Box sx={{ marginRight: 2 }}>
-                        <Button color="error" size="small">Discard</Button>
-                    </Box>
-                    <Box>
-                        <Button variant="contained" size="small">Save</Button>
-                    </Box>
-                </Paper>
-            </Box>
+            <FloatingApply discardText="Discard" saveText="Save" onDiscard={() => {}} onSave={() => {}} />
         </Box >
     )
 }
