@@ -11,6 +11,7 @@ pub struct DecodedMessage {
     pub data: Vec<i16>,
 }
 
+#[allow(clippy::struct_field_names)]
 pub struct Decoder {
     decoder_map: DecoderMap,
     sample_rate: u32,

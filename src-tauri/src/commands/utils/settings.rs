@@ -50,7 +50,7 @@ pub struct UserVoiceAdjustment {
 #[allow(clippy::module_name_repetitions)]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AudioOutputSettings {
-    pub voice_adjustment: Vec<UserVoiceAdjustment>
+    pub voice_adjustment: Vec<UserVoiceAdjustment>,
 }
 
 #[allow(clippy::module_name_repetitions)]

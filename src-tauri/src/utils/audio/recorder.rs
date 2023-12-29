@@ -178,6 +178,7 @@ impl<T: Signed + Copy + Default + PartialOrd + MulAssign + NumCast + core::fmt::
 {
 }
 
+#[allow(clippy::struct_field_names)]
 pub struct VoiceActivation<T: VoiceActivationType> {
     upper_threshold: T,
     lower_threshold: T,

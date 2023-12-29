@@ -69,10 +69,7 @@ impl Player {
                     audio_queue_ref.recv_timeout(Duration::from_millis(100))
                 {
                     if let Ok(user_info) = user_audio_info_map.get_audio_info(queue_value.user_id) {
-                        Self::adjust_volume_vec(
-                            &mut queue_value.data,
-                            user_info.volume_adjustment,
-                        );
+                        Self::adjust_volume_vec(&mut queue_value.data, user_info.volume_adjustment);
 
                         user_info
                             .sink

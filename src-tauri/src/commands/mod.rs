@@ -3,9 +3,9 @@
 
 mod helper;
 pub mod settings_cmd;
+pub mod utils;
 pub mod web_cmd;
 pub mod zip_cmd;
-pub mod utils;
 
 use std::{borrow::BorrowMut, collections::HashMap};
 
@@ -23,8 +23,7 @@ use tokio::sync::{
 };
 use tracing::{error, info, trace};
 
-use self::utils::settings::{AudioOptions, GlobalSettings, AudioOutputSettings};
-
+use self::utils::settings::{AudioOptions, AudioOutputSettings, GlobalSettings};
 
 pub struct ConnectionState {
     pub connection: Mutex<Option<Connection>>,
