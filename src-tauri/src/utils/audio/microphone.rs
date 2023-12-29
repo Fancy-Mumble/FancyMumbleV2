@@ -107,7 +107,7 @@ impl Microphone {
                 .lock()
                 .expect("Failed to lock input settings");
 
-            for (_, processed_sample) in processed_buffer.iter_mut().enumerate() {
+            for processed_sample in &mut processed_buffer {
                 *processed_sample *= input_settings.volume_adjustment;
             }
             drop(input_settings);

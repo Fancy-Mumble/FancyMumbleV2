@@ -6,6 +6,7 @@ use tokio::sync::broadcast::{Receiver, Sender};
 use tracing::{error, trace, warn};
 
 use crate::{
+    commands::utils::settings::GlobalSettings,
     connection::{traits::Shutdown, MessageChannels},
     errors::{application_error::ApplicationError, AnyError},
     manager::{
@@ -15,9 +16,10 @@ use crate::{
         voice::{self},
     },
     mumble,
-    utils::messages::MessageInfo, commands::utils::settings::GlobalSettings,
+    utils::messages::MessageInfo,
 };
 
+#[allow(clippy::struct_field_names)]
 pub struct MessageRouter {
     user_manager: user::Manager,
     channel_manager: channel::Manager,
