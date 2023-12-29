@@ -25,3 +25,4 @@ impl Error for ApplicationError {
         &self.details
     }
 }
+

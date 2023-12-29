@@ -1,4 +1,4 @@
-use crate::commands::Settings;
+use crate::commands::utils::settings::GlobalSettings;
 use crate::errors::application_error::ApplicationError;
 use crate::errors::AnyError;
 use crate::mumble;
@@ -36,9 +36,9 @@ impl Manager {
     pub fn new(
         send_to: Sender<String>,
         server_channel: Sender<Vec<u8>>,
-        settings_channel: Receiver<Settings>,
+        settings_channel: Receiver<GlobalSettings>,
     ) -> AnyError<Self> {
-        let mut player = Player::new();
+        let mut player = Player::new(settings_channel.resubscribe());
         if let Err(error) = player.start() {
             return Err(Box::new(ApplicationError::new(&format!(
                 "Failed to start audio player: {error}"

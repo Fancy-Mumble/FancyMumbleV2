@@ -1,6 +1,6 @@
 pub mod threads;
 pub mod traits;
-use crate::commands::Settings;
+use crate::commands::utils::settings::GlobalSettings;
 use crate::connection::traits::Shutdown;
 use crate::errors::AnyError;
 use crate::manager::user::UpdateableUserState;
@@ -60,7 +60,7 @@ pub struct Connection {
     message_channels: MessageChannels,
     package_info: PackageInfo,
     stream_reader: Arc<Mutex<Option<StreamReader>>>,
-    settings_channel: Receiver<Settings>,
+    settings_channel: Receiver<GlobalSettings>,
 }
 
 impl Connection {
@@ -69,7 +69,7 @@ impl Connection {
         server_port: u16,
         username: &str,
         package_info: PackageInfo,
-        settings_channel: Receiver<Settings>,
+        settings_channel: Receiver<GlobalSettings>,
     ) -> Self {
         let (tx_in, _): (Sender<Vec<u8>>, Receiver<Vec<u8>>) = broadcast::channel(QUEUE_SIZE);
         let (tx_out, _): (Sender<Vec<u8>>, Receiver<Vec<u8>>) = broadcast::channel(QUEUE_SIZE);

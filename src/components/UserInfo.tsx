@@ -1,4 +1,4 @@
-import { Typography, Popover, Card, Avatar, CardMedia, CardContent, Paper, IconButton, InputBase, Divider, Box } from "@mui/material";
+import { Typography, Popover, Card, Avatar, CardMedia, CardContent, Paper, IconButton, InputBase, Divider, Box, Slider } from "@mui/material";
 import { UsersState } from "../store/features/users/userSlice";
 import React, { useEffect, useState } from "react";
 import { getBackgroundFromComment, getProfileImage, getTextFromcomment } from "../helper/UserInfoHelper";
@@ -10,6 +10,7 @@ import { ChatMessageHandler } from "../helper/ChatMessage";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../store/store";
 import "./styles/common.css"
+import { invoke } from "@tauri-apps/api";
 
 interface UserInfoProps {
     userInfo: UsersState | undefined;
@@ -20,6 +21,7 @@ function UserInfo(props: UserInfoProps) {
     const background = getBackgroundFromComment(props.userInfo, false);
     const profileText = getTextFromcomment(props.userInfo);
     const [chatMessage, setChatMessage] = useState("");
+    const [voiceAdjustment, setVoiceAdjustment] = useState(0.0);
 
     const dispatch = useDispatch();
     const chatMessageHandler = new ChatMessageHandler(dispatch, setChatMessage);
@@ -67,17 +69,24 @@ function UserInfo(props: UserInfoProps) {
             let settings = props.userInfo?.commentData?.settings;
 
             let colors: React.CSSProperties = {};
-            if(settings?.primary_color) colors.backgroundColor = settings.primary_color;
-            if(settings?.accent_color) colors.backgroundColor = settings.accent_color;
+            if (settings?.primary_color) colors.backgroundColor = settings.primary_color;
+            if (settings?.accent_color) colors.backgroundColor = settings.accent_color;
 
             return colors;
+        }
+    }
+
+    function updateVolumeAdjustment(adjustment: number) {
+        let userId = props.userInfo?.id;
+        if (userId) {
+            invoke('set_audio_output_setting', { 'settings': { 'voice_adjustment': [{'volume': adjustment, 'user_id': userId}] } });
         }
     }
 
     return (
         <Card sx={{ maxWidth: 345 }} style={props.style}>
             {generateCardMedia()}
-            <CardContent sx={{ paddingTop: 0, ...getUserColors()  }}>
+            <CardContent sx={{ paddingTop: 0, ...getUserColors() }}>
                 <Box className="user-info-avatar">
                     <Avatar
                         alt={props.userInfo?.name}
@@ -90,6 +99,26 @@ function UserInfo(props: UserInfoProps) {
                         {props.userInfo?.name}
                     </Typography>
                     <Divider sx={{ margin: '10px 0' }} />
+                    <Box>
+                        <Slider
+                            sx={{ width: '80%', mx: 2, display: 'flex', justifyContent: 'center', margin: '0 auto' }}
+                            onChange={(event, newValue) => {
+                                if (Math.abs(Number(newValue)) < 0.5) {
+                                    setVoiceAdjustment(0);
+                                    return;
+                                }
+                                updateVolumeAdjustment(Number(newValue));
+                                setVoiceAdjustment(Number(newValue));
+                            }}
+                            value={voiceAdjustment}
+                            defaultValue={0}
+                            step={0.1}
+                            min={-20}
+                            max={20}
+                            valueLabelDisplay="auto"
+                            marks={[{ value: -20, label: '-20 dB' }, { value: 0, label: '+0 dB' }, { value: 20, label: '+20 dB' }]} />
+                    </Box>
+                    <Divider sx={{ mt: 4, mb: 2 }} />
                     <Box className="user-info-list">
                         <Box className="user-info-item">
                             <span className="user-text-title">User ID</span><span>#{props.userInfo?.id}</span>
