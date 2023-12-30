@@ -7,7 +7,7 @@ pub mod utils;
 pub mod web_cmd;
 pub mod zip_cmd;
 
-use std::{borrow::BorrowMut, collections::HashMap};
+use std::{borrow::BorrowMut, collections::HashMap, sync::Arc};
 
 use crate::{
     connection::{traits::Shutdown, Connection},
@@ -23,11 +23,13 @@ use tokio::sync::{
 };
 use tracing::{error, info, trace};
 
-use self::utils::settings::{AudioOptions, AudioOutputSettings, GlobalSettings};
+use self::utils::settings::{
+    AudioOptions, AudioOutputSettings, AudioPreviewContainer, GlobalSettings,
+};
 
 pub struct ConnectionState {
     pub connection: Mutex<Option<Connection>>,
-    pub window: Mutex<tauri::Window>,
+    pub window: Arc<Mutex<tauri::Window>>,
     pub package_info: Mutex<tauri::PackageInfo>,
     pub message_handler: Mutex<HashMap<String, Box<dyn Shutdown + Send>>>,
     pub device_manager: Mutex<Option<AudioDeviceManager>>,
@@ -253,5 +255,29 @@ pub async fn set_audio_output_setting(
         .await
         .as_ref()
         .map(|x| x.send(GlobalSettings::AudioOutputSettings(settings)));
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn disable_audio_info(state: State<'_, ConnectionState>) -> Result<(), String> {
+    state.settings_channel.lock().await.as_ref().map(|x| {
+        x.send(GlobalSettings::AudioPreview(AudioPreviewContainer {
+            enabled: false,
+            window: state.window.clone(),
+        }))
+    });
+    Ok(())
+}
+#[tauri::command]
+pub async fn enable_audio_info(state: State<'_, ConnectionState>) -> Result<(), String> {
+    state
+        .settings_channel
+        .lock()
+        .await
+        .as_ref()
+        .map(|x| x.send(GlobalSettings::AudioPreview(AudioPreviewContainer {
+            enabled: true,
+            window: state.window.clone(),
+        })));
     Ok(())
 }

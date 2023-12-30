@@ -1,5 +1,4 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { invoke } from "@tauri-apps/api";
 
 export interface LinkPreviewSettings {
   enabled: boolean,
@@ -11,9 +10,15 @@ export interface ApiKeys {
   tenor: string
 }
 
+export interface AdvancedSettings {
+  disableAutoscroll: boolean;
+  alwaysScrollDown: boolean;
+}
+
 export interface FrontendSettings {
   api_keys: ApiKeys;
-  link_preview: LinkPreviewSettings
+  link_preview: LinkPreviewSettings;
+  advancedSettings: AdvancedSettings
 }
 
 
@@ -25,6 +30,10 @@ const initialState: FrontendSettings = {
   },
   api_keys: {
     tenor: ''
+  },
+  advancedSettings: {
+    disableAutoscroll: false,
+    alwaysScrollDown: false
   }
 };
 
@@ -41,9 +50,13 @@ export const frontendSettings = createSlice({
     updateFrontendSettings: (state, action) => {
       state = action.payload;
     },
+    updateAdvancedSettings: (state, action) => {
+      console.log("updateAdvancedSettings: ", action.payload);
+      state.advancedSettings = action.payload;
+    }
   },
 })
 
-export const { updateFrontendSettings, updateLinkPreview, updateApiKey } = frontendSettings.actions
+export const { updateFrontendSettings, updateLinkPreview, updateApiKey, updateAdvancedSettings } = frontendSettings.actions
 
 export default frontendSettings.reducer

@@ -1,4 +1,7 @@
+use std::sync::Arc;
+
 use serde::{Deserialize, Serialize};
+use tokio::sync::Mutex;
 
 #[allow(clippy::module_name_repetitions)]
 #[derive(serde::Deserialize, Serialize, Debug)]
@@ -53,9 +56,16 @@ pub struct AudioOutputSettings {
     pub voice_adjustment: Vec<UserVoiceAdjustment>,
 }
 
+#[derive(Clone, Debug)]
+pub struct AudioPreviewContainer {
+    pub enabled: bool,
+    pub window: Arc<Mutex<tauri::Window>>
+}
+
 #[allow(clippy::module_name_repetitions)]
 #[derive(Clone, Debug)]
 pub enum GlobalSettings {
     AudioInputSettings(AudioOptions),
     AudioOutputSettings(AudioOutputSettings),
+    AudioPreview(AudioPreviewContainer)
 }

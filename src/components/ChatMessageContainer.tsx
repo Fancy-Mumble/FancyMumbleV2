@@ -20,6 +20,7 @@ interface GroupedMessages {
 
 const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 	const userList = useSelector((state: RootState) => state.reducer.userInfo);
+	const advancedSettings = useSelector((state: RootState) => state.reducer.frontendSettings.advancedSettings);
 	const chatContainer: React.RefObject<HTMLDivElement> = React.createRef();
 	const messagesEndRef: React.RefObject<HTMLDivElement> = React.createRef();
 	const [userInfoAnchor, setUserInfoAnchor] = React.useState<HTMLElement | null>(null);
@@ -28,6 +29,9 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 	const prevPropsRef = useRef(props);
 
 	const scrollToBottom = () => {
+		if (advancedSettings.disableAutoscroll) {
+			return;
+		}
 		new Promise(r => setTimeout(r, 100)).then(() => {
 			messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 		});
@@ -36,7 +40,7 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 	useEffect(() => {
 		let messages = props.messages;
 		if (messages.length > 0) {
-			const isScrolledToBottom = (chatContainer?.current?.scrollHeight || 0) - (chatContainer?.current?.scrollTop || 0) >= (chatContainer?.current?.clientHeight || 0) * 1.2;
+			const isScrolledToBottom = !advancedSettings.disableAutoscroll && (advancedSettings.alwaysScrollDown || ((chatContainer?.current?.scrollHeight || 0) - (chatContainer?.current?.scrollTop || 0) >= (chatContainer?.current?.clientHeight || 0) * 1.2));
 
 			if (isScrolledToBottom) {
 				messagesEndRef?.current?.scrollIntoView({ behavior: 'smooth' });
@@ -45,7 +49,7 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 	}, [props.messages]);
 
 	useEffect(() => {
-		if (!userScrolled && chatContainer?.current) {
+		if (!userScrolled || advancedSettings.alwaysScrollDown) {
 			scrollToBottom();
 		}
 	}, [props, userScrolled]); // Depend on props and userScrolled

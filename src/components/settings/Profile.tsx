@@ -1,14 +1,13 @@
-import { Alert, Box, Button, CircularProgress, Container, Divider, FormControl, Grid, InputLabel, MenuItem, Paper, Select, TextField, Typography } from "@mui/material";
+import { Alert, Box,  CircularProgress, Container, Divider, Grid, TextField, Typography } from "@mui/material";
 import { invoke } from "@tauri-apps/api";
 import UploadBox from "../UploadBox";
 import React, { useState } from 'react';
 import DefaultColorPicker from "../ColorPicker";
-import { ColorResult, HSLColor } from "react-color";
+import { ColorResult } from "react-color";
 import UserInfo from "../UserInfo";
 import { RootState } from "../../store/store";
 import { useDispatch, useSelector } from "react-redux";
-import { updateUserValue } from "../../helper/UserInfo";
-import { UpdateableUserState, UsersState, defaultInitializeUser, updateUser, updateUserSettings } from "../../store/features/users/userSlice";
+import { UpdateableUserState, UsersState, updateUserSettings } from "../../store/features/users/userSlice";
 import { encodeUserCommentData } from "../../helper/ProfileDataHelper";
 import { useTheme } from '@mui/material/styles';
 import './styles/Profile.css'
@@ -24,7 +23,6 @@ function Profile() {
     const dispatch = useDispatch();
 
     const userInfo = useSelector((state: RootState) => state.reducer.userInfo).currentUser;
-    let userInfoClone = JSON.stringify(userInfo) ?? defaultInitializeUser();
 
 
     let [errorMessage, setErrorMessage] = useState('');
@@ -161,7 +159,7 @@ function Profile() {
                     </Grid>
                 </Grid>
             </Container >
-            <FloatingApply discardText="Discard" saveText="Save" onDiscard={() => {}} onSave={() => {}} />
+            <FloatingApply discardText="Discard" saveText="Save" onDiscard={() => { }} onSave={() => { }} />
         </Box >
     )
 }

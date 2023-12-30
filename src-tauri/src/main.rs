@@ -14,9 +14,10 @@ mod utils;
 #[cfg(test)]
 mod tests;
 
-use std::{collections::HashMap, sync::RwLock};
+use std::{collections::HashMap, sync::{RwLock, Arc}};
 
 use commands::{settings_cmd::FrontendSettingsState, web_cmd::CrawlerState, ConnectionState};
+use tauri_plugin_window_state::{StateFlags, WindowExt};
 use tokio::sync::Mutex;
 
 use tauri::Manager;
@@ -27,8 +28,9 @@ use tracing_subscriber::{
 };
 
 use crate::commands::{
-    change_user_state, connect_to_server, get_audio_devices, like_message, logout, send_message,
-    set_audio_input_setting, set_audio_output_setting, set_user_image,
+    change_user_state, connect_to_server, disable_audio_info, enable_audio_info, get_audio_devices,
+    like_message, logout, send_message, set_audio_input_setting, set_audio_output_setting,
+    set_user_image,
     settings_cmd::{get_frontend_settings, get_server_list, save_frontend_settings, save_server},
     web_cmd::{get_open_graph_data_from_website, open_browser},
     zip_cmd::{unzip_data_from_utf8, zip_data_to_utf8},
@@ -55,10 +57,11 @@ async fn main() {
     init_logging();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_window_state::Builder::default().build())
         .setup(|app| {
             app.manage(ConnectionState {
                 connection: Mutex::new(None),
-                window: Mutex::new(app.get_window("main").expect("window not found")),
+                window: Arc::new(Mutex::new(app.get_window("main").expect("window not found"))),
                 package_info: Mutex::new(app.package_info().clone()),
                 message_handler: Mutex::new(HashMap::new()),
                 device_manager: Mutex::new(None),
@@ -70,6 +73,9 @@ async fn main() {
             app.manage(FrontendSettingsState {
                 state: RwLock::new(false),
             });
+            if let Some(window) = app.get_window("main") {
+                window.restore_state(StateFlags::all())?;
+            }
 
             Ok(())
         })
@@ -90,7 +96,9 @@ async fn main() {
             save_frontend_settings,
             get_frontend_settings,
             set_audio_input_setting,
-            set_audio_output_setting
+            set_audio_output_setting,
+            enable_audio_info,
+            disable_audio_info
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
