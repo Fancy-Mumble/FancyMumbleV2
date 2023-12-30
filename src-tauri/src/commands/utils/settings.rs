@@ -63,6 +63,7 @@ pub struct AudioPreviewContainer {
 }
 
 #[allow(clippy::module_name_repetitions)]
+#[allow(clippy::enum_variant_names)]
 #[derive(Clone, Debug)]
 pub enum GlobalSettings {
     AudioInputSettings(AudioOptions),
