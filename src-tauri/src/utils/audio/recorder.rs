@@ -11,10 +11,10 @@ use std::{
 
 use num_traits::{NumCast, Signed};
 use tokio::sync::broadcast::{self, Receiver};
-use tracing::{error, trace, warn};
+use tracing::{error, info, trace, warn};
 
 use crate::{
-    commands::utils::settings::{AudioOptions, GlobalSettings, InputMode},
+    commands::utils::settings::{AudioOptions, AudioPreviewContainer, GlobalSettings, InputMode},
     errors::AnyError,
     mumble::proto::UdpTunnel,
     utils::{audio::microphone::Microphone, messages::raw_message_builder},
@@ -90,12 +90,27 @@ impl Recorder {
                 0.3,
             ));
 
+            let mut audio_preview: Option<AudioPreviewContainer> = None;
+
             while playing_clone.load(Ordering::Relaxed) {
-                update_settings(&mut settings_channel, &mut va, &microphone);
+                update_settings(
+                    &mut settings_channel,
+                    &mut va,
+                    &microphone,
+                    &mut audio_preview,
+                );
+                let mut max_amplitude = 0.0;
 
                 let mut value = rx.recv().expect("Failed to receive audio data");
                 if let Some(va) = va.as_mut() {
-                    va.process(&mut value);
+                    max_amplitude = va.process(&mut value);
+                }
+
+                if let Some(audio_preview) = audio_preview.as_mut() {
+                    let _ = audio_preview.window.try_lock().and_then(|window| {
+                        let _ = window.emit("audio_preview", max_amplitude);
+                        Ok(())
+                    });
                 }
 
                 let audio_buffer = encoder.encode_audio(&value, &mut sequence_number);
@@ -128,12 +143,27 @@ fn update_settings<T: VoiceActivationType>(
     settings_channel: &mut Receiver<GlobalSettings>,
     va: &mut Option<VoiceActivation<T>>,
     microphone: &Microphone,
+    audio_settings: &mut Option<AudioPreviewContainer>,
 ) {
-    if let Ok(GlobalSettings::AudioInputSettings(audio_settings)) = settings_channel.try_recv() {
-        trace!("Received settings: {:?}", audio_settings);
-        update_voice_activation_options(&audio_settings, va);
+    match settings_channel.try_recv() {
+        Ok(GlobalSettings::AudioInputSettings(audio_settings)) => {
+            trace!("Received settings: {:?}", audio_settings);
+            update_voice_activation_options(&audio_settings, va);
 
-        let _ = microphone.volume_adjustment(audio_settings.amplification);
+            let _ = microphone.volume_adjustment(audio_settings.amplification);
+        }
+        Ok(GlobalSettings::AudioPreview(audio_preview)) => {
+            info!("Received audio preview: {:?}", audio_preview.enabled);
+            match audio_preview.enabled {
+                true => {
+                    *audio_settings = Some(audio_preview);
+                }
+                false => {
+                    *audio_settings = None;
+                }
+            }
+        }
+        _ => {}
     }
 }
 
@@ -252,8 +282,9 @@ impl<T: VoiceActivationType> VoiceActivation<T> {
         self.fade_out_samples = fade_out_samples;
     }
 
-    pub fn process(&mut self, new_data: &mut [T]) {
+    pub fn process(&mut self, new_data: &mut [T]) -> T {
         const FRAME_SIZE: usize = 160; // Size of each frame in samples
+        let mut max_amplitude: T = T::zero();
 
         let mut vad = Hysteresis::new(self.lower_threshold, self.upper_threshold); // Hysteresis object for the VAD logic
 
@@ -267,6 +298,11 @@ impl<T: VoiceActivationType> VoiceActivation<T> {
                     max.map_or(Some(x), |max| Some(if x > max { x } else { max }))
                 })
                 .unwrap_or_else(T::zero); // Apply the VAD logic
+            max_amplitude = if amplitude > max_amplitude {
+                amplitude
+            } else {
+                max_amplitude
+            };
             if vad.update(&amplitude) {
                 // If the VAD is on, reset the fade out counter
                 self.fade_out_count = 0;
@@ -286,6 +322,8 @@ impl<T: VoiceActivationType> VoiceActivation<T> {
                 frame.fill(T::zero());
             }
         }
+
+        max_amplitude
     }
 
     // precision-loss is intended

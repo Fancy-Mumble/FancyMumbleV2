@@ -22,6 +22,7 @@ function UserInfo(props: UserInfoProps) {
     const profileText = getTextFromcomment(props.userInfo);
     const [chatMessage, setChatMessage] = useState("");
     const [voiceAdjustment, setVoiceAdjustment] = useState(0.0);
+    const userInfo = useSelector((state: RootState) => state.reducer.userInfo).currentUser;
 
     const dispatch = useDispatch();
     const chatMessageHandler = new ChatMessageHandler(dispatch, setChatMessage);
@@ -79,8 +80,34 @@ function UserInfo(props: UserInfoProps) {
     function updateVolumeAdjustment(adjustment: number) {
         let userId = props.userInfo?.id;
         if (userId) {
-            invoke('set_audio_output_setting', { 'settings': { 'voice_adjustment': [{'volume': adjustment, 'user_id': userId}] } });
+            invoke('set_audio_output_setting', { 'settings': { 'voice_adjustment': [{ 'volume': adjustment, 'user_id': userId }] } });
         }
+    }
+
+    function showVolumeAdjustment() {
+        if (props.userInfo?.id !== userInfo?.id) {
+            return (<Box>
+                <Slider
+                    sx={{ width: '80%', mx: 2, display: 'flex', justifyContent: 'center', margin: '0 auto' }}
+                    onChange={(event, newValue) => {
+                        if (Math.abs(Number(newValue)) < 0.5) {
+                            setVoiceAdjustment(0);
+                            return;
+                        }
+                        updateVolumeAdjustment(Number(newValue));
+                        setVoiceAdjustment(Number(newValue));
+                    }}
+                    value={voiceAdjustment}
+                    defaultValue={0}
+                    step={0.1}
+                    min={-20}
+                    max={20}
+                    valueLabelDisplay="auto"
+                    marks={[{ value: -20, label: '-20 dB' }, { value: 0, label: '+0 dB' }, { value: 20, label: '+20 dB' }]} />
+                <Divider sx={{ mt: 4, mb: 2 }} />
+            </Box>);
+        }
+        return (<Box />)
     }
 
     return (
@@ -99,26 +126,7 @@ function UserInfo(props: UserInfoProps) {
                         {props.userInfo?.name}
                     </Typography>
                     <Divider sx={{ margin: '10px 0' }} />
-                    <Box>
-                        <Slider
-                            sx={{ width: '80%', mx: 2, display: 'flex', justifyContent: 'center', margin: '0 auto' }}
-                            onChange={(event, newValue) => {
-                                if (Math.abs(Number(newValue)) < 0.5) {
-                                    setVoiceAdjustment(0);
-                                    return;
-                                }
-                                updateVolumeAdjustment(Number(newValue));
-                                setVoiceAdjustment(Number(newValue));
-                            }}
-                            value={voiceAdjustment}
-                            defaultValue={0}
-                            step={0.1}
-                            min={-20}
-                            max={20}
-                            valueLabelDisplay="auto"
-                            marks={[{ value: -20, label: '-20 dB' }, { value: 0, label: '+0 dB' }, { value: 20, label: '+20 dB' }]} />
-                    </Box>
-                    <Divider sx={{ mt: 4, mb: 2 }} />
+                    {showVolumeAdjustment()}
                     <Box className="user-info-list">
                         <Box className="user-info-item">
                             <span className="user-text-title">User ID</span><span>#{props.userInfo?.id}</span>

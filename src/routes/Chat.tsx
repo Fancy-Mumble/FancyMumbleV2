@@ -34,6 +34,17 @@ function Chat() {
             <Sidebar />
             <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
                 <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    <Box sx={{
+                        width: '100%',
+                        height: '100%',
+                        filter: ' blur(10px)',
+                        background: 'transparent',
+                        backgroundSize: 'cover',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        zIndex: -1
+                    }}></Box>
                     <ChatInfoBar onShowLog={setShowLog} />
                     <ChatMessageContainer messages={messageLog}></ChatMessageContainer>
                     <ChatInput />

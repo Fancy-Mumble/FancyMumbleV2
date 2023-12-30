@@ -1,9 +1,10 @@
 import { Box, Button, Collapse, Container, FormControl, FormControlLabel, Grid, IconButton, InputLabel, LinearProgress, MenuItem, Select, Slider, Switch, Typography, RadioGroup, Radio, Paper, InputBase, Divider } from "@mui/material";
 import { invoke } from "@tauri-apps/api";
 import LoopIcon from '@mui/icons-material/Loop';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import KeyboardIcon from '@mui/icons-material/Keyboard';
 import FloatingApply from "./components/FloatingApply";
+import { listen } from "@tauri-apps/api/event";
 
 enum InputMode {
     VoiceActivation = 0,
@@ -17,9 +18,21 @@ function AudioSettings() {
     const [fadeOutDuration, setFadeOutDuration] = useState<number>(10);
     const [advancedOptions, showAdvanceOptions] = useState(true);
     const [amplification, setAmplification] = useState<number>(10);
-    const [voiceHysteresis, setVoiceHysteresis] = useState<number[]>([20, 37]);
+    const [voiceHysteresis, setVoiceHysteresis] = useState<number[]>([0.1, 0.2]);
     const [audioLevel, setAudioLevel] = useState<number>(10);
     const [inputMode, setInputMode] = useState<InputMode>(InputMode.VoiceActivation);
+
+    useEffect(() => {
+        invoke('enable_audio_info');
+        const unlisten = listen('audio_preview', (event) => {
+            setAudioLevel(event.payload as number);
+        });
+
+        return () => {
+            invoke('disable_audio_info');
+            unlisten.then(stop => stop());
+        }
+    }, []);
 
     function getAudioDevices() {
         invoke('get_audio_devices')
@@ -78,6 +91,10 @@ function AudioSettings() {
         }
     }
 
+    function remap(value: number, max: number): number {
+        return (value / max) * 100;
+    }
+
     return (
         <Container>
             <Typography variant="h3">Audio</Typography>
@@ -114,7 +131,7 @@ function AudioSettings() {
                     </RadioGroup>
                 </Box>
                 <Collapse in={inputMode === InputMode.VoiceActivation}>
-                    <LinearProgress variant="buffer" value={audioLevel} valueBuffer={voiceHysteresis[1]} />
+                    <LinearProgress variant="buffer" value={remap(audioLevel, 1)} valueBuffer={remap(voiceHysteresis[1], 1)} color={audioLevel > voiceHysteresis[1] ? 'success' : 'error'}  />
                     <Divider sx={{ my: 4 }} />
                     <FormControlLabel label="Automatically detect Microphone sensitivity (Not Implemented)" control={<Switch disabled checked={!advancedOptions} onChange={() => showAdvanceOptions(!advancedOptions)} />} />
                     <Collapse in={advancedOptions}>
@@ -160,7 +177,7 @@ function AudioSettings() {
                                 <Slider
                                     min={0}
                                     step={0.01}
-                                    max={3}
+                                    max={1}
                                     getAriaLabel={() => ''}
                                     value={voiceHysteresis}
                                     onChange={(e, v) => setVoiceHysteresis(v as number[])}
@@ -227,8 +244,21 @@ function AudioSettings() {
                     defaultValue={1}
                     name="radio-buttons-group"
                 >
-                    <FormControlLabel value={0} control={<Radio />} label="A" />
-                    <FormControlLabel value={1} control={<Radio />} label="B" />
+                    <FormControlLabel value={0} control={<Radio />} label="Echo Suppression A (Not Implemented)" />
+                    <FormControlLabel value={1} control={<Radio />} label="Echo Suppression B (Not Implemented)" />
+                </RadioGroup>
+            </Box>
+            <Box sx={{ my: 4 }}>
+                <Typography id="non-linear-slider" gutterBottom>
+                    Noice Cancelation
+                </Typography>
+                <RadioGroup
+                    aria-labelledby="demo-radio-buttons-group-label"
+                    defaultValue={1}
+                    name="radio-buttons-group"
+                >
+                    <FormControlLabel value={0} control={<Radio />} label="Noice Cancelation A (Not Implemented)" />
+                    <FormControlLabel value={1} control={<Radio />} label="Noice Cancelation B (Not Implemented)" />
                 </RadioGroup>
             </Box>
             <Divider sx={{ my: 4 }} />
