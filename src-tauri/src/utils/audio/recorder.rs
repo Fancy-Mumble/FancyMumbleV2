@@ -107,9 +107,8 @@ impl Recorder {
                 }
 
                 if let Some(audio_preview) = audio_preview.as_mut() {
-                    let _ = audio_preview.window.try_lock().and_then(|window| {
+                    let _ = audio_preview.window.try_lock().map(|window| {
                         let _ = window.emit("audio_preview", max_amplitude);
-                        Ok(())
                     });
                 }
 
@@ -154,13 +153,10 @@ fn update_settings<T: VoiceActivationType>(
         }
         Ok(GlobalSettings::AudioPreview(audio_preview)) => {
             info!("Received audio preview: {:?}", audio_preview.enabled);
-            match audio_preview.enabled {
-                true => {
-                    *audio_settings = Some(audio_preview);
-                }
-                false => {
-                    *audio_settings = None;
-                }
+            if audio_preview.enabled {
+                *audio_settings = Some(audio_preview);
+            } else {
+                *audio_settings = None;
             }
         }
         _ => {}
