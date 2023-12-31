@@ -70,3 +70,11 @@ pub enum GlobalSettings {
     AudioOutputSettings(AudioOutputSettings),
     AudioPreview(AudioPreviewContainer),
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Coordinates {
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
+}

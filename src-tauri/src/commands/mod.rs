@@ -7,14 +7,14 @@ pub mod utils;
 pub mod web_cmd;
 pub mod zip_cmd;
 
-use std::{borrow::BorrowMut, collections::HashMap, sync::Arc};
+use std::{borrow::BorrowMut, collections::HashMap, path::Path, sync::Arc};
 
 use crate::{
     connection::{traits::Shutdown, Connection},
     errors::string_convertion::ErrorString,
     manager::user::UpdateableUserState,
     protocol::message_transmitter::MessageTransmitter,
-    utils::audio::device_manager::AudioDeviceManager,
+    utils::{audio::device_manager::AudioDeviceManager, constants::get_project_dirs},
 };
 use tauri::State;
 use tokio::sync::{
@@ -24,7 +24,11 @@ use tokio::sync::{
 use tracing::{error, info, trace};
 
 use self::utils::settings::{
-    AudioOptions, AudioOutputSettings, AudioPreviewContainer, GlobalSettings,
+    AudioOptions, AudioOutputSettings, AudioPreviewContainer, Coordinates, GlobalSettings,
+};
+use image::{
+    imageops::{self, FilterType},
+    GenericImageView,
 };
 
 pub struct ConnectionState {
@@ -185,6 +189,57 @@ pub async fn set_user_image(
     }
 
     Ok(())
+}
+
+#[allow(clippy::cast_possible_truncation)] // truncation is intentional
+#[allow(clippy::cast_sign_loss)] // loss is intentional
+#[allow(clippy::cast_precision_loss)] // loss is intentional
+#[tauri::command]
+pub async fn crop_and_store_image(
+    path: &str,
+    zoom: f32,
+    crop: Coordinates,
+    rotation: i32,
+) -> Result<String, String> {
+    let project_dirs = get_project_dirs().ok_or("Unable to load project dir")?;
+
+    let data_dir = project_dirs.cache_dir();
+    let path = Path::new(path);
+    let img = image::open(path).map_err(|e| e.to_string())?;
+
+    // Zoom
+    let (width, height) = img.dimensions();
+    let new_width = (width as f32 * zoom) as u32;
+    let new_height = (height as f32 * zoom) as u32;
+    let img = img.resize(new_width, new_height, FilterType::Nearest);
+
+    // Rotate
+    let img = if rotation == 90 {
+        img.rotate90()
+    } else if rotation == 180 {
+        img.rotate180()
+    } else if rotation == 270 {
+        img.rotate270()
+    } else {
+        img
+    };
+
+    // Crop
+    let crop_x = (crop.x * zoom) as u32;
+    let crop_y = (crop.y * zoom) as u32;
+    let crop_width = (crop.width * zoom) as u32;
+    let crop_height = (crop.height * zoom) as u32;
+    let img = imageops::crop_imm(&img, crop_x, crop_y, crop_width, crop_height).to_image();
+
+    // Save the image
+    let temp_path = data_dir.join(format!(
+        "tmp_img.{}",
+        path.extension()
+            .map_or_else(|| "", |x| x.to_str().unwrap_or(""))
+    ));
+    img.save(&temp_path).map_err(|e| e.to_string())?;
+
+    Ok(temp_path.to_str().unwrap_or("").to_string())
 }
 
 // guard can't be dropped any earlier

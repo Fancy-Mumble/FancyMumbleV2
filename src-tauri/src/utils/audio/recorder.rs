@@ -115,10 +115,12 @@ impl Recorder {
 
                 let audio_buffer = encoder.encode_audio(&value, &mut sequence_number);
 
-                let result_buffer =
-                    raw_message_builder::<UdpTunnel>(&audio_buffer).unwrap_or_default();
-                if let Err(e) = audio_queue_ref.send(result_buffer) {
-                    warn!("Failed to send audio data: {e}");
+                if let Some(audio_buffer) = audio_buffer {
+                    let result_buffer =
+                        raw_message_builder::<UdpTunnel>(&audio_buffer).unwrap_or_default();
+                    if let Err(e) = audio_queue_ref.send(result_buffer) {
+                        warn!("Failed to send audio data: {e}");
+                    }
                 }
             }
             microphone.stop().expect("Failed to stop microphone");
@@ -147,7 +149,7 @@ fn update_settings<T: VoiceActivationType>(
 ) {
     match settings_channel.try_recv() {
         Ok(GlobalSettings::AudioInputSettings(audio_settings)) => {
-            trace!("Received settings: {:?}", audio_settings);
+            info!("Received settings: {:?}", audio_settings);
             update_voice_activation_options(&audio_settings, va);
 
             let _ = microphone.volume_adjustment(audio_settings.amplification);

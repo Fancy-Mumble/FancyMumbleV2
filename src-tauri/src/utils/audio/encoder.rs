@@ -7,9 +7,11 @@ use super::microphone::DeviceConfig;
 const MAXIMUM_SAMPLES_PER_TALK: u64 = 600;
 const QUALITY: opus::Application = opus::Application::Audio;
 
+#[allow(clippy::struct_field_names)] // yes
 pub struct Encoder {
     encoder: opus::Encoder,
     audio_buffer_size: usize,
+    talking: bool,
 }
 
 impl Encoder {
@@ -26,10 +28,15 @@ impl Encoder {
         Self {
             encoder,
             audio_buffer_size: config.buffer_size,
+            talking: false,
         }
     }
 
-    pub fn encode_audio(&mut self, data: &[f32], sequence_number: &mut u64) -> Vec<u8> {
+    pub fn encode_audio(&mut self, data: &[f32], sequence_number: &mut u64) -> Option<Vec<u8>> {
+        let is_only_zero = Self::is_zero(data);
+        if !self.talking && is_only_zero {
+            return None;
+        }
         let output = self
             .encoder
             .encode_vec_float(data, self.audio_buffer_size)
@@ -49,7 +56,13 @@ impl Encoder {
         audio_buffer.extend(sequence_number_bytes.parsed_vec());
         *sequence_number += 1;
 
-        let size_pre = (output.len() as i128) | 1 << 14;
+        let termination_bit = if is_only_zero {
+            self.talking = false;
+            0
+        } else {
+            1
+        };
+        let size_pre = (output.len() as i128) | termination_bit << 14; // termination bit
 
         if *sequence_number > MAXIMUM_SAMPLES_PER_TALK {
             *sequence_number = 0;
@@ -64,6 +77,14 @@ impl Encoder {
 
         audio_buffer.extend(output);
 
-        audio_buffer
+        Some(audio_buffer)
+    }
+
+    fn is_zero(buf: &[f32]) -> bool {
+        let (prefix, aligned, suffix) = unsafe { buf.align_to::<u128>() };
+
+        prefix.iter().all(|&x| x == 0.0)
+            && suffix.iter().all(|&x| x == 0.0)
+            && aligned.iter().all(|&x| x == 0)
     }
 }
