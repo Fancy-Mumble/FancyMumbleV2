@@ -13,6 +13,7 @@ import { useTheme } from '@mui/material/styles';
 import './styles/Profile.css'
 import FloatingApply from "./components/FloatingApply";
 import ImageCrop from "./components/ImageCrop";
+import { Area } from "react-easy-crop";
 
 enum ImageType {
     Profile = 'profile',
@@ -28,6 +29,8 @@ function Profile() {
     const [uploadBoxPath, setUploadBoxPath] = React.useState("");
     const [uploadBoxBase64, setUploadBoxBase64] = React.useState("");
     const [uploadBoxType, setUploadBoxType] = React.useState(ImageType.Profile);
+    const [aspect, setAspect] = React.useState(1);
+    const [shape, setShape] = React.useState<"rect" | "round">("rect");
 
 
     let [errorMessage, setErrorMessage] = useState('');
@@ -126,7 +129,7 @@ function Profile() {
                 <CardContent>
                     <ImageCrop
                         image={uploadBoxBase64}
-                        onCancel={() => { 
+                        onCancel={() => {
                             setUploadBox(false);
                             setUploadBoxBase64("");
                         }}
@@ -135,21 +138,32 @@ function Profile() {
                             setUploadBox(false);
                             setUploadBoxBase64("");
                         }}
-                        onCrop={(image: string, zoom: number, crop: { x: number, y: number }) => {
+                        onCrop={(image: string, zoom: number, crop: Area, rotation: number) => {
                             setUploadBox(false);
                             setUploadBoxBase64("");
-                        }} />
+                            invoke('crop_and_store_image', { path: uploadBoxPath, zoom: zoom, crop: crop, rotation: rotation })
+                                .then((path) => {
+                                    console.log(path);
+                                    uploadFile(path as string, uploadBoxType);
+                                })
+                                .catch(e => console.log(e));
+                        }}
+                        aspect={aspect}
+                        cropShape={shape} />
                 </CardContent>
             </Card>
         </Backdrop>
         )
     }
 
-    function showUploadBox(path: string, type: ImageType) {
+    function showUploadBox(path: string, type: ImageType, aspect?: number, shape?: "rect" | "round") {
         invoke('convert_to_base64', { path: path }).then(base64 => {
             setUploadBox(true);
             setUploadBoxBase64(base64 as string);
+            setUploadBoxPath(path);
             setUploadBoxType(type);
+            setAspect(aspect ?? 1);
+            setShape(shape ?? "rect");
         })
     }
 
@@ -169,7 +183,7 @@ function Profile() {
                             alignContent: 'center',
                             maxWidth: '100%'
                         }}>
-                            <UploadBox onUpload={(path) => showUploadBox(path, ImageType.Background)}>{displayLoadingText("Background Image")}</UploadBox>
+                            <UploadBox onUpload={(path) => showUploadBox(path, ImageType.Background, 3 / 1, "rect")}>{displayLoadingText("Background Image")}</UploadBox>
                         </Box>
                         <Box sx={{
                             display: 'flex',
@@ -177,7 +191,7 @@ function Profile() {
                             alignContent: 'center',
                             maxWidth: '100%'
                         }}>
-                            <UploadBox onUpload={(path) => uploadFile(path, ImageType.Profile)}>{displayLoadingText("Profile Image")}</UploadBox>
+                            <UploadBox onUpload={(path) => showUploadBox(path, ImageType.Profile, 1, "round")}>{displayLoadingText("Profile Image")}</UploadBox>
                         </Box>
                         <Typography variant="h5" sx={{ marginTop: 4, marginBottom: 1 }}>Colors</Typography>
                         <Box sx={{ display: 'flex' }}>

@@ -5,22 +5,17 @@ import { useEffect, useState } from "react";
 import KeyboardIcon from '@mui/icons-material/Keyboard';
 import FloatingApply from "./components/FloatingApply";
 import { listen } from "@tauri-apps/api/event";
-
-enum InputMode {
-    VoiceActivation = 0,
-    PushToTalk = 1,
-}
+import { InputMode, setAmplification, setFadeOutDuration, setInputMode, setVoiceHold, setVoiceHysteresis } from "../../store/features/users/audioSettings";
+import { RootState } from "../../store/store";
+import { useDispatch, useSelector } from "react-redux";
 
 function AudioSettings() {
     let [inputDevice, setInputDevice] = useState('');
     let [inputDeviceList, setInputDeviceList] = useState([]);
-    const [voiceHold, setVoiceHold] = useState<number>(10);
-    const [fadeOutDuration, setFadeOutDuration] = useState<number>(10);
     const [advancedOptions, showAdvanceOptions] = useState(true);
-    const [amplification, setAmplification] = useState<number>(10);
-    const [voiceHysteresis, setVoiceHysteresis] = useState<number[]>([0.1, 0.2]);
     const [audioLevel, setAudioLevel] = useState<number>(10);
-    const [inputMode, setInputMode] = useState<InputMode>(InputMode.VoiceActivation);
+    const audioSettings = useSelector((state: RootState) => state.reducer.audioSettings);
+    const dispatch = useDispatch();
 
     useEffect(() => {
         invoke('enable_audio_info');
@@ -41,15 +36,15 @@ function AudioSettings() {
             })
     }
 
-    function setAudioSetting() {
+    function saveAudioSettings() {
         let settings = {
-            amplification: amplification,
-            input_mode: InputMode[inputMode] as keyof typeof inputMode,
+            amplification: audioSettings.amplification,
+            input_mode: InputMode[audioSettings.input_mode] as keyof typeof audioSettings.input_mode,
             voice_activation_options: {
-                voice_hold: Math.floor(calculateVoiceHold(voiceHold)),
-                fade_out_duration: Math.floor(calculateVoiceHold(fadeOutDuration)),
-                voice_hysteresis_lower_threshold: voiceHysteresis[0],
-                voice_hysteresis_upper_threshold: voiceHysteresis[1],
+                voice_hold: Math.floor(audioSettings.voice_activation_options.voice_hold),
+                fade_out_duration: Math.floor(audioSettings.voice_activation_options.fade_out_duration),
+                voice_hysteresis_lower_threshold: audioSettings.voice_activation_options.voice_hysteresis_lower_threshold,
+                voice_hysteresis_upper_threshold: audioSettings.voice_activation_options.voice_hysteresis_upper_threshold,
             }
         };
         console.log(settings);
@@ -59,6 +54,10 @@ function AudioSettings() {
 
     function calculateVoiceHold(value: number) {
         return 1.2 ** value;
+    }
+
+    function calculateVoiceHoldInverse(value: number) {
+        return Math.log(value) / Math.log(1.2);
     }
 
     function valueLabelFormat(ms: number): string {
@@ -81,13 +80,13 @@ function AudioSettings() {
 
     function handleVoiceHoldChange(event: Event, newValue: number | number[]) {
         if (typeof newValue === 'number') {
-            setVoiceHold(newValue);
+            dispatch(setVoiceHold(calculateVoiceHold(newValue)));
         }
     }
 
     function handleFadeOutDuration(event: Event, newValue: number | number[]) {
         if (typeof newValue === 'number') {
-            setFadeOutDuration(newValue);
+            dispatch(setFadeOutDuration(calculateVoiceHold(newValue)));
         }
     }
 
@@ -123,19 +122,19 @@ function AudioSettings() {
                         aria-labelledby="demo-radio-buttons-group-label"
                         defaultValue={InputMode.VoiceActivation}
                         name="radio-buttons-group"
-                        value={inputMode}
-                        onChange={(e, v) => setInputMode(Number(v))}
+                        value={audioSettings.input_mode}
+                        onChange={(e, v) => dispatch(setInputMode(Number(v)))}
                     >
                         <FormControlLabel value={InputMode.VoiceActivation} control={<Radio />} label="Voice Activation" />
                         <FormControlLabel value={InputMode.PushToTalk} control={<Radio />} label="Push-to-Talk" />
                     </RadioGroup>
                 </Box>
-                <Collapse in={inputMode === InputMode.VoiceActivation}>
+                <Collapse in={audioSettings.input_mode === InputMode.VoiceActivation}>
                     <LinearProgress
                         variant="buffer"
                         value={remap(audioLevel, 1)}
-                        valueBuffer={remap(voiceHysteresis[1], 1)}
-                        color={audioLevel > voiceHysteresis[1] ? 'success' : 'error'}
+                        valueBuffer={remap(audioSettings.voice_activation_options.voice_hysteresis_upper_threshold, 1)}
+                        color={audioLevel > audioSettings.voice_activation_options.voice_hysteresis_upper_threshold ? 'success' : 'error'}
                         sx={{
                             '& .MuiLinearProgress-bar': {
                                 transition: '50ms linear',
@@ -148,10 +147,10 @@ function AudioSettings() {
                         <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12, lg: 18 }} sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
                             <Grid item xs={4} sm={8} md={12} lg={12}>
                                 <Typography id="non-linear-slider" gutterBottom>
-                                    Audio hold duration: {valueLabelFormat(calculateVoiceHold(voiceHold))}
+                                    Audio hold duration: {valueLabelFormat(audioSettings.voice_activation_options.voice_hold)}
                                 </Typography>
                                 <Slider
-                                    value={voiceHold}
+                                    value={calculateVoiceHoldInverse(audioSettings.voice_activation_options.voice_hold)}
                                     min={0}
                                     step={1}
                                     max={60}
@@ -165,10 +164,10 @@ function AudioSettings() {
                             </Grid>
                             <Grid item xs={4} sm={8} md={12} lg={12}>
                                 <Typography id="non-linear-slider" gutterBottom>
-                                    Fade-out Duration: {valueLabelFormat(calculateVoiceHold(fadeOutDuration))}
+                                    Fade-out Duration: {valueLabelFormat(audioSettings.voice_activation_options.fade_out_duration)}
                                 </Typography>
                                 <Slider
-                                    value={fadeOutDuration}
+                                    value={calculateVoiceHoldInverse(audioSettings.voice_activation_options.fade_out_duration)}
                                     min={0}
                                     step={1}
                                     max={60}
@@ -182,15 +181,17 @@ function AudioSettings() {
                             </Grid>
                             <Grid item xs={4} sm={8} md={12} lg={12}>
                                 <Typography id="non-linear-slider" gutterBottom>
-                                    Voice Hysteresis: {voiceHysteresis[0]} - {voiceHysteresis[1]}
+                                    Voice Hysteresis: {audioSettings.voice_activation_options.voice_hysteresis_lower_threshold} - {audioSettings.voice_activation_options.voice_hysteresis_upper_threshold}
                                 </Typography>
                                 <Slider
                                     min={0}
                                     step={0.01}
                                     max={1}
                                     getAriaLabel={() => ''}
-                                    value={voiceHysteresis}
-                                    onChange={(e, v) => setVoiceHysteresis(v as number[])}
+                                    value={[audioSettings.voice_activation_options.voice_hysteresis_lower_threshold, audioSettings.voice_activation_options.voice_hysteresis_upper_threshold]}
+                                    onChange={(e, v) => {
+                                        dispatch(setVoiceHysteresis(v as number[]))
+                                    }}
                                     valueLabelDisplay="auto"
                                     disableSwap
                                 />
@@ -198,7 +199,7 @@ function AudioSettings() {
                         </Grid>
                     </Collapse>
                 </Collapse>
-                <Collapse in={inputMode === InputMode.PushToTalk}>
+                <Collapse in={audioSettings.input_mode === InputMode.PushToTalk}>
                     <Paper
                         component="form"
                         sx={{ p: '2px 4px', display: 'flex', alignItems: 'center', width: 400 }}
@@ -231,14 +232,14 @@ function AudioSettings() {
             <Box>
                 <Grid item xs={4} sm={8} md={12} lg={12}>
                     <Typography id="non-linear-slider" gutterBottom>
-                        Amplification: +{amplification}dB
+                        Amplification: +{audioSettings.amplification}dB
                     </Typography>
                     <Slider
-                        value={amplification}
+                        value={audioSettings.amplification}
                         min={0}
                         step={1}
                         max={20}
-                        onChange={(e, v) => setAmplification(v as number)}
+                        onChange={(e, v) => dispatch(setAmplification(v as number))}
                         valueLabelDisplay="auto"
                         aria-labelledby="non-linear-slider"
                     />
@@ -272,7 +273,7 @@ function AudioSettings() {
                 </RadioGroup>
             </Box>
             <Divider sx={{ my: 4 }} />
-            <FloatingApply discardText="Discard" saveText="Apply" onDiscard={() => { }} onSave={() => setAudioSetting()} />
+            <FloatingApply discardText="Discard" saveText="Apply" onDiscard={() => { }} onSave={() => saveAudioSettings()} />
         </Container>
     )
 }

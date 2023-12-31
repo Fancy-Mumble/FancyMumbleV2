@@ -27,6 +27,18 @@ function Chat() {
         }).catch(e => {
             console.log(e);
         });
+
+        invoke<any>('get_frontend_settings', { settingsName: 'audio_input' }).then((result) => {
+            let parsedSettings = JSON.parse(result);
+            if(parsedSettings?.AudioInput) {
+                dispatch(updateFrontendSettings(parsedSettings.AudioInput));
+                invoke('set_audio_input_setting', { 'settings': parsedSettings.AudioInput }).then(() => {
+                    console.log("set_audio_input_setting: ", parsedSettings.AudioInput);
+                }).catch(e => {
+                    console.log(e);
+                });
+            }
+        });
     }, []);
 
     return (
