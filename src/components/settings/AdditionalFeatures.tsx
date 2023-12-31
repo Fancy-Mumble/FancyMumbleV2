@@ -1,9 +1,8 @@
 import { Alert, Box, Container, Divider, Grid, Switch, TextField, Typography } from '@mui/material';
-import { G } from '@tauri-apps/api/path-e12e0e34';
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
-import { LinkPreviewSettings, updateApiKey, ApiKeys, FrontendSettings, updateFrontendSettings, updateLinkPreview } from '../../store/features/users/frontendSettings';
+import { updateApiKey, FrontendSettings, updateLinkPreview } from '../../store/features/users/frontendSettings';
 import { invoke } from '@tauri-apps/api';
 import { ActionCreatorWithPayload } from '@reduxjs/toolkit';
 
