@@ -1,6 +1,8 @@
 use std::io::Write;
 
 use base64::{engine::general_purpose, Engine};
+use mime_guess::from_path;
+use tokio::fs;
 use tracing::trace;
 
 #[tauri::command]
@@ -34,4 +36,13 @@ pub fn unzip_data_from_utf8(data: &str) -> Result<String, String> {
 
     let result = String::from_utf8(output).map_err(|e| e.to_string())?;
     Ok(result)
+}
+
+#[tauri::command]
+pub async fn convert_to_base64(path: &str) -> Result<String, String> {
+    let content = fs::read(path).await.map_err(|e| e.to_string())?;
+    let encoded = general_purpose::STANDARD.encode(content);
+    let mime_type = from_path(path).first_or_octet_stream();
+
+    Ok(format!("data:{mime_type};base64,{encoded}"))
 }

@@ -3,7 +3,7 @@ import { G } from '@tauri-apps/api/path-e12e0e34';
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
-import { LinkPreviewSettings, updateLinkPreview, updateApiKey, ApiKeys, FrontendSettings, updateFrontendSettings } from '../../store/features/users/frontendSettings';
+import { LinkPreviewSettings, updateApiKey, ApiKeys, FrontendSettings, updateFrontendSettings, updateLinkPreview } from '../../store/features/users/frontendSettings';
 import { invoke } from '@tauri-apps/api';
 import { ActionCreatorWithPayload } from '@reduxjs/toolkit';
 
@@ -60,9 +60,10 @@ const AdditionalFeatures: React.FC<AdditionalFeaturesProps> = React.memo(({ }) =
         let stateClone = JSON.parse(JSON.stringify(frontendSettings));
         stateClone = stateChangeFunction(stateClone);
 
-        console.log(stateClone);
-        invoke('save_frontend_settings', { settingsName: 'link_preview', data: stateClone }).then(() => {
-            console.log('Saved settings: ', stateClone);
+        let storedData = stateClone.link_preview;
+        console.log(storedData);
+        invoke('save_frontend_settings', { settingsName: 'general', data: { 'LinkPreview': storedData } }).then(() => {
+            console.log('Saved settings: ', storedData);
         }).catch(e => {
             console.log(e);
             setErrorMessage('Failed to save settings: ' + e);
@@ -108,27 +109,28 @@ const AdditionalFeatures: React.FC<AdditionalFeaturesProps> = React.memo(({ }) =
                 <Typography variant="h4">Additional Features</Typography>
                 <Divider sx={{ marginBottom: 5 }} />
                 <Box m={2}>
-                <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12, lg: 18 }} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Grid item xs={4} sm={8} md={6} lg={6}>
-                        <Typography variant="h6">Enable Link Preview</Typography>
+                    Value: {JSON.stringify(frontendSettings.link_preview)}
+                    <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12, lg: 18 }} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Grid item xs={4} sm={8} md={6} lg={6}>
+                            <Typography variant="h6">Enable Link Preview</Typography>
+                        </Grid>
+                        <Grid item xs={4} sm={8} md={6} lg={6}>
+                            <Switch {...label} checked={frontendSettings.link_preview.enabled} onChange={() => updateEnabled()} />
+                        </Grid>
                     </Grid>
-                    <Grid item xs={4} sm={8} md={6} lg={6}>
-                        <Switch {...label} checked={frontendSettings.link_preview.enabled} onChange={() => updateEnabled()} />
-                    </Grid>
-                </Grid>
-                {allowAllSetting()}
-                {linkPreviewSettings()}
+                    {allowAllSetting()}
+                    {linkPreviewSettings()}
                 </Box>
                 <Divider variant="middle" />
                 <Box m={2}>
-                <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12, lg: 18 }} sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
-                    <Grid item xs={4} sm={8} md={6} lg={6}>
-                        <Typography variant="h6">Tenor API Key</Typography>
+                    <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12, lg: 18 }} sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
+                        <Grid item xs={4} sm={8} md={6} lg={6}>
+                            <Typography variant="h6">Tenor API Key</Typography>
+                        </Grid>
+                        <Grid item xs={4} sm={8} md={6} lg={6}>
+                            <TextField {...label} value={frontendSettings.api_keys.tenor} onChange={(text) => updateTenorApiKey(text.target.value)} maxRows={10} />
+                        </Grid>
                     </Grid>
-                    <Grid item xs={4} sm={8} md={6} lg={6}>
-                        <TextField {...label} value={frontendSettings.api_keys.tenor} onChange={(text) => updateTenorApiKey(text.target.value)} maxRows={10} />
-                    </Grid>
-                </Grid>
                 </Box>
             </Container>
         </Box>

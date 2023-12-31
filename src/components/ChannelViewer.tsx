@@ -90,7 +90,7 @@ function ChannelViewer() {
                                         <ListItem key={user.id} sx={{ py: 0, minHeight: 32, maxWidth: '100%' }}>
                                             <ListItemAvatar sx={{ width: 24, height: 24, minWidth: 0, marginRight: 1 }}>
                                                 <Avatar
-                                                    sx={{ width: 24, height: 24 }}
+                                                    sx={{ width: 24, height: 24, cursor: 'pointer' }}
                                                     src={user.profile_picture}
                                                     className={(isTalking(user.id) ? 'talking-avatar' : 'silent-avatar')}
                                                     onClick={e => { setUserInfoAnchor(e.currentTarget); setSelectedUser(user) }}

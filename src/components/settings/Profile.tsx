@@ -1,4 +1,4 @@
-import { Alert, Box,  CircularProgress, Container, Divider, Grid, TextField, Typography } from "@mui/material";
+import { Alert, Backdrop, Box, Card, CardContent, CircularProgress, Container, Divider, Grid, TextField, Typography } from "@mui/material";
 import { invoke } from "@tauri-apps/api";
 import UploadBox from "../UploadBox";
 import React, { useState } from 'react';
@@ -12,6 +12,7 @@ import { encodeUserCommentData } from "../../helper/ProfileDataHelper";
 import { useTheme } from '@mui/material/styles';
 import './styles/Profile.css'
 import FloatingApply from "./components/FloatingApply";
+import ImageCrop from "./components/ImageCrop";
 
 enum ImageType {
     Profile = 'profile',
@@ -23,6 +24,10 @@ function Profile() {
     const dispatch = useDispatch();
 
     const userInfo = useSelector((state: RootState) => state.reducer.userInfo).currentUser;
+    const [uploadBox, setUploadBox] = React.useState(false);
+    const [uploadBoxPath, setUploadBoxPath] = React.useState("");
+    const [uploadBoxBase64, setUploadBoxBase64] = React.useState("");
+    const [uploadBoxType, setUploadBoxType] = React.useState(ImageType.Profile);
 
 
     let [errorMessage, setErrorMessage] = useState('');
@@ -111,8 +116,46 @@ function Profile() {
             });
     }
 
+    function imageCropBox() {
+        return (<Backdrop
+            sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+            open={uploadBox}
+            onClick={() => { setUploadBox(!uploadBox) }}
+        >
+            <Card variant="outlined" onClick={(e) => e.stopPropagation()}>
+                <CardContent>
+                    <ImageCrop
+                        image={uploadBoxBase64}
+                        onCancel={() => { 
+                            setUploadBox(false);
+                            setUploadBoxBase64("");
+                        }}
+                        onSkip={() => {
+                            uploadFile(uploadBoxPath, uploadBoxType);
+                            setUploadBox(false);
+                            setUploadBoxBase64("");
+                        }}
+                        onCrop={(image: string, zoom: number, crop: { x: number, y: number }) => {
+                            setUploadBox(false);
+                            setUploadBoxBase64("");
+                        }} />
+                </CardContent>
+            </Card>
+        </Backdrop>
+        )
+    }
+
+    function showUploadBox(path: string, type: ImageType) {
+        invoke('convert_to_base64', { path: path }).then(base64 => {
+            setUploadBox(true);
+            setUploadBoxBase64(base64 as string);
+            setUploadBoxType(type);
+        })
+    }
+
     return (
         <Box>
+            {imageCropBox()}
             <Container className="settingsContainer">
                 {showErrorMessage()}
                 <Typography variant="h4">Profile</Typography>
@@ -126,7 +169,7 @@ function Profile() {
                             alignContent: 'center',
                             maxWidth: '100%'
                         }}>
-                            <UploadBox onUpload={(path) => uploadFile(path, ImageType.Background)}>{displayLoadingText("Background Image")}</UploadBox>
+                            <UploadBox onUpload={(path) => showUploadBox(path, ImageType.Background)}>{displayLoadingText("Background Image")}</UploadBox>
                         </Box>
                         <Box sx={{
                             display: 'flex',

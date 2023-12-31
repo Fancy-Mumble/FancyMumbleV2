@@ -1,4 +1,5 @@
 use std::{
+    fs,
     io::{Read, Seek, SeekFrom, Write},
     sync::RwLock,
 };
@@ -24,6 +25,18 @@ pub fn get_settings_file(file_name: &str) -> Result<std::fs::File, String> {
         .open(data_dir.join(file_name))
         .map_err(|e| format!("Error opening file: {e:?}"))?;
     Ok(settings_file)
+}
+
+pub fn get_settings_file_location(file_name: &str) -> Result<String, String> {
+    let project_dirs = get_project_dirs().ok_or("Unable to load project dir")?;
+    let data_dir = project_dirs.config_dir();
+    std::fs::create_dir_all(data_dir).map_err(|e| format!("{e:?}"))?;
+
+    Ok(data_dir
+        .join(file_name)
+        .to_str()
+        .ok_or_else(|| "Unable to get file location".to_string())?
+        .to_string())
 }
 
 #[tauri::command]
@@ -103,31 +116,27 @@ pub struct FrontendSettingsState {
 }
 
 #[allow(clippy::needless_pass_by_value)] // LinkPreview needs to be deserialized
+#[allow(clippy::significant_drop_tightening)] // we need this to prevent simultaneous writes
 #[tauri::command]
 pub fn save_frontend_settings(
     state: State<'_, FrontendSettingsState>,
     settings_name: &str,
     data: FrontendSettings,
 ) -> Result<(), String> {
-    info!("Saving frontend settings: {settings_name}");
-    let mut settings_file = get_settings_file(&format!("{settings_name}_{FRONTEND_SETTINS_FILE}"))?;
+    trace!("Saving frontend settings: {settings_name}");
 
     trace!("Settings data: {:#?}", data);
-    if let Err(e) = state.state.write() {
+    let lock = state.state.write();
+    if let Err(e) = lock {
         return Err(format!("Error locking write state: {}", e.get_ref()));
     }
+    let data = serde_json::to_string_pretty(&data).map_err(|e| format!("{e:?}"))?;
 
-    // write the new json content
-    settings_file
-        .seek(SeekFrom::Start(0))
-        .map_err(|e| format!("{e:?}"))?;
-    settings_file
-        .write_all(
-            serde_json::to_string_pretty(&data)
-                .map_err(|e| format!("{e:?}"))?
-                .as_bytes(),
-        )
-        .map_err(|e| format!("{e:?}"))?;
+    fs::write(
+        get_settings_file_location(&format!("{settings_name}_{FRONTEND_SETTINS_FILE}"))?,
+        data,
+    )
+    .map_err(|e| format!("{e:?}"))?;
 
     Ok(())
 }

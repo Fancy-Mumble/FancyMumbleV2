@@ -27,7 +27,7 @@ enum SettingsTab {
 
 function Settings() {
     const navigate = useNavigate();
-    const [selectedIndex, setSelectedIndex] = React.useState(1);
+    const [selectedIndex, setSelectedIndex] = React.useState(0);
 
     return (
         <Box sx={{ height: '100%', display: 'flex' }}>

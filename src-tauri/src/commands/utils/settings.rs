@@ -59,7 +59,7 @@ pub struct AudioOutputSettings {
 #[derive(Clone, Debug)]
 pub struct AudioPreviewContainer {
     pub enabled: bool,
-    pub window: Arc<Mutex<tauri::Window>>
+    pub window: Arc<Mutex<tauri::Window>>,
 }
 
 #[allow(clippy::module_name_repetitions)]
@@ -68,5 +68,5 @@ pub struct AudioPreviewContainer {
 pub enum GlobalSettings {
     AudioInputSettings(AudioOptions),
     AudioOutputSettings(AudioOutputSettings),
-    AudioPreview(AudioPreviewContainer)
+    AudioPreview(AudioPreviewContainer),
 }
