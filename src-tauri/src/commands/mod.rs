@@ -270,14 +270,11 @@ pub async fn disable_audio_info(state: State<'_, ConnectionState>) -> Result<(),
 }
 #[tauri::command]
 pub async fn enable_audio_info(state: State<'_, ConnectionState>) -> Result<(), String> {
-    state
-        .settings_channel
-        .lock()
-        .await
-        .as_ref()
-        .map(|x| x.send(GlobalSettings::AudioPreview(AudioPreviewContainer {
+    state.settings_channel.lock().await.as_ref().map(|x| {
+        x.send(GlobalSettings::AudioPreview(AudioPreviewContainer {
             enabled: true,
             window: state.window.clone(),
-        })));
+        }))
+    });
     Ok(())
 }

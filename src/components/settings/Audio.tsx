@@ -131,7 +131,17 @@ function AudioSettings() {
                     </RadioGroup>
                 </Box>
                 <Collapse in={inputMode === InputMode.VoiceActivation}>
-                    <LinearProgress variant="buffer" value={remap(audioLevel, 1)} valueBuffer={remap(voiceHysteresis[1], 1)} color={audioLevel > voiceHysteresis[1] ? 'success' : 'error'}  />
+                    <LinearProgress
+                        variant="buffer"
+                        value={remap(audioLevel, 1)}
+                        valueBuffer={remap(voiceHysteresis[1], 1)}
+                        color={audioLevel > voiceHysteresis[1] ? 'success' : 'error'}
+                        sx={{
+                            '& .MuiLinearProgress-bar': {
+                                transition: '50ms linear',
+                            }
+                        }}
+                    />
                     <Divider sx={{ my: 4 }} />
                     <FormControlLabel label="Automatically detect Microphone sensitivity (Not Implemented)" control={<Switch disabled checked={!advancedOptions} onChange={() => showAdvanceOptions(!advancedOptions)} />} />
                     <Collapse in={advancedOptions}>

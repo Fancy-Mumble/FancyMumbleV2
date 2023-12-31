@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 import ChatInfoBar from '../components/ChatInfoBar';
 import EventLog from '../components/EventLog';
 import { invoke } from '@tauri-apps/api';
-import { updateLinkPreview } from '../store/features/users/frontendSettings';
+import { updateFrontendSettings } from '../store/features/users/frontendSettings';
 
 
 function Chat() {
@@ -21,9 +21,9 @@ function Chat() {
     const dispatch = useDispatch();
 
     useEffect(() => {
-        invoke<string>('get_frontend_settings', { settingsName: 'link_preview' }).then((result) => {
+        invoke<string>('get_frontend_settings', { settingsName: 'general' }).then((result) => {
             console.log("settings: ", result);
-            dispatch(updateLinkPreview(JSON.parse(result)));
+            dispatch(updateFrontendSettings(JSON.parse(result)));
         }).catch(e => {
             console.log(e);
         });

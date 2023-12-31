@@ -33,7 +33,7 @@ const initialState: FrontendSettings = {
   },
   advancedSettings: {
     disableAutoscroll: false,
-    alwaysScrollDown: false
+    alwaysScrollDown: false,
   }
 };
 

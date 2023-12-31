@@ -14,7 +14,10 @@ mod utils;
 #[cfg(test)]
 mod tests;
 
-use std::{collections::HashMap, sync::{RwLock, Arc}};
+use std::{
+    collections::HashMap,
+    sync::{Arc, RwLock},
+};
 
 use commands::{settings_cmd::FrontendSettingsState, web_cmd::CrawlerState, ConnectionState};
 use tauri_plugin_window_state::{StateFlags, WindowExt};
@@ -33,7 +36,7 @@ use crate::commands::{
     set_user_image,
     settings_cmd::{get_frontend_settings, get_server_list, save_frontend_settings, save_server},
     web_cmd::{get_open_graph_data_from_website, open_browser},
-    zip_cmd::{unzip_data_from_utf8, zip_data_to_utf8},
+    zip_cmd::{convert_to_base64, unzip_data_from_utf8, zip_data_to_utf8},
 };
 
 fn init_logging() {
@@ -61,7 +64,9 @@ async fn main() {
         .setup(|app| {
             app.manage(ConnectionState {
                 connection: Mutex::new(None),
-                window: Arc::new(Mutex::new(app.get_window("main").expect("window not found"))),
+                window: Arc::new(Mutex::new(
+                    app.get_window("main").expect("window not found"),
+                )),
                 package_info: Mutex::new(app.package_info().clone()),
                 message_handler: Mutex::new(HashMap::new()),
                 device_manager: Mutex::new(None),
@@ -91,6 +96,7 @@ async fn main() {
             get_audio_devices,
             zip_data_to_utf8,
             unzip_data_from_utf8,
+            convert_to_base64,
             open_browser,
             get_open_graph_data_from_website,
             save_frontend_settings,

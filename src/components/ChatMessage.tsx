@@ -8,10 +8,9 @@ import ThumbUpOffAltIcon from '@mui/icons-material/ThumbUpOffAlt';
 import { invoke } from "@tauri-apps/api";
 import { TextMessage, deleteChatMessage } from "../store/features/users/chatMessageSlice";
 import ClearIcon from '@mui/icons-material/Clear';
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import React, { } from "react";
 import { RootState } from "../store/store";
-import { useSelector } from "react-redux";
 import "./styles/ChatMessage.css";
 import MessageUIHelper from "../helper/MessageUIHelper";
 
