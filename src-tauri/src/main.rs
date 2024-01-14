@@ -34,7 +34,10 @@ use crate::commands::{
     change_user_state, connect_to_server, crop_and_store_image, disable_audio_info,
     enable_audio_info, get_audio_devices, like_message, logout, send_message,
     set_audio_input_setting, set_audio_output_setting, set_user_image,
-    settings_cmd::{get_frontend_settings, get_server_list, save_frontend_settings, save_server},
+    settings_cmd::{
+        get_identity_certs, get_frontend_settings, get_server_list, save_frontend_settings,
+        save_server,
+    },
     web_cmd::{get_open_graph_data_from_website, open_browser},
     zip_cmd::{convert_to_base64, unzip_data_from_utf8, zip_data_to_utf8},
 };
@@ -102,6 +105,7 @@ async fn main() {
             get_open_graph_data_from_website,
             save_frontend_settings,
             get_frontend_settings,
+            get_identity_certs,
             set_audio_input_setting,
             set_audio_output_setting,
             enable_audio_info,

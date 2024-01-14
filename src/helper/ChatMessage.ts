@@ -22,10 +22,10 @@ export class ChatMessageHandler {
         invoke('send_message', { chatMessage: data, channelId: userInfo?.channel_id });
         console.log("customChatMessage", data);
         this.pushChatMessage({
-            actor: userInfo?.id || 0,
+            actor: userInfo?.id ?? 0,
             sender: {
-                user_id: userInfo?.id || 0,
-                user_name: userInfo?.name || 'unknown'
+                user_id: userInfo?.id ?? 0,
+                user_name: userInfo?.name ?? 'unknown'
             },
             channel_id: [0],
             tree_id: [0],

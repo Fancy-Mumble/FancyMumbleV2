@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import '../App.css';
 import './styles/Login.css';
-import { Accordion, AccordionDetails, AccordionSummary, Alert, Avatar, Box, Container, Grid, LinearProgress, List, ListItem, ListItemAvatar, ListItemButton, ListItemIcon, ListItemText, TextField, Typography } from '@mui/material'
+import { Accordion, AccordionDetails, AccordionSummary, Alert, Avatar, Box, Container, Grid, IconButton, LinearProgress, List, ListItem, ListItemAvatar, ListItemButton, ListItemIcon, ListItemText, MenuItem, Select, TextField, Tooltip, Typography } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton';
 import { invoke } from '@tauri-apps/api/tauri'
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -10,6 +10,8 @@ import { RootState } from '../store/store';
 import React from 'react';
 import StorageIcon from '@mui/icons-material/Storage';
 import SendIcon from '@mui/icons-material/Send';
+import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
+import { n } from '@tauri-apps/api/fs-4bb77382';
 
 interface ServerEntry {
     description: string,
@@ -27,9 +29,12 @@ function Login() {
     const [server, setServer] = useState("magical.rocks");
     const [port, setPort] = useState("64738");
     const [username, setUsername] = useState("Endor");
+    const [identity, setIdentity] = useState("none");
+    const [identityCerts, setIdentityCerts] = useState(new Array<string>());
     const [connecting, setConnecting] = useState(false);
     const [errorInfo, setErrorInfo] = useState({ show: false, text: "" });
     const [serverInfo, setServerInfo] = useState({ show: false, text: "" });
+    const [showAdditionalOptions, setShowAdditionalOptions] = useState(false);
 
     const [serverList, setServerList] = useState<ServerEntry[]>([]);
 
@@ -54,6 +59,11 @@ function Login() {
             setServerList(e);
         }).catch(e => {
             console.log("error getting server list: ", e);
+        });
+
+        invoke('get_identity_certs').then((e: any) => {
+            console.log("identity certs: ", e);
+            setIdentityCerts(e);
         });
     }, []);
 
@@ -99,6 +109,27 @@ function Login() {
     let errorBox = errorInfo.show ? (<Box mb={3}><Alert severity="error">{errorInfo.text}</Alert></Box>) : (<div></div>);
     let serverAddInfoBoxBox = serverInfo.show ? (<Box mb={3} mt={-2}><Alert severity="info">{serverInfo.text}</Alert></Box>) : (<div></div>);
     let connectionLoading = connecting ? (<LinearProgress />) : (<div></div>);
+
+    let additionalOptions = useMemo(() => {
+        if (showAdditionalOptions) {
+            return (
+                <Grid item={true} xs={12}>
+                    <Box mt={2}>
+                        <Select fullWidth label="Identity" value={identity} onChange={e => setIdentity(e.target.value)}>
+                            {
+                                identityCerts.map((e) => {
+                                    return (
+                                        <MenuItem key={e} value={e}>{e}</MenuItem >
+                                    )
+                                })
+                            }
+                        </Select>
+                    </Box>
+                </Grid>
+            )
+        }
+        return null;
+    }, [showAdditionalOptions, identity]);
 
     return (
         <Box sx={{ height: '100%', display: 'flex', maxHeight: '100%', overflow: 'hidden' }}>
@@ -161,12 +192,21 @@ function Login() {
                                 <Grid item={true} xs={12}>
                                     <TextField fullWidth label="Username" value={username} onChange={e => setUsername(e.target.value)} />
                                 </Grid>
+                                {additionalOptions}
                                 <Grid item={true} xs={6} container justifyContent="flex-start">
                                     <Box mt={2}>
                                         <LoadingButton loading={connecting} variant="contained" onClick={e => saveServer()}>Save</LoadingButton >
                                     </Box>
                                 </Grid>
                                 <Grid item={true} xs={6} container justifyContent="flex-end">
+                                    <Box mt={2}>
+                                        <Tooltip title="More Options">
+                                            <IconButton color="primary" onClick={e => setShowAdditionalOptions(!showAdditionalOptions)} >
+                                                <UnfoldMoreIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </Box>
+
                                     <Box mt={2}>
                                         <LoadingButton loading={connecting} variant="outlined" onClick={e => connect()} endIcon={<SendIcon />}>Connect</LoadingButton >
                                     </Box>

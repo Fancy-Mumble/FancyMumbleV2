@@ -40,7 +40,7 @@ class DOMMessageParser {
         Array.from(this.document.querySelectorAll('a')).forEach(e => {
             let replaced = !this.replacementUrl.every(r => {
                 if (e.getAttribute('href')?.match(r.regex)) {
-                    let replaced = e.getAttribute('href')?.replace(r.regex, r.replacement) || '';
+                    let replaced = e.getAttribute('href')?.replace(r.regex, r.replacement) ?? '';
 
                     if (!r.inline) {
                         e.setAttribute('href', replaced);
@@ -71,6 +71,7 @@ class MessageParser {
     }
 
     parseDOM(dom: (value: DOMMessageParser) => DOMMessageParser) {
+        console.log("Parsing DOM");
         this.input = dom(new DOMMessageParser(this.input)).build();
 
         return this;
@@ -111,7 +112,7 @@ class MessageParser {
         return this;
     }
 
-    waitAndExecute(timeStr: string, callback: (remainingStr: string) => void): void {
+    private waitAndExecute(timeStr: string, callback: (remainingStr: string) => void): void {
         let time = 0;
         let remainingStr = '';
         let timeUnits = timeStr.split(' ');
