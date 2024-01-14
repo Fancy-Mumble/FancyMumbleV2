@@ -104,11 +104,13 @@ impl<T: VoiceActivationType> VoiceActivation<T> {
                     max.map_or(Some(x), |max| Some(if x > max { x } else { max }))
                 })
                 .unwrap_or_else(T::zero); // Apply the VAD logic
+
             max_amplitude = if amplitude > max_amplitude {
                 amplitude
             } else {
                 max_amplitude
             };
+
             if vad.update(&amplitude) {
                 // If the VAD is on, reset the fade out counter
                 self.fade_out_count = 0;
