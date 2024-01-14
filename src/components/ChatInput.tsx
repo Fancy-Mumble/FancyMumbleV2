@@ -57,7 +57,8 @@ function ChatInput() {
                         chatMessageHandler.sendCustomChatMessage("[[ Image too large ( " + formatBytes((reader.result as string).length) + " out of " + formatBytes(0x7fffff) + ") ]]", currentUser);
                         return;
                     }
-                    let img = '<img src="' + reader.result + '" />';
+                    const legacyImageSize = 600; // Adapt image size for legacy clients
+                    let img = `<img src="${reader.result}" width="${legacyImageSize}" />`;
                     chatMessageHandler.sendCustomChatMessage(img, currentUser);
                 };
             }

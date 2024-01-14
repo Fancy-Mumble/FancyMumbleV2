@@ -109,6 +109,7 @@ impl Connection {
             .store_to_project_dir(true)
             .build()?;
 
+        //TODO: Check for ECDHE-RSA-AES256-GCM-SHA384
         let socket = TcpStream::connect(server_uri).await?;
         let cx = TlsConnector::builder()
             .identity(certificate_store.get_client_certificate()?)

@@ -8,6 +8,7 @@ use std::{
     time::Duration,
 };
 
+use serde::de::IntoDeserializer;
 use tokio::sync::broadcast::{self, Receiver};
 use tracing::{error, info, trace, warn};
 
@@ -22,6 +23,28 @@ use super::{
     encoder::Encoder,
     processing::voice_activation::{VoiceActivation, VoiceActivationType},
 };
+
+struct GlobalMaxAvg {
+    max_avg: f32,
+    max_avg_count: u64,
+}
+
+impl Default for GlobalMaxAvg {
+    fn default() -> Self {
+        Self {
+            max_avg: 0.0,
+            max_avg_count: 0,
+        }
+    }
+}
+
+impl GlobalMaxAvg {
+    fn update(&mut self, value: f32) {
+        self.max_avg_count += 1;
+        self.max_avg =
+            (self.max_avg * (self.max_avg_count - 1) as f32 + value) / self.max_avg_count as f32;
+    }
+}
 
 pub struct Recorder {
     audio_thread: Option<thread::JoinHandle<()>>,

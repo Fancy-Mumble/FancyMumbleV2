@@ -1,4 +1,4 @@
-import { Avatar, Box, Card, CardContent, Grid, List } from "@mui/material";
+import { Avatar, Box, Card, CardContent, Grid, List, Typography } from "@mui/material";
 import React, { ReactElement, useEffect, useMemo, useRef, useState } from "react";
 import { MemoChatMessage } from "./ChatMessage";
 import { useSelector } from "react-redux";
@@ -133,6 +133,21 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 		return popoverMap;
 	}, [userIdToUserMap, userInfoAnchor]);
 
+	const emptyChatMessageContainer = useMemo(() => {
+		if (props.messages.length === 0) {
+			return (
+				<Grid container sx={{ height: '100%', width: '100%' }} justifyContent="center" alignItems="center">
+					<Grid item>
+						<Box sx={{ backgroundColor: 'transparent' }}>
+							<Typography variant="h2" sx={{ color: 'transparent', textShadow: '2px 2px 3px rgba(50,50,50,0.5)', backgroundClip: 'text', backgroundColor: '#333' }}>Write something :)</Typography>
+						</Box>
+					</Grid>
+				</Grid>
+			);
+		}
+		return null;
+	}, [props.messages]);
+
 	return (
 		<Box sx={{ flex: 1, overflowY: 'auto' }} ref={chatContainer}>
 			<List sx={{ width: '100%', maxWidth: '100%' }}>
@@ -154,6 +169,7 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 
 				))}
 			</List>
+			{emptyChatMessageContainer}
 			{currentPopoverUserId && userIdToPopoverMap.get(currentPopoverUserId)}
 			<div ref={messagesEndRef} />
 		</Box>
