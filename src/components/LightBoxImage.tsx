@@ -5,12 +5,14 @@ import "./styles/common.css"
 import UserInfo from "./UserInfo";
 import React, { useState } from "react";
 import { openInBrowser } from "../helper/BrowserUtils";
+import { useTranslation } from "react-i18next";
 
 interface LightBoxImageProps {
     src: string;
 }
 
 function LightBoxImage(props: LightBoxImageProps) {
+    const { t, i18n } = useTranslation();
     const [open, setOpen]: any = useState(false);
 
     const handleClose = () => {
@@ -30,7 +32,7 @@ function LightBoxImage(props: LightBoxImageProps) {
                         <img src={props.src} style={{ height: 'auto', width: 'auto', maxWidth: '100%', maxHeight: 'calc(100% - 2em)', objectFit: 'contain' }} />
                     </Box>
                     <Box sx={{ flexShrink: 1, textAlign: 'center'}}>
-                        <Link href="#" color="inherit" underline="hover" onClick={() => openInBrowser(props.src)}>Open In Browser</Link>
+                        <Link href="#" color="inherit" underline="hover" onClick={() => openInBrowser(props.src)}>{t('Open In Browser')}</Link>
                     </Box>
                 </Box>
             </Backdrop>

@@ -13,6 +13,7 @@ import React, { } from "react";
 import { RootState } from "../store/store";
 import "./styles/ChatMessage.css";
 import MessageUIHelper from "../helper/MessageUIHelper";
+import { useTranslation } from "react-i18next";
 
 
 interface ChatMessageProps {
@@ -64,6 +65,7 @@ const generateDate = (timestamp: number) => {
 const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message, messageId, onLoaded }) => {
     const userList = useSelector((state: RootState) => state.reducer.userInfo);
     const dispatch = useDispatch();
+    const { t, i18n } = useTranslation();
     const [loaded, setLoaded] = React.useState(false);
 
     const user = React.useMemo(() =>
@@ -92,7 +94,7 @@ const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message, messageId
                 <Typography variant="subtitle2" className="metadata">
                     <Link className="user-info" href="#">{message.sender.user_name}</Link> - {date}
                 </Typography>
-                <Tooltip title="Like">
+                <Tooltip title={t("Like")}>
                     <IconButton aria-label="Example" size="small" onClick={e => likeMessage("abc")}>
                         <ThumbUpOffAltIcon fontSize="small" color="disabled" />
                     </IconButton>

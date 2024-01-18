@@ -7,6 +7,7 @@ import { TextMessage } from "../store/features/users/chatMessageSlice";
 import { UsersState } from "../store/features/users/userSlice";
 import { getProfileImage } from "../helper/UserInfoHelper";
 import UserInfoPopover from "./UserInfoPopover";
+import { useTranslation } from "react-i18next";
 
 interface ChatMessageContainerProps {
 	messages: TextMessage[]
@@ -19,6 +20,7 @@ interface GroupedMessages {
 
 
 const ChatMessageContainer = (props: ChatMessageContainerProps) => {
+    const { t, i18n } = useTranslation();
 	const userList = useSelector((state: RootState) => state.reducer.userInfo);
 	const advancedSettings = useSelector((state: RootState) => state.reducer.frontendSettings.advancedSettings);
 	const chatContainer: React.RefObject<HTMLDivElement> = React.createRef();
@@ -139,7 +141,7 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 				<Grid container sx={{ height: '100%', width: '100%' }} justifyContent="center" alignItems="center">
 					<Grid item>
 						<Box sx={{ backgroundColor: 'transparent' }}>
-							<Typography variant="h2" sx={{ color: 'transparent', textShadow: '2px 2px 3px rgba(50,50,50,0.5)', backgroundClip: 'text', backgroundColor: '#333' }}>Write something :)</Typography>
+							<Typography variant="h2" sx={{ color: 'transparent', textShadow: '2px 2px 3px rgba(50,50,50,0.5)', backgroundClip: 'text', backgroundColor: '#333', textAlign: "center" }}>{t("write something")}</Typography>
 						</Box>
 					</Grid>
 				</Grid>

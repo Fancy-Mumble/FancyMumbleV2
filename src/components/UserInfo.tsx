@@ -11,6 +11,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../store/store";
 import "./styles/common.css"
 import { invoke } from "@tauri-apps/api";
+import { useTranslation } from "react-i18next";
 
 interface UserInfoProps {
     userInfo: UsersState | undefined;
@@ -22,6 +23,7 @@ function UserInfo(props: UserInfoProps) {
     const profileText = getTextFromcomment(props.userInfo);
     const [chatMessage, setChatMessage] = useState("");
     const [voiceAdjustment, setVoiceAdjustment] = useState(0.0);
+    const { t, i18n } = useTranslation();
     const userInfo = useSelector((state: RootState) => state.reducer.userInfo).currentUser;
 
     const dispatch = useDispatch();
@@ -129,11 +131,11 @@ function UserInfo(props: UserInfoProps) {
                     {showVolumeAdjustment()}
                     <Box className="user-info-list">
                         <Box className="user-info-item">
-                            <span className="user-text-title">User ID</span><span>#{props.userInfo?.id}</span>
+                            <span className="user-text-title">{t('User ID')}</span><span>#{props.userInfo?.id}</span>
                         </Box>
-                        {showStatusBox("Muted", mutedText)}
-                        {showStatusBox("Deafened", deafenedText)}
-                        {showStatusBox("Joined", joinedText)}
+                        {showStatusBox(t('Muted'), mutedText)}
+                        {showStatusBox(t('Deafened'), deafenedText)}
+                        {showStatusBox(t('Joined'), joinedText)}
                     </Box>
                     <Divider sx={{ margin: '10px 0' }} />
                     <Box className="user-info-text">
@@ -146,7 +148,7 @@ function UserInfo(props: UserInfoProps) {
                     >
                         <InputBase
                             sx={{ ml: 1, flex: 1 }}
-                            placeholder={"write " + props.userInfo?.name + "..."}
+                            placeholder={t("write user a message", {user: props.userInfo?.name})}
                             inputProps={{ 'aria-label': 'search google maps' }}
                             onChange={e => setChatMessage(e.target.value)}
                             onKeyDown={keyDownHandler}
