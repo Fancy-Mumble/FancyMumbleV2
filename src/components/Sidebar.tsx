@@ -1,18 +1,19 @@
-import { Box, Button, ButtonGroup } from "@mui/material"
+import React, { useCallback, useEffect, useState } from "react";
+import { Box, Button, ButtonGroup } from "@mui/material";
 import LogoutIcon from '@mui/icons-material/Logout';
 import InfoIcon from '@mui/icons-material/Info';
-import { invoke } from "@tauri-apps/api";
-import { useNavigate } from "react-router-dom";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { LoadingButton } from "@mui/lab";
-import './Sidebar.css'
-import ChannelViewer from "./ChannelViewer";
-import CurrentUserInfo from "./CurrentUserInfo";
 import SettingsIcon from '@mui/icons-material/Settings';
 import CastIcon from '@mui/icons-material/Cast';
+import { invoke } from "@tauri-apps/api";
+import { useNavigate } from "react-router-dom";
 import { useSelector } from 'react-redux';
 import { RootState } from "../store/store";
 import { WebRTCStreamer, WebRTCViewer } from "../helper/webrtc/WebRTC";
+import './Sidebar.css';
+import ChannelViewer from "./ChannelViewer";
+import CurrentUserInfo from "./CurrentUserInfo";
+import { LoadingButton } from "@mui/lab";
+import WebRTCPreview from "./WebRTCPreview";
 
 function Sidebar() {
     const signalingServerUrl = "http://127.0.0.1:4000";
@@ -23,8 +24,8 @@ function Sidebar() {
     const [webRtcViewer, setWebRtcViewer] = useState<WebRTCViewer | undefined>(undefined);
 
     const userList = useSelector((state: RootState) => state.reducer.userInfo);
-    let currentUserId = userList.currentUser?.id;
-    let currentChannelId = userList.currentUser?.channel_id;
+    const currentUserId = userList.currentUser?.id;
+    const currentChannelId = userList.currentUser?.channel_id;
 
     const triggerLogout = useCallback((event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         event.preventDefault();
@@ -32,13 +33,13 @@ function Sidebar() {
         invoke('logout').then(e => {
             setLogoutInProgress(false);
             navigate("/");
-        })
-    }, [navigate]); // add dependencies here
+        });
+    }, [navigate]);
 
     const openSettings = useCallback((event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void => {
         event.preventDefault();
         navigate("/settings");
-    }, [navigate]); // add dependencies here
+    }, [navigate]);
 
     useEffect(() => {
         const viewer = new WebRTCViewer(signalingServerUrl, currentUserId ?? 0, currentChannelId ?? 0);
@@ -46,40 +47,21 @@ function Sidebar() {
         viewer.onStream((stream) => {
             setShowWebRtcWindow(true);
         });
+        viewer.onStreamEnd(() => {
+            setShowWebRtcWindow(false);
+        });
         setWebRtcViewer(viewer);
+
         return () => {
             if (webRtcStreamer) {
                 webRtcStreamer.stop();
             }
             viewer.stop();
             setShowWebRtcWindow(false);
-        }
-    }, []);
-
-    const streamPreview = useMemo(() => {
-        if (showWebRtcWindow) {
-            return (
-                <Box sx={{ overflowY: 'auto', width: '100%', display: 'flex', flexDirection: 'column' }} >
-                    <video
-                        ref={streamElement => {
-                            if (streamElement) {
-                                webRtcViewer?.onStream((stream) => {
-                                    streamElement.srcObject = stream;
-                                });
-                            }
-                        }}
-                        autoPlay
-                        playsInline
-                        controls>
-                    </video>
-                </Box>)
-        }
-        return null;
-    }, [webRtcStreamer]);
-
+        };
+    }, [currentUserId, currentChannelId]);
 
     const castScreen = async (event: React.MouseEvent<HTMLButtonElement, MouseEvent>): Promise<void> => {
-
         if (currentUserId === undefined || currentChannelId === undefined) {
             return;
         }
@@ -87,13 +69,13 @@ function Sidebar() {
         setWebRtcStreamer(rtc);
         setShowWebRtcWindow(true);
         await rtc?.start();
-    }
+    };
 
     return (
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', alignContent: 'center', width: '250px' }} className="sidebar">
             <Box sx={{ flex: 1, overflowY: 'auto', width: '100%', display: 'flex', flexDirection: 'column' }} >
                 <CurrentUserInfo />
-                {streamPreview}
+                <WebRTCPreview webRtcViewer={webRtcViewer} showWebRtcWindow={showWebRtcWindow} />
                 <ChannelViewer />
                 <Box m={3} sx={{ display: 'flex', justifyContent: 'center' }}>
                     <ButtonGroup variant="text">
@@ -111,7 +93,7 @@ function Sidebar() {
                 </Box>
             </Box>
         </Box >
-    )
+    );
 }
 
 export default React.memo(Sidebar);

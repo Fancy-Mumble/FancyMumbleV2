@@ -71,13 +71,16 @@ export class WebRTCStreamer {
         });
 
         this.socket.emit("broadcaster");
-
+        this.stream?.getTracks().forEach(track => track.onended = () => {
+            this.stop();
+        });
     }
 
 
     stop() {
         this.socket?.disconnect();
         this.stream?.getTracks().forEach(track => track.stop());
+        this.peerConnections.forEach(peerConnection => peerConnection.close());
     }
 }
 
@@ -88,7 +91,7 @@ export class WebRTCViewer {
     private socket: Socket<DefaultEventsMap, DefaultEventsMap> | null = null;
     private configuration: { iceServers: { urls: string; }[]; };
     private stream: MediaStream | null = null;
-    private onStreamListener: ((stream: MediaStream) => void) | null = null;
+    private onStreamListeners: ((stream: MediaStream) => void)[] = [];
 
     constructor(signalingServerUrl: string, userId: number, roomId: number) {
         this.configuration = { 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }] };
@@ -110,9 +113,7 @@ export class WebRTCViewer {
                     this.socket?.emit("answer", id, peerConnection?.localDescription);
                 });
             peerConnection.ontrack = event => {
-                if (this.onStreamListener) {
-                    this.onStreamListener(event.streams[0]);
-                }
+                this.onStreamListeners.forEach(onStreamListener => onStreamListener(event.streams[0]));
             };
             peerConnection.onicecandidate = event => {
                 if (event.candidate) {
@@ -140,7 +141,23 @@ export class WebRTCViewer {
         this.socket?.disconnect();
     }
 
+
     onStream(callback: (stream: MediaStream) => void) {
-        this.onStreamListener = callback;
+        this.onStreamListeners.push(callback);
+    }
+
+    onStreamEnd(callback: () => void) {
+        if (this.peerConnection) {
+            this.peerConnection.onremovestream = callback;
+            this.peerConnection.oniceconnectionstatechange = () => {
+                if (this.peerConnection?.iceConnectionState === 'disconnected') {
+                    callback();
+                }
+            };
+        }
+        if(this.socket) {
+            this.socket.on('disconnect', callback);
+            this.socket.on('disconnectBroadcaster', callback);
+        }
     }
 }
