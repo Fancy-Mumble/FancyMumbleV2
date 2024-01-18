@@ -85,7 +85,6 @@ function DefaultColorPicker(props: ColorPickerProps) {
     }
 
     const handleChangeComplete = (hue: ColorResult, event: React.ChangeEvent<HTMLInputElement>) => {
-        console.log("Complete!");
         handleHueChange(hue);
         if(props.onChangeComplete)
            props.onChangeComplete(colorState as any, event as any)
