@@ -13,6 +13,7 @@ import Loader from './components/Loader';
 import hljs from 'highlight.js';
 import { marked } from 'marked';
 import { markedHighlight } from 'marked-highlight';
+import './i18n/i18n';
 
 import 'highlight.js/styles/base16/equilibrium-gray-dark.css';
 

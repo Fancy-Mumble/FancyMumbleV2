@@ -12,6 +12,7 @@ import { invoke } from "@tauri-apps/api";
 import { UpdateableUserState, UsersState } from "../store/features/users/userSlice";
 import "./styles/common.css"
 import { useCallback, useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 const selectCurrentUser = (state: RootState) => state.reducer.userInfo.currentUser;
 
@@ -29,6 +30,7 @@ const customEqual = (oldUser: UsersState | undefined, newUser: UsersState | unde
 };
 
 function CurrentUserInfo() {
+    const { t, i18n } = useTranslation();
     const currentUser = useSelector(selectCurrentUser, customEqual);
 
     const userBackground = useMemo(() => getBackgroundFromComment(currentUser), [currentUser?.comment]);
@@ -89,7 +91,7 @@ function CurrentUserInfo() {
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', padding: '2px 10px', flexDirection: 'column', alignItems: 'center', width: '100%', textShadow: '1px 1px #000' }}>
                     <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-                        <Typography sx={{ fontWeight: 'bold', textShadow: '2px 2px #000' }}>{currentUser?.name ?? 'Unknown'}</Typography>
+                        <Typography sx={{ fontWeight: 'bold', textShadow: '2px 2px #000' }}>{currentUser?.name ?? t('Unknown User')}</Typography>
                         <Box onClick={muteToggleUser}>
                             {MicrophoneState}
                         </Box>

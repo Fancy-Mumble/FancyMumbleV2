@@ -6,6 +6,7 @@ import { RootState } from "../store/store";
 import { invoke } from "@tauri-apps/api";
 import './styles/ChannelSearch.css';
 import Fuse from 'fuse.js';
+import { useTranslation } from "react-i18next";
 
 const fuseOptions = {
     // isCaseSensitive: false,
@@ -27,6 +28,7 @@ const fuseOptions = {
 };
 
 function ChannelSearch() {
+    const { t, i18n } = useTranslation();
     const channelList = useSelector((state: RootState) => state.reducer.channel);
     const fuse = new Fuse(channelList, fuseOptions);
 
@@ -58,10 +60,10 @@ function ChannelSearch() {
             >
                 <InputBase
                     sx={{ ml: 1, flex: 1 }}
-                    placeholder="Search"
+                    placeholder={t('Search')}
                     inputProps={{ 'aria-label': 'search' }}
                 />
-                <IconButton type="button" sx={{ p: '5px' }} aria-label="search">
+                <IconButton type="button" sx={{ p: '5px' }} aria-label={t('Search')}>
                     <SearchIcon />
                 </IconButton>
             </Paper>
@@ -83,12 +85,12 @@ function ChannelSearch() {
                         >
                             <InputBase
                                 sx={{ ml: 1, flex: 1 }}
-                                placeholder="Search Channel"
-                                inputProps={{ 'aria-label': 'search channel' }}
+                                placeholder={t('Search Channel')}
+                                inputProps={{ 'aria-label': t('Search Channel') }}
                                 onChange={e => setChannelSearchValue(e.target.value)}
                                 value={channelSearchValue}
                             />
-                            <IconButton type="button" sx={{ p: '10px' }} aria-label="search">
+                            <IconButton type="button" sx={{ p: '10px' }} aria-label={t('search')}>
                                 <SearchIcon />
                             </IconButton>
                         </Paper>

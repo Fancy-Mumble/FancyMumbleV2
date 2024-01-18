@@ -2,6 +2,8 @@ import { createSlice } from "@reduxjs/toolkit";
 import { UserInfoState, UsersState, deleteUser, updateUser } from "./userSlice";
 import dayjs from "dayjs";
 import { ChannelState } from "./channelSlice";
+import { useTranslation } from "react-i18next";
+import i18next from "i18next";
 
 interface EventLogState {
     timestamp: number
@@ -17,7 +19,7 @@ interface CheckData {
 const checks: CheckData[] = [
     {
         condition: (userInfo, payload) => !userInfo,
-        message: (userInfo, payload) => `${payload.name} joined the server`,
+        message: (userInfo, payload) => i18next.t("User Joined the Server", { user: payload.name }),
         stopAfter: (userInfo) => !userInfo
     },
     {

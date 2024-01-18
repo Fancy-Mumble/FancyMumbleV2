@@ -5,12 +5,14 @@ import { RootState } from '../store/store';
 import { useSelector } from 'react-redux';
 import React, { useEffect, useRef } from 'react';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 
 interface EventLogProps {
     showLog: boolean;
 }
 
 const EventLog: React.FC<EventLogProps> = React.memo(({ showLog }) => {
+    const { t, i18n } = useTranslation();
     const eventLog = useSelector((state: RootState) => state.eventLog);
     const eventLogRef = useRef<HTMLDivElement | null>(null);
 
@@ -43,8 +45,8 @@ const EventLog: React.FC<EventLogProps> = React.memo(({ showLog }) => {
                             <Table sx={{ minWidth: 300 }} aria-label="messaeg log" size="small" stickyHeader>
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell>Timestamp</TableCell>
-                                        <TableCell align="left">Message</TableCell>
+                                        <TableCell>{t('Timestamp')}</TableCell>
+                                        <TableCell align="left">{t('Message')}</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>

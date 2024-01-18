@@ -1,6 +1,7 @@
 import { Box, Fade, ImageList, ImageListItem, Paper, Popper, Skeleton, TextField } from '@mui/material'
 import React, { useState } from 'react';
 import SearchIcon from '@mui/icons-material/Search';
+import { useTranslation } from 'react-i18next';
 
 interface GifSearchProps {
   open: boolean
@@ -8,7 +9,7 @@ interface GifSearchProps {
 }
 
 function GifSearch(props: GifSearchProps) {
-
+  const { t, i18n } = useTranslation();
   const [search, setSearch] = useState("");
   const [itemData, setItemData] = useState<any[]>([{}, {}, {}, {}, {}, {}]);
 
@@ -20,7 +21,7 @@ function GifSearch(props: GifSearchProps) {
             <Box>
               <TextField
                 fullWidth
-                label="Search Tenor"
+                label={t("Search Tenor")}
                 InputProps={{
                   endAdornment: <SearchIcon />,
                 }}
