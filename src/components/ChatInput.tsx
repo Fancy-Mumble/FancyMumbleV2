@@ -56,7 +56,7 @@ function ChatInput() {
                 reader.readAsDataURL(file);
                 reader.onload = function () {
                     if (reader.result && (reader.result as string).length > 0x7fffff) {
-                        chatMessageHandler.sendCustomChatMessage(t("Image too large", {size: formatBytes((reader.result as string).length), max: formatBytes(0x7fffff)}), currentUser);
+                        chatMessageHandler.sendCustomChatMessage(t("Image too large", {size: formatBytes((reader.result as string).length), maximum: formatBytes(0x7fffff)}), currentUser);
                         return;
                     }
                     const legacyImageSize = 600; // Adapt image size for legacy clients

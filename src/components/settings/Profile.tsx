@@ -14,6 +14,7 @@ import './styles/Profile.css'
 import FloatingApply from "./components/FloatingApply";
 import ImageCrop from "./components/ImageCrop";
 import { Area } from "react-easy-crop";
+import { useTranslation } from "react-i18next";
 
 enum ImageType {
     Profile = 'profile',
@@ -23,6 +24,7 @@ enum ImageType {
 function Profile() {
     const theme = useTheme();
     const dispatch = useDispatch();
+    const [t, i18n] = useTranslation();
 
     const userInfo = useSelector((state: RootState) => state.reducer.userInfo).currentUser;
     const [uploadBox, setUploadBox] = React.useState(false);
@@ -183,7 +185,7 @@ function Profile() {
                             alignContent: 'center',
                             maxWidth: '100%'
                         }}>
-                            <UploadBox onUpload={(path) => showUploadBox(path, ImageType.Background, 3 / 1, "rect")}>{displayLoadingText("Background Image")}</UploadBox>
+                            <UploadBox onUpload={(path) => showUploadBox(path, ImageType.Background, 3 / 1, "rect")}>{displayLoadingText(t("Background Image"))}</UploadBox>
                         </Box>
                         <Box sx={{
                             display: 'flex',
@@ -191,17 +193,17 @@ function Profile() {
                             alignContent: 'center',
                             maxWidth: '100%'
                         }}>
-                            <UploadBox onUpload={(path) => showUploadBox(path, ImageType.Profile, 1, "round")}>{displayLoadingText("Profile Image")}</UploadBox>
+                            <UploadBox onUpload={(path) => showUploadBox(path, ImageType.Profile, 1, "round")}>{displayLoadingText(t("Profile Image"))}</UploadBox>
                         </Box>
-                        <Typography variant="h5" sx={{ marginTop: 4, marginBottom: 1 }}>Colors</Typography>
+                        <Typography variant="h5" sx={{ marginTop: 4, marginBottom: 1 }}>{t("Colors")}</Typography>
                         <Box sx={{ display: 'flex' }}>
-                            <DefaultColorPicker color={primaryColor} onChangeComplete={(color) => setPrimaryColorCall(color)} description="Primary" style={{ marginRight: 15 }} />
-                            <DefaultColorPicker color={accentColor} onChangeComplete={(color) => setAccentColorCall(color)} description="Accent" style={{ marginRight: 15 }} />
+                            <DefaultColorPicker color={primaryColor} onChangeComplete={(color) => setPrimaryColorCall(color)} description={t("Primary")} style={{ marginRight: 15 }} />
+                            <DefaultColorPicker color={accentColor} onChangeComplete={(color) => setAccentColorCall(color)} description={t("Accent")} style={{ marginRight: 15 }} />
                         </Box>
-                        <Typography variant="h5" sx={{ marginTop: 4, marginBottom: 1 }}>About Me</Typography>
+                        <Typography variant="h5" sx={{ marginTop: 4, marginBottom: 1 }}>{t("About Me")}</Typography>
                         <Box sx={{ display: 'flex' }}>
                             <TextField
-                                placeholder="Tell us about yourself!"
+                                placeholder={t("Tell us about yourself")}
                                 rows={4}
                                 multiline
                                 sx={{ flexGrow: 1, marginRight: 2 }}
@@ -216,7 +218,7 @@ function Profile() {
                     </Grid>
                 </Grid>
             </Container >
-            <FloatingApply discardText="Discard" saveText="Save" onDiscard={() => { }} onSave={() => { }} />
+            <FloatingApply discardText={t("Discard")} saveText={t("Save")} onDiscard={() => { }} onSave={() => { }} />
         </Box >
     )
 }
