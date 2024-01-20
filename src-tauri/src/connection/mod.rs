@@ -34,6 +34,7 @@ struct ServerData {
     username: String,
     server_host: String,
     server_port: u16,
+    identity: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -68,6 +69,7 @@ impl Connection {
         server_host: &str,
         server_port: u16,
         username: &str,
+        identity: Option<String>,
         package_info: PackageInfo,
         settings_channel: Receiver<GlobalSettings>,
     ) -> Self {
@@ -84,6 +86,7 @@ impl Connection {
                 username: username.to_string(),
                 server_host: server_host.to_string(),
                 server_port,
+                identity,
             },
             tx_in,
             tx_out,
@@ -104,7 +107,7 @@ impl Connection {
             self.server_data.server_host, self.server_data.server_port
         );
 
-        let mut certificate_store = CertificateBuilder::new()
+        let mut certificate_store = CertificateBuilder::try_from(&self.server_data.identity)
             .load_or_generate_new(true)
             .store_to_project_dir(true)
             .build()?;

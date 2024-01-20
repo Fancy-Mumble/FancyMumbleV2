@@ -10,6 +10,7 @@ use tokio::net::TcpStream;
 use crate::errors::AnyError;
 
 pub const DEADMAN_INTERVAL: Duration = Duration::from_millis(500);
+pub const MAX_PING_FAILURES: u8 = 3;
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum ConnectionThread {

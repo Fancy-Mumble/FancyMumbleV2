@@ -45,8 +45,8 @@ const EventLog: React.FC<EventLogProps> = React.memo(({ showLog }) => {
                             <Table sx={{ minWidth: 300 }} aria-label="messaeg log" size="small" stickyHeader>
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell>{t('Timestamp')}</TableCell>
-                                        <TableCell align="left">{t('Message')}</TableCell>
+                                        <TableCell>{t('Timestamp', { ns: "time" })}</TableCell>
+                                        <TableCell align="left">{t('Message', { ns: "user_interaction" })}</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>

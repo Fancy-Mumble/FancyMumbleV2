@@ -46,7 +46,7 @@ pub fn save_server(
     server_host: &str,
     server_port: u16,
     username: &str,
-    identity: Option<UserIdentity>,
+    identity: Option<String>,
 ) -> Result<(), String> {
     info!("Saving server: {server_host}:{server_port}");
     let mut server_file = get_settings_file(SERVER_SETTINS_FILE)?;
@@ -55,12 +55,12 @@ pub fn save_server(
     let mut server_list =
         serde_json::from_reader::<&std::fs::File, Vec<Server>>(&server_file).unwrap_or_default();
 
-    // check if the server is already in the list
-    for server in &server_list {
-        if server.host == server_host && server.port == server_port {
-            return Err("Server already exists".to_string());
-        }
-    }
+    // // check if the server is already in the list
+    // for server in &server_list {
+    //     if server.host == server_host && server.port == server_port {
+    //         return Err("Server already exists".to_string());
+    //     }
+    // }
 
     server_list.push(Server {
         description: description.to_string(),
@@ -190,7 +190,11 @@ pub fn get_identity_certs() -> Result<Vec<String>, String> {
         let file_name_str = file_name.to_string_lossy();
 
         if file_name_str.starts_with("cert_") && file_name_str.ends_with(".pem") {
-            certs.push(file_name_str.into_owned());
+            let cert_name = file_name_str
+                .trim_start_matches("cert_")
+                .trim_end_matches(".pem")
+                .to_owned();
+            certs.push(cert_name);
         }
     }
 

@@ -62,9 +62,10 @@ pub async fn connect_to_server(
     server_host: String,
     server_port: u16,
     username: String,
+    identity: Option<String>,
     state: State<'_, ConnectionState>,
 ) -> Result<(), String> {
-    info!("Connecting to server: {server_host}:{server_port}");
+    info!("Connecting to server: {server_host}:{server_port}, username: {username}, identity: {identity:?}");
 
     let mut guard = state.connection.lock().await;
     if let Some(guard) = guard.as_mut() {
@@ -81,6 +82,7 @@ pub async fn connect_to_server(
         &server_host,
         server_port,
         &username,
+        identity,
         app_info,
         settings_channel,
     ));

@@ -64,11 +64,11 @@ function AudioSettings() {
 
     function valueLabelFormat(ms: number): string {
         const timeUnits = [
-            { unit: t("day short"), value: 86400000 },
-            { unit: t("hour short"), value: 3600000 },
-            { unit: t("minute short"), value: 60000 },
-            { unit: t("second short"), value: 1000 },
-            { unit: t("millisecond short"), value: 1 }
+            { unit: t("day short", { ns: "time" }), value: 86400000 },
+            { unit: t("hour short", { ns: "time" }), value: 3600000 },
+            { unit: t("minute short", { ns: "time" }), value: 60000 },
+            { unit: t("second short", { ns: "time" }), value: 1000 },
+            { unit: t("millisecond short", { ns: "time" }), value: 1 }
         ];
 
         for (const element of timeUnits) {
@@ -98,14 +98,14 @@ function AudioSettings() {
 
     return (
         <Container>
-            <Typography variant="h3">{t("Audio")}</Typography>
+            <Typography variant="h3">{t("Audio", { ns: "audio" })}</Typography>
             <FormControl sx={{ m: 1, minWidth: 120, justifyContent: 'center' }} size="small">
-                <InputLabel id="demo-simple-select-label">{t("Microphone")}</InputLabel>
+                <InputLabel id="demo-simple-select-label">{t("Microphone", { ns: "audio" })}</InputLabel>
                 <Select
                     labelId="demo-simple-select-helper-label"
                     id="demo-simple-select-helper"
                     value={inputDevice}
-                    label={t("Microphone")}
+                    label={t("Microphone", { ns: "audio" })}
                     onChange={(e) => setInputDevice(e.target.value as any)}
                 >
                     <MenuItem value="">
@@ -127,8 +127,8 @@ function AudioSettings() {
                         value={audioSettings.input_mode}
                         onChange={(e, v) => dispatch(setInputMode(Number(v)))}
                     >
-                        <FormControlLabel value={InputMode.VoiceActivation} control={<Radio />} label={t("Voice Activation")} />
-                        <FormControlLabel value={InputMode.PushToTalk} control={<Radio />} label={t("Push To Talk")} />
+                        <FormControlLabel value={InputMode.VoiceActivation} control={<Radio />} label={t("Voice Activation", { ns: "audio" })} />
+                        <FormControlLabel value={InputMode.PushToTalk} control={<Radio />} label={t("Push To Talk", { ns: "audio" })} />
                     </RadioGroup>
                 </Box>
                 <Collapse in={audioSettings.input_mode === InputMode.VoiceActivation}>
@@ -144,12 +144,12 @@ function AudioSettings() {
                         }}
                     />
                     <Divider sx={{ my: 4 }} />
-                    <FormControlLabel label={t("Feature Not Implemented", {feature: t("Automatically detect Microphone sensitivity")})} control={<Switch disabled checked={!advancedOptions} onChange={() => showAdvanceOptions(!advancedOptions)} />} />
+                    <FormControlLabel label={t("Feature Not Implemented", { feature: t("Automatically detect Microphone sensitivity", { ns: "audio" }) })} control={<Switch disabled checked={!advancedOptions} onChange={() => showAdvanceOptions(!advancedOptions)} />} />
                     <Collapse in={advancedOptions}>
                         <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12, lg: 18 }} sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
                             <Grid item xs={4} sm={8} md={12} lg={12}>
                                 <Typography id="non-linear-slider" gutterBottom>
-                                    {t("Hold Activation for", {duration: valueLabelFormat(audioSettings.voice_activation_options.voice_hold)})}
+                                    {t("Hold Activation for", { ns: "audio", duration: valueLabelFormat(audioSettings.voice_activation_options.voice_hold) })}
                                 </Typography>
                                 <Slider
                                     value={calculateVoiceHoldInverse(audioSettings.voice_activation_options.voice_hold)}
@@ -166,7 +166,7 @@ function AudioSettings() {
                             </Grid>
                             <Grid item xs={4} sm={8} md={12} lg={12}>
                                 <Typography id="non-linear-slider" gutterBottom>
-                                {t("Fade-out Audio after activation for", {duration: valueLabelFormat(audioSettings.voice_activation_options.fade_out_duration)})}
+                                    {t("Fade-out Audio after activation for", { ns: "audio", duration: valueLabelFormat(audioSettings.voice_activation_options.fade_out_duration) })}
                                 </Typography>
                                 <Slider
                                     value={calculateVoiceHoldInverse(audioSettings.voice_activation_options.fade_out_duration)}
@@ -183,7 +183,7 @@ function AudioSettings() {
                             </Grid>
                             <Grid item xs={4} sm={8} md={12} lg={12}>
                                 <Typography id="non-linear-slider" gutterBottom>
-                                    {t("Audio activation at", {threshold: audioSettings.voice_activation_options.voice_hysteresis_upper_threshold})} | {t("Audio deactivation at", {threshold: audioSettings.voice_activation_options.voice_hysteresis_lower_threshold})}
+                                    {t("Audio activation at", { ns: "audio", threshold: audioSettings.voice_activation_options.voice_hysteresis_upper_threshold })} | {t("Audio deactivation at", { ns: "audio", threshold: audioSettings.voice_activation_options.voice_hysteresis_lower_threshold })}
                                 </Typography>
                                 <Slider
                                     min={0}
@@ -234,7 +234,7 @@ function AudioSettings() {
             <Box>
                 <Grid item xs={4} sm={8} md={12} lg={12}>
                     <Typography id="non-linear-slider" gutterBottom>
-                        {t("Amplification dB", {amplification: audioSettings.amplification})}
+                        {t("Amplification dB", { ns: "audio", amplification: audioSettings.amplification })}
                     </Typography>
                     <Slider
                         value={audioSettings.amplification}
@@ -250,32 +250,32 @@ function AudioSettings() {
             <Divider sx={{ my: 4 }} />
             <Box>
                 <Typography id="non-linear-slider" gutterBottom>
-                    {t("Echo Cancelation")}
+                    {t("Echo Cancelation", { ns: "audio" })}
                 </Typography>
                 <RadioGroup
                     aria-labelledby="demo-radio-buttons-group-label"
                     defaultValue={1}
                     name="radio-buttons-group"
                 >
-                    <FormControlLabel value={0} control={<Radio />} label={t("Feature Not Implemented", {feature: t("Echo Cancelation")})} />
-                    <FormControlLabel value={1} control={<Radio />} label={t("Feature Not Implemented", {feature: t("Echo Cancelation")})} />
+                    <FormControlLabel value={0} control={<Radio />} label={t("Feature Not Implemented", { feature: t("Echo Cancelation", { ns: "audio" }) })} />
+                    <FormControlLabel value={1} control={<Radio />} label={t("Feature Not Implemented", { feature: t("Echo Cancelation", { ns: "audio" }) })} />
                 </RadioGroup>
             </Box>
             <Box sx={{ my: 4 }}>
                 <Typography id="non-linear-slider" gutterBottom>
-                    {t("Noise Suppression")}
+                    {t("Noise Suppression", { ns: "audio" })}
                 </Typography>
                 <RadioGroup
                     aria-labelledby="demo-radio-buttons-group-label"
                     defaultValue={1}
                     name="radio-buttons-group"
                 >
-                    <FormControlLabel value={0} control={<Radio />} label={t("Feature Not Implemented", {feature: t("Noise Suppression")})} />
-                    <FormControlLabel value={1} control={<Radio />} label={t("Feature Not Implemented", {feature: t("Noise Suppression")})} />
+                    <FormControlLabel value={0} control={<Radio />} label={t("Feature Not Implemented", { feature: t("Noise Suppression", { ns: "audio" }) })} />
+                    <FormControlLabel value={1} control={<Radio />} label={t("Feature Not Implemented", { feature: t("Noise Suppression", { ns: "audio" }) })} />
                 </RadioGroup>
             </Box>
             <Divider sx={{ my: 4 }} />
-            <FloatingApply discardText={t("Discard")} saveText={t("Apply")} onDiscard={() => { }} onSave={() => saveAudioSettings()} />
+            <FloatingApply discardText={t("Discard", { ns: "user_interaction" })} saveText={t("Apply", { ns: "user_interaction" })} onDiscard={() => { }} onSave={() => saveAudioSettings()} />
         </Container>
     )
 }

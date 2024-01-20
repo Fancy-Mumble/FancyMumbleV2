@@ -148,7 +148,7 @@ function UserInfo(props: UserInfoProps) {
                     >
                         <InputBase
                             sx={{ ml: 1, flex: 1 }}
-                            placeholder={t("write user a message", {user: props.userInfo?.name})}
+                            placeholder={t("write user a message", {ns: "user_interaction", user: props.userInfo?.name})}
                             inputProps={{ 'aria-label': 'search google maps' }}
                             onChange={e => setChatMessage(e.target.value)}
                             onKeyDown={keyDownHandler}

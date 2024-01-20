@@ -19,7 +19,7 @@ interface CheckData {
 const checks: CheckData[] = [
     {
         condition: (userInfo, payload) => !userInfo,
-        message: (userInfo, payload) => i18next.t("User Joined the Server", { user: payload.name }),
+        message: (userInfo, payload) => i18next.t("User Joined the Server", { ns: "user_interaction", user: payload.name }),
         stopAfter: (userInfo) => !userInfo
     },
     {

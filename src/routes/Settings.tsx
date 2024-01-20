@@ -57,7 +57,7 @@ function Settings() {
                             <ListItemIcon>
                                 <VolumeUpIcon />
                             </ListItemIcon>
-                            <ListItemText primary={t("Audio")} />
+                            <ListItemText primary={t("Audio", { ns: "audio" })} />
                         </ListItemButton>
                     </List>
                     <Divider />
@@ -69,7 +69,7 @@ function Settings() {
                             <ListItemIcon>
                                 <AodIcon />
                             </ListItemIcon>
-                            <ListItemText primary={t("Appearance")} />
+                            <ListItemText primary={t("Appearance", { ns: "appearance" })} />
                         </ListItemButton>
                         <ListItemButton
                             selected={selectedIndex === SettingsTab.Notifications}
@@ -78,7 +78,7 @@ function Settings() {
                             <ListItemIcon>
                                 <NotificationsIcon />
                             </ListItemIcon>
-                            <ListItemText primary={t("Notifications")} />
+                            <ListItemText primary={t("Notifications", { ns: "notifications" })} />
                         </ListItemButton>
                         <ListItemButton
                             selected={selectedIndex === SettingsTab.Language}
@@ -87,7 +87,7 @@ function Settings() {
                             <ListItemIcon>
                                 <LanguageIcon />
                             </ListItemIcon>
-                            <ListItemText primary={t("Language")} />
+                            <ListItemText primary={t("Language", { ns: "language" })} />
                         </ListItemButton>
                         <ListItemButton
                             selected={selectedIndex === SettingsTab.Hotkeys}
@@ -96,7 +96,7 @@ function Settings() {
                             <ListItemIcon>
                                 <KeyboardIcon />
                             </ListItemIcon>
-                            <ListItemText primary={t("Hotkeys")} />
+                            <ListItemText primary={t("Hotkeys", { ns: "notifications" })} />
                         </ListItemButton>
                     </List>
                     <Divider />
@@ -126,12 +126,12 @@ function Settings() {
                             <ListItemIcon>
                                 <SecurityIcon />
                             </ListItemIcon>
-                            <ListItemText primary={t("Privacy")} />
+                            <ListItemText primary={t("Privacy", { ns: "privacy" })} />
                         </ListItemButton>
                     </List>
                 </Box>
                 <Box>
-                    <Button onClick={e => navigate("/chat")}>{t('Go Back')}</Button>
+                    <Button onClick={e => navigate("/chat")}>{t('Go Back', { ns: "user_interaction" })}</Button>
                 </Box>
             </Box>
             <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
@@ -139,7 +139,7 @@ function Settings() {
                     {selectedIndex === SettingsTab.Audio && <AudioSettings />}
                     {selectedIndex === SettingsTab.Profile && <Profile />}
                     {selectedIndex === SettingsTab.AdditionalFeatures && <AdditionalFeatures />}
-                    {selectedIndex === SettingsTab.Privacy && <div>{t('Privacy')}</div>}
+                    {selectedIndex === SettingsTab.Privacy && <div>{t('Privacy', { ns: "privacy" })}</div>}
                     {selectedIndex === SettingsTab.Advanced && <AdvancedSettings />}
                     {selectedIndex === SettingsTab.Language && <LanguageSettings />}
                 </Box>

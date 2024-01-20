@@ -8,7 +8,7 @@ use tracing::{debug, error, info};
 
 use crate::{
     errors::AnyError, mumble, protocol::serialize::message_container::FrontendMessage,
-    utils::messages::message_builder,
+    utils::{messages::message_builder, frontend::send_to_frontend},
 };
 
 use super::Update;
@@ -76,24 +76,11 @@ impl Manager {
         }
     }
 
-    fn send_to_frontend<T: Serialize + Clone>(&self, msg: &FrontendMessage<T>) {
-        match serde_json::to_string(&msg) {
-            Ok(json) => {
-                if let Err(e) = self.frontend_channel.send(json) {
-                    error!("Failed to send user list to frontend: {}", e);
-                }
-            }
-            Err(e) => {
-                error!("Failed to serialize user list: {}", e);
-            }
-        }
-    }
-
     fn notify(&self, channel_id: u32) {
         if let Some(user) = self.channels.get(&channel_id) {
             let msg = FrontendMessage::new("channel_update", &user);
 
-            self.send_to_frontend(&msg);
+            send_to_frontend(&self.frontend_channel, &msg);
         }
     }
 
@@ -143,7 +130,7 @@ impl Manager {
             };
             let msg = FrontendMessage::new("channel_description", &channel_description);
 
-            self.send_to_frontend(&msg);
+            send_to_frontend(&self.frontend_channel, &msg);
         }
     }
 
