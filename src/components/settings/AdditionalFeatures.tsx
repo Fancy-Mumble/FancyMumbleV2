@@ -5,6 +5,7 @@ import { RootState } from '../../store/store';
 import { updateApiKey, FrontendSettings, updateLinkPreview } from '../../store/features/users/frontendSettings';
 import { invoke } from '@tauri-apps/api';
 import { ActionCreatorWithPayload } from '@reduxjs/toolkit';
+import { t } from 'i18next';
 
 
 interface AdditionalFeaturesProps {
@@ -15,7 +16,7 @@ const AdditionalFeatures: React.FC<AdditionalFeaturesProps> = React.memo(({ }) =
     const dispatch = useDispatch();
 
     let [errorMessage, setErrorMessage] = useState('');
-    const label = { inputProps: { 'aria-label': 'Link Preview' } };
+    const label = { inputProps: { 'aria-label': t('Link Preview') } };
 
     function showErrorMessage() {
         if (errorMessage) {
@@ -77,7 +78,7 @@ const AdditionalFeatures: React.FC<AdditionalFeaturesProps> = React.memo(({ }) =
         return (
             <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12, lg: 18 }} sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
                 <Grid item xs={4} sm={8} md={6} lg={6}>
-                    <Typography variant="h6">Allow URLs from all sources</Typography>
+                    <Typography variant="h6">{t('Allow URLs from all sources')}</Typography>
                 </Grid>
                 <Grid item xs={4} sm={8} md={6} lg={6}>
                     <Switch {...label} checked={frontendSettings.link_preview.allow_all || false} onChange={() => updateAllowAll()} />
@@ -92,7 +93,7 @@ const AdditionalFeatures: React.FC<AdditionalFeaturesProps> = React.memo(({ }) =
         return (
             <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12, lg: 18 }} sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
                 <Grid item xs={4} sm={8} md={6} lg={6}>
-                    <Typography variant="h6">Link Preview Urls</Typography>
+                    <Typography variant="h6">{t('Allowed Link Preview Urls')}</Typography>
                 </Grid>
                 <Grid item xs={4} sm={8} md={6} lg={6}>
                     <TextField {...label} value={frontendSettings.link_preview.urls.join('\n')} multiline onChange={(text) => updateAllowedUrls(text.target.value.split(/\r?\n/))} maxRows={10} />
@@ -105,13 +106,12 @@ const AdditionalFeatures: React.FC<AdditionalFeaturesProps> = React.memo(({ }) =
         <Box>
             <Container className="settingsContainer">
                 {showErrorMessage()}
-                <Typography variant="h4">Additional Features</Typography>
+                <Typography variant="h4">{t('Additional Features')}</Typography>
                 <Divider sx={{ marginBottom: 5 }} />
                 <Box m={2}>
-                    Value: {JSON.stringify(frontendSettings.link_preview)}
                     <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12, lg: 18 }} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Grid item xs={4} sm={8} md={6} lg={6}>
-                            <Typography variant="h6">Enable Link Preview</Typography>
+                            <Typography variant="h6">{t('Enable Link Preview')}</Typography>
                         </Grid>
                         <Grid item xs={4} sm={8} md={6} lg={6}>
                             <Switch {...label} checked={frontendSettings.link_preview.enabled} onChange={() => updateEnabled()} />
@@ -124,7 +124,7 @@ const AdditionalFeatures: React.FC<AdditionalFeaturesProps> = React.memo(({ }) =
                 <Box m={2}>
                     <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12, lg: 18 }} sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
                         <Grid item xs={4} sm={8} md={6} lg={6}>
-                            <Typography variant="h6">Tenor API Key</Typography>
+                            <Typography variant="h6">{t('Tenor API Key')}</Typography>
                         </Grid>
                         <Grid item xs={4} sm={8} md={6} lg={6}>
                             <TextField {...label} value={frontendSettings.api_keys.tenor} onChange={(text) => updateTenorApiKey(text.target.value)} maxRows={10} />

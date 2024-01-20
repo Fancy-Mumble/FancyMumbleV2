@@ -13,6 +13,11 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import KeyboardIcon from '@mui/icons-material/Keyboard';
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
 import AdvancedSettings from "../components/settings/AdvancedSettings";
+import Language from "@mui/icons-material/Language";
+import { Lan } from "@mui/icons-material";
+import LanguageSettings from "../components/settings/LanguageSettings";
+import LanguageIcon from '@mui/icons-material/Language';
+import { useTranslation } from "react-i18next";
 
 enum SettingsTab {
     Profile = 0,
@@ -23,17 +28,19 @@ enum SettingsTab {
     Notifications = 5,
     Hotkeys = 6,
     Advanced = 7,
+    Language = 8
 }
 
 function Settings() {
     const navigate = useNavigate();
     const [selectedIndex, setSelectedIndex] = React.useState(0);
+    const [t, i18n] = useTranslation();
 
     return (
         <Box sx={{ height: '100%', display: 'flex' }}>
             <Box sx={{ width: '100%', maxWidth: 200, bgcolor: 'background.paper', height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
-                    <List component="nav" aria-label="main mailbox folders" subheader={<ListSubheader>Settings</ListSubheader>}>
+                    <List component="nav" aria-label="main mailbox folders" subheader={<ListSubheader>{t('Settings')}</ListSubheader>}>
                         <ListItemButton
                             selected={selectedIndex === SettingsTab.Profile}
                             onClick={() => setSelectedIndex(SettingsTab.Profile)}
@@ -41,7 +48,7 @@ function Settings() {
                             <ListItemIcon>
                                 <PersonIcon />
                             </ListItemIcon>
-                            <ListItemText primary="Profile" />
+                            <ListItemText primary={t("Profile")} />
                         </ListItemButton>
                         <ListItemButton
                             selected={selectedIndex === SettingsTab.Audio}
@@ -50,7 +57,7 @@ function Settings() {
                             <ListItemIcon>
                                 <VolumeUpIcon />
                             </ListItemIcon>
-                            <ListItemText primary="Audio" />
+                            <ListItemText primary={t("Audio")} />
                         </ListItemButton>
                     </List>
                     <Divider />
@@ -62,7 +69,7 @@ function Settings() {
                             <ListItemIcon>
                                 <AodIcon />
                             </ListItemIcon>
-                            <ListItemText primary="Appearance" />
+                            <ListItemText primary={t("Appearance")} />
                         </ListItemButton>
                         <ListItemButton
                             selected={selectedIndex === SettingsTab.Notifications}
@@ -71,7 +78,16 @@ function Settings() {
                             <ListItemIcon>
                                 <NotificationsIcon />
                             </ListItemIcon>
-                            <ListItemText primary="Notifications" />
+                            <ListItemText primary={t("Notifications")} />
+                        </ListItemButton>
+                        <ListItemButton
+                            selected={selectedIndex === SettingsTab.Language}
+                            onClick={(event) => setSelectedIndex(SettingsTab.Language)}
+                        >
+                            <ListItemIcon>
+                                <LanguageIcon />
+                            </ListItemIcon>
+                            <ListItemText primary={t("Language")} />
                         </ListItemButton>
                         <ListItemButton
                             selected={selectedIndex === SettingsTab.Hotkeys}
@@ -80,7 +96,7 @@ function Settings() {
                             <ListItemIcon>
                                 <KeyboardIcon />
                             </ListItemIcon>
-                            <ListItemText primary="Hotkeys" />
+                            <ListItemText primary={t("Hotkeys")} />
                         </ListItemButton>
                     </List>
                     <Divider />
@@ -92,7 +108,7 @@ function Settings() {
                             <ListItemIcon>
                                 <KeyIcon />
                             </ListItemIcon>
-                            <ListItemText primary="Additional Features" />
+                            <ListItemText primary={t("Additional Features")} />
                         </ListItemButton>
                         <ListItemButton
                             selected={selectedIndex === SettingsTab.Advanced}
@@ -101,7 +117,7 @@ function Settings() {
                             <ListItemIcon>
                                 <SettingsSuggestIcon />
                             </ListItemIcon>
-                            <ListItemText primary="Advanced" />
+                            <ListItemText primary={t("Advanced")} />
                         </ListItemButton>
                         <ListItemButton
                             selected={selectedIndex === SettingsTab.Privacy}
@@ -110,12 +126,12 @@ function Settings() {
                             <ListItemIcon>
                                 <SecurityIcon />
                             </ListItemIcon>
-                            <ListItemText primary="Privacy" />
+                            <ListItemText primary={t("Privacy")} />
                         </ListItemButton>
                     </List>
                 </Box>
                 <Box>
-                    <Button onClick={e => navigate("/chat")}>Go Back</Button>
+                    <Button onClick={e => navigate("/chat")}>{t('Go Back')}</Button>
                 </Box>
             </Box>
             <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
@@ -123,8 +139,9 @@ function Settings() {
                     {selectedIndex === SettingsTab.Audio && <AudioSettings />}
                     {selectedIndex === SettingsTab.Profile && <Profile />}
                     {selectedIndex === SettingsTab.AdditionalFeatures && <AdditionalFeatures />}
-                    {selectedIndex === SettingsTab.Privacy && <div>Privacy</div>}
+                    {selectedIndex === SettingsTab.Privacy && <div>{t('Privacy')}</div>}
                     {selectedIndex === SettingsTab.Advanced && <AdvancedSettings />}
+                    {selectedIndex === SettingsTab.Language && <LanguageSettings />}
                 </Box>
             </Box>
         </Box>
