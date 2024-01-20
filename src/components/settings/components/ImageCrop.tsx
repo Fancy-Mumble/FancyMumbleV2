@@ -3,6 +3,7 @@ import { Box, Button, Container, IconButton, Slider, Typography } from '@mui/mat
 import Cropper, { Area } from 'react-easy-crop';
 import RotateLeftIcon from '@mui/icons-material/RotateLeft';
 import RotateRightIcon from '@mui/icons-material/RotateRight';
+import { useTranslation } from 'react-i18next';
 
 interface ImageCropperProps {
     image: string;
@@ -14,6 +15,7 @@ interface ImageCropperProps {
 }
 
 const ImageCropper: React.FC<ImageCropperProps> = ({ image, onSkip, onCrop, onCancel, ...props }) => {
+    const [t, i18n] = useTranslation();
     const [crop, setCrop] = useState<{ x: number, y: number }>({ x: 0, y: 0 });
     const [zoom, setZoom] = useState<number>(1);
     const [croppedImage, setCroppedImage] = useState<string | null>(null);
@@ -28,7 +30,7 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ image, onSkip, onCrop, onCa
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '640px', height: '480px', maxWidth: '100%', maxHeight: '100%', margin: '5px' }}>
             <Box sx={{ mb: 1 }}>
-                <Typography variant="h6">Edit Image</Typography>
+                <Typography variant="h6">{t('Edit Image')}</Typography>
             </Box>
             <Box sx={{ maxWidth: '640px', maxHeight: '480px', position: 'relative', flexGrow: 1, width: '100%' }}>
                 <Cropper
@@ -66,15 +68,15 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ image, onSkip, onCrop, onCa
             <Box sx={{ display: 'flex', width: '100%' }}>
                 <Box sx={{ flexGrow: 1 }}>
                     <Button onClick={onSkip} variant="text" color="info">
-                        Skip
+                        {t('Skip')}
                     </Button>
                 </Box>
                 <Box>
                     <Button onClick={onCancel} variant="text" color="error">
-                        Cancel
+                        {t('Cancel')}
                     </Button>
                     <Button onClick={() => onCrop(image, zoom, cropInfo, rotation)} variant="contained" color="primary">
-                        Apply
+                        {t('Apply')}
                     </Button>
                 </Box>
             </Box>

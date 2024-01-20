@@ -6,11 +6,13 @@ import { useTheme } from '@mui/material/styles';
 import './styles/Profile.css'
 import { ChangeEvent, useState } from "react";
 import { updateAdvancedSettings } from "../../store/features/users/frontendSettings";
+import { useTranslation } from "react-i18next";
 
 
 function Profile() {
     const theme = useTheme();
     const dispatch = useDispatch();
+    const [t, i18n] = useTranslation();
 
     let [errorMessage, setErrorMessage] = useState('');
     const advancedSettings = useSelector((state: RootState) => state.reducer.frontendSettings).advancedSettings;
@@ -33,10 +35,10 @@ function Profile() {
         <Box>
             <Container className="settingsContainer">
                 {showErrorMessage()}
-                <Typography variant="h4">Additional Features</Typography>
+                <Typography variant="h4">{t("Additional Features")}</Typography>
                 <FormGroup>
-                    <FormControlLabel control={<Switch value={advancedSettings.disableAutoscroll} onChange={(e) => updateAutoScroll(e)} />} label="Disable Auto-Scroll" />
-                    <FormControlLabel control={<Switch value={advancedSettings.alwaysScrollDown} onChange={(e) => updateScrollState(e)} disabled={advancedSettings.disableAutoscroll} />} label="Always auto-scroll, even if scrolled up" />
+                    <FormControlLabel control={<Switch value={advancedSettings.disableAutoscroll} onChange={(e) => updateAutoScroll(e)} />} label={t("Disable Auto-Scroll")} />
+                    <FormControlLabel control={<Switch value={advancedSettings.alwaysScrollDown} onChange={(e) => updateScrollState(e)} disabled={advancedSettings.disableAutoscroll} />} label={t("Always auto-scroll, even if scrolled up")} />
                 </FormGroup>
             </Container>
         </Box >
