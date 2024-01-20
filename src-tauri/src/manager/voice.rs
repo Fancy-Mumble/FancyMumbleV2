@@ -6,6 +6,7 @@ use crate::protocol::serialize::message_container::FrontendMessage;
 use crate::utils::audio;
 use crate::utils::audio::player::Player;
 use crate::utils::audio::recorder::Recorder;
+use crate::utils::frontend::send_to_frontend;
 use crate::utils::messages::message_builder;
 use crate::{connection::traits::Shutdown, errors::voice_error::VoiceError};
 use async_trait::async_trait;
@@ -66,19 +67,6 @@ impl Manager {
         })
     }
 
-    fn send_to_frontend<T: Serialize + Clone>(&self, msg: &FrontendMessage<T>) {
-        match serde_json::to_string(&msg) {
-            Ok(json) => {
-                if let Err(e) = self.frontend_channel.send(json) {
-                    error!("Failed to send user list to frontend: {}", e);
-                }
-            }
-            Err(e) => {
-                error!("Failed to serialize user list: {}", e);
-            }
-        }
-    }
-
     pub fn notify_audio(&mut self, audio_data: &[u8]) -> AnyError<()> {
         let audio_data = self.decoder.decode_audio(audio_data)?;
         self.send_taking_information(audio_data.user_id, audio_data.talking);
@@ -97,7 +85,11 @@ impl Manager {
                     {
                         o.remove_entry();
                     }
-                    self.send_to_frontend(&FrontendMessage::new("audio_info", &audio_info));
+
+                    send_to_frontend(
+                        &self.frontend_channel,
+                        &FrontendMessage::new("audio_info", &audio_info),
+                    );
                 }
             }
             Entry::Vacant(v) => {
@@ -107,7 +99,11 @@ impl Manager {
                 {
                     v.insert(audio_info);
                 }
-                self.send_to_frontend(&FrontendMessage::new("audio_info", &audio_info_clone));
+
+                send_to_frontend(
+                    &self.frontend_channel,
+                    &FrontendMessage::new("audio_info", &audio_info_clone),
+                );
             }
         };
     }

@@ -29,6 +29,7 @@
     "highlight.js": "^11.8.0",
     "html-react-parser": "^4.0.0",
     "i18next": "^23.7.16",
+    "i18next-http-backend": "^2.4.2",
     "lru-cache": "^10.0.0",
     "marked": "^5.0.2",
     "marked-highlight": "^2.0.0",

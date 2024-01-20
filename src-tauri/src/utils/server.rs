@@ -10,5 +10,5 @@ pub struct Server {
     pub host: String,
     pub port: u16,
     pub username: String,
-    pub identity: Option<UserIdentity>
+    pub identity: Option<String>
 }

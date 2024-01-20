@@ -4,6 +4,9 @@ import { Event } from '@tauri-apps/api/event';
 import { addChatMessage } from '../store/features/users/chatMessageSlice';
 import { Dispatch } from 'react';
 import { AnyAction } from '@reduxjs/toolkit';
+import { ServerSync, updateServerInfo } from '../store/features/server/serverSlice';
+import { invoke } from '@tauri-apps/api/tauri';
+import { useNavigate } from 'react-router-dom';
 
 enum MessageTypes {
     Connected = "connected",
@@ -18,7 +21,9 @@ enum MessageTypes {
     ChannelUpdate = "channel_update",
     ChannelDescription = "channel_description",
     NotifyCurrentUser = "current_user_id",
-    AudioInfo = "audio_info"
+    AudioInfo = "audio_info",
+    SyncInfo = "sync_info",
+    PingTimeout = "ping_timeout"
 }
 
 interface BackendMessage {
@@ -35,9 +40,11 @@ export function handleBackendMessage<T>(event: Event<T>, dispatch: Dispatch<AnyA
             dispatch(updateConnected(true));
             break;
         }
+        case MessageTypes.PingTimeout:
         case MessageTypes.Disconnected: {
             dispatch(updateConnected(false));
             dispatch({ type: "logout" });
+            invoke('logout');
             break;
         }
         case MessageTypes.TextMessage: {
@@ -75,6 +82,14 @@ export function handleBackendMessage<T>(event: Event<T>, dispatch: Dispatch<AnyA
         }
         case MessageTypes.AudioInfo: {
             dispatch(updateUserTalkingInfo(message.data));
+            break;
+        }
+        case MessageTypes.SyncInfo: {
+            let data = message.data as ServerSync;
+            if (data.session !== undefined) {
+                dispatch(updateCurrentUserById(data.session));
+            }
+            dispatch(updateServerInfo(data));
             break;
         }
     }

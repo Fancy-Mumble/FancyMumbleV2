@@ -1,19 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import '../App.css';
 import './styles/Login.css';
-import { Accordion, AccordionDetails, AccordionSummary, Alert, Avatar, Box, ButtonGroup, Button, Container, Grid, IconButton, LinearProgress, List, ListItem, ListItemAvatar, ListItemButton, ListItemIcon, ListItemText, MenuItem, Select, TextField, Tooltip, Typography, Menu } from '@mui/material'
-import LoadingButton from '@mui/lab/LoadingButton';
+import { Accordion, AccordionDetails, AccordionSummary, Alert, Avatar, Box, IconButton, LinearProgress, List, ListItem, ListItemAvatar, ListItemButton, ListItemText, MenuItem, Typography, Menu } from '@mui/material'
 import { invoke } from '@tauri-apps/api/tauri'
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store/store';
-import React from 'react';
 import StorageIcon from '@mui/icons-material/Storage';
-import SendIcon from '@mui/icons-material/Send';
-import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
-import { n } from '@tauri-apps/api/fs-4bb77382';
 import { useTranslation } from 'react-i18next';
 import LanguageIcon from '@mui/icons-material/Language';
+import AddNewServer, { ServerInfo } from '../components/AddNewServer';
 
 
 interface ServerEntry {
@@ -21,6 +17,7 @@ interface ServerEntry {
     host: string,
     port: number,
     username: string,
+    identity?: string
 }
 
 function Login() {
@@ -28,16 +25,10 @@ function Login() {
     const userInfo = useSelector((state: RootState) => state.reducer.userInfo);
     const [expanded, setExpanded] = React.useState<string | false>('panel1');
 
-    const [description, setDescription] = useState("Magical Rocks");
-    const [server, setServer] = useState("magical.rocks");
-    const [port, setPort] = useState("64738");
-    const [username, setUsername] = useState("Endor");
-    const [identity, setIdentity] = useState("none");
     const [identityCerts, setIdentityCerts] = useState(new Array<string>());
     const [connecting, setConnecting] = useState(false);
     const [errorInfo, setErrorInfo] = useState({ show: false, text: "" });
     const [serverInfo, setServerInfo] = useState({ show: false, text: "" });
-    const [showAdditionalOptions, setShowAdditionalOptions] = useState(false);
     const [languageMenuAnchorEl, setLanguageMenuAnchorEl] = React.useState<null | HTMLElement>(null);
     const languageMenuOpen = Boolean(languageMenuAnchorEl);
 
@@ -81,30 +72,38 @@ function Login() {
         navigate("/chat");
     }
 
-    function connect(serverHost: string = server, serverPort: number = parseInt(port), serverUsername: string = username) {
+    function connect(serverHost: string, serverPort: number, serverUsername: string, identity?: string): Promise<void> {
         console.log("connecting to server: ", serverHost, serverPort, serverUsername);
         setConnecting(true);
         setErrorInfo({ show: false, text: "" });
 
-        invoke('connect_to_server', { serverHost: serverHost, serverPort: serverPort, username: serverUsername }).then(e => {
-            setConnecting(false);
-        }).catch(e => {
-            setErrorInfo({ show: true, text: e });
-            setConnecting(false);
+        return new Promise<void>((resolve, reject) => {
+            invoke('connect_to_server', { serverHost: serverHost, serverPort: serverPort, username: serverUsername, identity: identity }).then(e => {
+                setConnecting(false);
+                resolve();
+            }).catch(e => {
+                setErrorInfo({ show: true, text: e });
+                setConnecting(false);
+                reject(new Error("error connecting to server"));
+            });
         });
     }
 
-    function saveServer() {
+    function saveServer(serverInfo: ServerInfo): Promise<void> {
         setErrorInfo({ show: false, text: "" });
         setServerInfo({ show: false, text: "" });
+        return new Promise<void>((resolve, reject) => {
 
-        invoke('save_server', { description: description, serverHost: server, serverPort: parseInt(port), username: username }).then(e => {
-            setServerInfo({ show: true, text: "Server saved" });
-            setServerList([...serverList, { description: description, host: server, port: parseInt(port), username: username }]);
-        }).catch(e => {
-            console.log("error saving server: ", e);
-            setErrorInfo({ show: true, text: e });
-        })
+            invoke('save_server', { description: serverInfo.description, serverHost: serverInfo.server, serverPort: parseInt(serverInfo.port), username: serverInfo.username, identity: serverInfo.identity }).then(e => {
+                setServerInfo({ show: true, text: "Server saved" });
+                setServerList([...serverList, { description: serverInfo.description, host: serverInfo.server, port: parseInt(serverInfo.port), username: serverInfo.username, identity: serverInfo.identity }]);
+                resolve();
+            }).catch(e => {
+                console.log("error saving server: ", e);
+                setErrorInfo({ show: true, text: e });
+                reject(new Error("error saving server"));
+            })
+        });
     }
 
     const handleChange =
@@ -113,32 +112,7 @@ function Login() {
         };
 
     let errorBox = errorInfo.show ? (<Box mb={3}><Alert severity="error">{errorInfo.text}</Alert></Box>) : (<div></div>);
-    let serverAddInfoBoxBox = serverInfo.show ? (<Box mb={3} mt={-2}><Alert severity="info">{serverInfo.text}</Alert></Box>) : (<div></div>);
     let connectionLoading = connecting ? (<LinearProgress />) : (<div></div>);
-
-    let additionalOptions = useMemo(() => {
-        if (showAdditionalOptions) {
-            return (
-                <Grid item={true} xs={12}>
-                    <Box mt={2}>
-                        <ButtonGroup variant="outlined" aria-label="outlined button group">
-                            <Button>One</Button>
-                            <Select fullWidth label="Identity" value={identity} onChange={e => setIdentity(e.target.value)}>
-                                {
-                                    identityCerts.map((e) => {
-                                        return (
-                                            <MenuItem key={e} value={e}>{e}</MenuItem >
-                                        )
-                                    })
-                                }
-                            </Select>
-                        </ButtonGroup>
-                    </Box>
-                </Grid>
-            )
-        }
-        return null;
-    }, [showAdditionalOptions, identity]);
 
     return (
         <Box sx={{ height: '100%', display: 'flex', maxHeight: '100%', overflow: 'hidden' }}>
@@ -168,7 +142,7 @@ function Login() {
                                 {serverList.map((e) => {
                                     return (
                                         <ListItem disablePadding key={(e.host || '') + (e.port || '') + (e.username || '')}>
-                                            <ListItemButton onClick={() => connect(e.host, e.port, e.username)}>
+                                            <ListItemButton onClick={() => connect(e.host, e.port, e.username, e.identity)}>
                                                 <ListItemAvatar>
                                                     <Avatar>
                                                         <StorageIcon />
@@ -185,44 +159,12 @@ function Login() {
                     <Accordion expanded={expanded === 'panel2'} onChange={handleChange('panel2')}>
                         <AccordionSummary aria-controls="panel1d-content" id="panel1d-header">{t('Add New Server')}</AccordionSummary>
                         <AccordionDetails>
-                            {serverAddInfoBoxBox}
-                            <Container className='login-form'>
-                                <Grid container spacing={1}>
-                                    <Grid item={true} xs={12}>
-                                        <TextField fullWidth label="Description" value={description} onChange={e => setDescription(e.target.value)} />
-                                    </Grid>
-                                    <Grid item={true} xs={8} mt={2}>
-                                        <Box mr={2} mb={2}>
-                                            <TextField fullWidth label="Server" value={server} onChange={e => setServer(e.target.value)} />
-                                        </Box>
-                                    </Grid>
-                                    <Grid item={true} xs={4} mt={2}>
-                                        <TextField fullWidth label="Port" value={port} onChange={e => setPort(e.target.value)} />
-                                    </Grid>
-                                    <Grid item={true} xs={12}>
-                                        <TextField fullWidth label="Username" value={username} onChange={e => setUsername(e.target.value)} />
-                                    </Grid>
-                                    {additionalOptions}
-                                    <Grid item={true} xs={6} container justifyContent="flex-start">
-                                        <Box mt={2}>
-                                            <LoadingButton loading={connecting} variant="contained" onClick={e => saveServer()}>{t('Save')}</LoadingButton >
-                                        </Box>
-                                    </Grid>
-                                    <Grid item={true} xs={6} container justifyContent="flex-end">
-                                        <Box mt={2}>
-                                            <Tooltip title="More Options">
-                                                <IconButton color="primary" onClick={e => setShowAdditionalOptions(!showAdditionalOptions)} >
-                                                    <UnfoldMoreIcon />
-                                                </IconButton>
-                                            </Tooltip>
-                                        </Box>
-
-                                        <Box mt={2}>
-                                            <LoadingButton loading={connecting} variant="outlined" onClick={e => connect()} endIcon={<SendIcon />}>{t('Connect')}</LoadingButton >
-                                        </Box>
-                                    </Grid>
-                                </Grid>
-                            </Container>
+                            <AddNewServer
+                                serverInfo={serverInfo}
+                                identityCerts={identityCerts}
+                                onSave={(serverInfo) => saveServer(serverInfo)}
+                                onConnect={(serverInfo) => connect(serverInfo.server, parseInt(serverInfo.port), serverInfo.username, serverInfo.identity)}
+                            />
                         </AccordionDetails>
                     </Accordion>
                 </Box>

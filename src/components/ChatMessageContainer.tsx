@@ -20,7 +20,7 @@ interface GroupedMessages {
 
 
 const ChatMessageContainer = (props: ChatMessageContainerProps) => {
-    const { t, i18n } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const userList = useSelector((state: RootState) => state.reducer.userInfo);
 	const advancedSettings = useSelector((state: RootState) => state.reducer.frontendSettings.advancedSettings);
 	const chatContainer: React.RefObject<HTMLDivElement> = React.createRef();
@@ -150,27 +150,33 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 		return null;
 	}, [props.messages]);
 
+	const chatElements = useMemo(() => {
+		if (!memoizedMessages || props.messages.length === 0) return null;
+
+		return (<List sx={{ width: '100%', maxWidth: '100%' }}>
+			{memoizedMessages.map((group, index) => (
+				<Grid container className="message-root" key={index} sx={{ width: '100%', flexWrap: 'nowrap' }}>
+					<Grid item >
+						<Avatar
+							sx={{ position: 'sticky', top: 10 }}
+							className="avatar"
+							src={getProfileImage(group.user?.id || 0, userList)}
+							onClick={e => { setCurrentPopoverUserId(group.user?.id); setUserInfoAnchor(e.currentTarget); console.log(e.currentTarget) }}
+							variant="rounded"
+						/>
+					</Grid>
+					<Grid item sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+						{group.messages}
+					</Grid>
+				</Grid>
+
+			))}
+		</List>);
+	}, [memoizedMessages, userList]);
+
 	return (
 		<Box sx={{ flex: 1, overflowY: 'auto' }} ref={chatContainer}>
-			<List sx={{ width: '100%', maxWidth: '100%' }}>
-				{memoizedMessages.map((group, index) => (
-					<Grid container className="message-root" key={index} sx={{ width: '100%', flexWrap: 'nowrap' }}>
-						<Grid item >
-							<Avatar
-								sx={{ position: 'sticky', top: 10 }}
-								className="avatar"
-								src={getProfileImage(group.user?.id || 0, userList)}
-								onClick={e => { setCurrentPopoverUserId(group.user?.id); setUserInfoAnchor(e.currentTarget); console.log(e.currentTarget) }}
-								variant="rounded"
-							/>
-						</Grid>
-						<Grid item sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-							{group.messages}
-						</Grid>
-					</Grid>
-
-				))}
-			</List>
+			{chatElements}
 			{emptyChatMessageContainer}
 			{currentPopoverUserId && userIdToPopoverMap.get(currentPopoverUserId)}
 			<div ref={messagesEndRef} />

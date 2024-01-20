@@ -37,8 +37,8 @@ function Profile() {
                 {showErrorMessage()}
                 <Typography variant="h4">{t("Additional Features")}</Typography>
                 <FormGroup>
-                    <FormControlLabel control={<Switch value={advancedSettings.disableAutoscroll} onChange={(e) => updateAutoScroll(e)} />} label={t("Disable Auto-Scroll")} />
-                    <FormControlLabel control={<Switch value={advancedSettings.alwaysScrollDown} onChange={(e) => updateScrollState(e)} disabled={advancedSettings.disableAutoscroll} />} label={t("Always auto-scroll, even if scrolled up")} />
+                    <FormControlLabel control={<Switch value={advancedSettings.disableAutoscroll} onChange={(e) => updateAutoScroll(e)} />} label={t("Disable Auto-Scroll", { ns: "appearance" })} />
+                    <FormControlLabel control={<Switch value={advancedSettings.alwaysScrollDown} onChange={(e) => updateScrollState(e)} disabled={advancedSettings.disableAutoscroll} />} label={t("Always auto-scroll, even if scrolled up", { ns: "appearance" })} />
                 </FormGroup>
             </Container>
         </Box >

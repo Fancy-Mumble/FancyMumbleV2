@@ -1,0 +1,15 @@
+{
+    "Audio": "Audio",
+    "Input Device": "Input Device",
+    "Microphone": "Microphone",
+    "Voice Activation": "Voice Activation",
+    "Push To Talk": "Push To Talk",
+    "Automatically detect Microphone sensitivity": "Automatically detect Microphone sensitivity",
+    "Hold Activation for": "Hold activation for {{duration}}",
+    "Fade-out Audio after activation for": "Fade-out audio after activation for {{duration}}",
+    "Audio activation at": "Audio activation at {{threshold}}",
+    "Audio deactivation at": "Audio deactivation at {{threshold}}",
+    "Amplification dB": "Amplification +{{amplification}}dB",
+    "Echo Cancelation": "Echo Cancelation",
+    "Noise Suppression": "Noise Suppression"
+}
