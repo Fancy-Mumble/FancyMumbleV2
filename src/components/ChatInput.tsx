@@ -56,7 +56,7 @@ function ChatInput() {
                 reader.readAsDataURL(file);
                 reader.onload = function () {
                     if (reader.result && (reader.result as string).length > 0x7fffff) {
-                        chatMessageHandler.sendCustomChatMessage(t("Image too large", {size: formatBytes((reader.result as string).length), maximum: formatBytes(0x7fffff)}), currentUser);
+                        chatMessageHandler.sendCustomChatMessage(t("Image too large", { size: formatBytes((reader.result as string).length), maximum: formatBytes(0x7fffff) }), currentUser);
                         return;
                     }
                     const legacyImageSize = 600; // Adapt image size for legacy clients
@@ -73,14 +73,14 @@ function ChatInput() {
                 component="form"
                 sx={{ p: '2px 4px', display: 'flex', alignItems: 'center', width: 400, flexGrow: 1 }}
             >
-                <Tooltip title={t("Delete all messages")}>
+                <Tooltip title={t("Delete all messages", { ns: "user_interaction" })}>
                     <IconButton sx={{ p: '10px' }} aria-label="menu" onClick={showDeleteMessageConfirmationDialog}>
                         <DeleteIcon />
                     </IconButton>
                 </Tooltip>
                 <InputBase
                     sx={{ ml: 1, flex: 1 }}
-                    placeholder={t("Send Message to Channel", {channel: currentChannel})}
+                    placeholder={t("Send Message to Channel", { ns: "user_interaction", channel: currentChannel })}
                     inputProps={{ 'aria-label': 'Send Message to ' + currentChannel }}
                     onChange={e => setChatMessage(e.target.value)}
                     onKeyDown={keyDownHandler}
@@ -102,14 +102,14 @@ function ChatInput() {
                     <Fade {...TransitionProps}>
                         <Paper sx={{ p: 1 }}>
                             <Box sx={{ p: 1 }}>
-                                {t('Are you sure you want to delete all messages?')}
+                                {t('Are you sure you want to delete all messages?', { ns: 'user_interaction' })}
                                 <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                                     <Button onClick={(data) => {
                                         deleteMessages();
                                         showDeleteMessageConfirmationDialog(data);
                                     }}
-                                        color="error">{t('Yes')}</Button>
-                                    <Button onClick={showDeleteMessageConfirmationDialog} color="primary">{t('No')}</Button>
+                                        color="error">{t('Yes', { ns: "user_interaction" })}</Button>
+                                    <Button onClick={showDeleteMessageConfirmationDialog} color="primary">{t('No', { ns: 'user_interaction' })}</Button>
                                 </Box>
                             </Box>
                         </Paper>

@@ -1,7 +1,7 @@
 use crate::{
-    connection::{Connection, PingThread},
+    connection::{Connection, PingThread, threads::MAX_PING_FAILURES},
     mumble,
-    utils::messages::message_builder,
+    utils::{messages::message_builder, frontend::send_to_frontend}, protocol::serialize::message_container::FrontendMessage,
 };
 use std::{
     sync::atomic::Ordering,
@@ -23,6 +23,7 @@ impl PingThread for Connection {
 
         let tx_out = self.tx_out.clone();
         let running = self.running.clone();
+        let frontend_channel = self.message_channels.message_channel.clone();
 
         // timer thread
         self.threads.insert(
@@ -30,6 +31,7 @@ impl PingThread for Connection {
             tokio::spawn(async move {
                 let mut interval = time::interval(PING_INTERVAL);
                 let mut deadman_switch = time::interval(DEADMAN_INTERVAL);
+                let mut deadman_counter = 0;
 
                 while running.load(Ordering::Relaxed) {
                     let now = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
@@ -59,8 +61,15 @@ impl PingThread for Connection {
                         _ = deadman_switch.tick() => {}
                         _ = interval.tick() => {
                             match tx_out.send(message_builder(&ping).unwrap_or_default()) {
-                                Ok(_) => {}
-                                Err(error) => error!("Unable to send Ping: {}", error),
+                                Ok(_) => { deadman_counter = 0; }
+                                Err(error) => {
+                                    error!("Unable to send Ping: {}", error);
+                                    deadman_counter += 1;
+                                    if deadman_counter > MAX_PING_FAILURES {
+                                        let message = FrontendMessage::new("ping_timeout", "Timeout while sending Ping");
+                                        send_to_frontend(&frontend_channel, &message)
+                                    }
+                                },
                             }
                         }
                     }

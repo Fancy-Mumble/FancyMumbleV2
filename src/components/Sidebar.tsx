@@ -30,7 +30,7 @@ function Sidebar() {
     const triggerLogout = useCallback((event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         event.preventDefault();
         setLogoutInProgress(true);
-        invoke('logout').then(e => {
+        invoke('logout').finally(() => {
             setLogoutInProgress(false);
             navigate("/");
         });

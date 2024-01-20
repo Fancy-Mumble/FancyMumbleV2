@@ -1,6 +1,7 @@
 use std::sync::atomic::Ordering;
 
 use crate::connection::Connection;
+use crate::connection::traits::Shutdown;
 use crate::protocol::message_router::MessageRouter;
 use crate::protocol::stream_reader::StreamReader;
 use tokio::select;

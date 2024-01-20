@@ -2,7 +2,7 @@ use base64::{engine::general_purpose, Engine as _};
 use std::collections::{hash_map::Entry, HashMap};
 
 use serde::{Deserialize, Serialize};
-use tracing::{debug, error, info, trace};
+use tracing::{debug, error, info, trace, warn};
 
 use crate::{
     errors::AnyError,
@@ -10,7 +10,7 @@ use crate::{
     protocol::serialize::message_container::FrontendMessage,
     utils::{
         file::{read_data_from_cache, store_data_in_cache},
-        messages::message_builder,
+        messages::message_builder, frontend::send_to_frontend,
     },
 };
 
@@ -64,6 +64,14 @@ pub struct UpdateableUserState {
     pub comment: Option<String>,
 }
 
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
+pub struct SyncInfo {
+        pub session: Option<u32>,
+        pub max_bandwidth: Option<u32>,
+        pub welcome_text: Option<String>,
+        pub permissions: Option<u64>,
+}
+
 #[derive(Debug, Default, Serialize)]
 pub struct BlobData {
     pub user_id: u32,
@@ -107,31 +115,18 @@ impl Manager {
         }
     }
 
-    fn send_to_frontend<T: Serialize + Clone>(&self, msg: &FrontendMessage<T>) {
-        match serde_json::to_string(&msg) {
-            Ok(json) => {
-                if let Err(e) = self.frontend_channel.send(json) {
-                    error!("Failed to send user list to frontend: {}", e);
-                }
-            }
-            Err(e) => {
-                error!("Failed to serialize user list: {}", e);
-            }
-        }
-    }
-
     fn notify_update(&self, session: u32) {
         if let Some(user) = self.users.get(&session) {
             let msg = FrontendMessage::new("user_update", &user);
 
-            self.send_to_frontend(&msg);
+            send_to_frontend(&self.frontend_channel, &msg);
         }
     }
 
     fn notify_remove(&self, session: u32) {
         let msg = FrontendMessage::new("user_remove", session);
 
-        self.send_to_frontend(&msg);
+        send_to_frontend(&self.frontend_channel, &msg);
     }
 
     fn notify_user_image(&self, session: u32) -> AnyError<()> {
@@ -149,7 +144,7 @@ impl Manager {
             };
             let msg = FrontendMessage::new("user_image", &user_image);
 
-            self.send_to_frontend(&msg);
+            send_to_frontend(&self.frontend_channel, &msg);
         }
 
         Ok(())
@@ -170,7 +165,7 @@ impl Manager {
             };
             let msg = FrontendMessage::new("user_comment", &user_image);
 
-            self.send_to_frontend(&msg);
+            send_to_frontend(&self.frontend_channel, &msg);
         }
 
         Ok(())
@@ -325,12 +320,14 @@ impl Manager {
     }
 
     pub fn notify_current_user(&mut self, sync_info: &mumble::proto::ServerSync) {
-        if sync_info.session.is_some() {
-            self.current_user_id = sync_info.session;
-
-            let message = FrontendMessage::new("current_user_id", self.current_user_id);
-            self.send_to_frontend(&message);
-        }
+            let sync_info = SyncInfo {
+                session: sync_info.session,
+                max_bandwidth: sync_info.max_bandwidth,
+                welcome_text: sync_info.welcome_text.clone(),
+                permissions: sync_info.permissions,
+            };
+            let message = FrontendMessage::new("sync_info", sync_info);
+            send_to_frontend(&self.frontend_channel, &message);
     }
 }
 

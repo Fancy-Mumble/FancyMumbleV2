@@ -178,14 +178,14 @@ function Profile() {
                 <Divider sx={{ marginBottom: 5 }} />
                 <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12, lg: 18 }} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Grid item xs={12} sm={12} md={6} lg={12} sx={{ padding: 2 }}>
-                        <Typography variant="h5">Images</Typography>
+                        <Typography variant="h5">{t("Images")}</Typography>
                         <Box sx={{
                             display: 'flex',
                             flexDirection: 'row',
                             alignContent: 'center',
                             maxWidth: '100%'
                         }}>
-                            <UploadBox onUpload={(path) => showUploadBox(path, ImageType.Background, 3 / 1, "rect")}>{displayLoadingText(t("Background Image"))}</UploadBox>
+                            <UploadBox onUpload={(path) => showUploadBox(path, ImageType.Background, 3 / 1, "rect")}>{displayLoadingText(t("Background Image", { ns: "appearance" }))}</UploadBox>
                         </Box>
                         <Box sx={{
                             display: 'flex',
@@ -193,12 +193,12 @@ function Profile() {
                             alignContent: 'center',
                             maxWidth: '100%'
                         }}>
-                            <UploadBox onUpload={(path) => showUploadBox(path, ImageType.Profile, 1, "round")}>{displayLoadingText(t("Profile Image"))}</UploadBox>
+                            <UploadBox onUpload={(path) => showUploadBox(path, ImageType.Profile, 1, "round")}>{displayLoadingText(t("Profile Image", { ns: "appearance" }))}</UploadBox>
                         </Box>
-                        <Typography variant="h5" sx={{ marginTop: 4, marginBottom: 1 }}>{t("Colors")}</Typography>
+                        <Typography variant="h5" sx={{ marginTop: 4, marginBottom: 1 }}>{t("Colors", { ns: "appearance" })}</Typography>
                         <Box sx={{ display: 'flex' }}>
-                            <DefaultColorPicker color={primaryColor} onChangeComplete={(color) => setPrimaryColorCall(color)} description={t("Primary")} style={{ marginRight: 15 }} />
-                            <DefaultColorPicker color={accentColor} onChangeComplete={(color) => setAccentColorCall(color)} description={t("Accent")} style={{ marginRight: 15 }} />
+                            <DefaultColorPicker color={primaryColor} onChangeComplete={(color) => setPrimaryColorCall(color)} description={t("Primary", { ns: "appearance" })} style={{ marginRight: 15 }} />
+                            <DefaultColorPicker color={accentColor} onChangeComplete={(color) => setAccentColorCall(color)} description={t("Accent", { ns: "appearance" })} style={{ marginRight: 15 }} />
                         </Box>
                         <Typography variant="h5" sx={{ marginTop: 4, marginBottom: 1 }}>{t("About Me")}</Typography>
                         <Box sx={{ display: 'flex' }}>
@@ -218,7 +218,7 @@ function Profile() {
                     </Grid>
                 </Grid>
             </Container >
-            <FloatingApply discardText={t("Discard")} saveText={t("Save")} onDiscard={() => { }} onSave={() => { }} />
+            <FloatingApply discardText={t("Discard", { ns: "user_interaction" })} saveText={t("Save", { ns: "user_interaction" })} onDiscard={() => { }} onSave={() => { }} />
         </Box >
     )
 }

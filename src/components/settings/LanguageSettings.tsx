@@ -1,8 +1,8 @@
-import { Box, Container, FormControlLabel, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Radio, RadioGroup,  Typography, } from "@mui/material";
+import { Box, Container, FormControlLabel, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Radio, RadioGroup, Typography, } from "@mui/material";
 import { useDispatch } from "react-redux";
 import { useTheme } from '@mui/material/styles';
 import './styles/Profile.css'
-import {  useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 
@@ -22,7 +22,7 @@ function LanguageSettings() {
     return (
         <Box>
             <Container className="settingsContainer">
-                <Typography variant="h4">{t("Language")}</Typography>
+                <Typography variant="h4">{t("Language", { ns: "language" })}</Typography>
                 <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
                     <RadioGroup
                         aria-labelledby="demo-radio-buttons-group-label"
@@ -44,9 +44,9 @@ function LanguageSettings() {
                                 >
                                     <ListItemButton role={undefined} onClick={() => updateLanguageSettings(e)} dense>
                                         <ListItemIcon>
-                                        <FormControlLabel value={e} control={<Radio />} label={t(e)} />
+                                            <FormControlLabel value={e} control={<Radio />} label={t(e, { ns: "language" })} />
                                         </ListItemIcon>
-                                        <ListItemText primary={t(e + " native")} />
+                                        <ListItemText primary={t(e + " native", { ns: "language" })} />
                                     </ListItemButton>
                                 </ListItem>
                             );

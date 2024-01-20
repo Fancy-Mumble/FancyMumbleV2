@@ -1,0 +1,15 @@
+{
+    "Audio": "Audio",
+    "Input Device": "Périphérique d'entrée",
+    "Microphone": "Microphone",
+    "Voice Activation": "Activation vocale",
+    "Push To Talk": "Appuyez pour parler",
+    "Automatically detect Microphone sensitivity": "Détection automatique de la sensibilité du microphone",
+    "Hold Activation for": "Maintenir l'activation pendant {{duration}}",
+    "Fade-out Audio after activation for": "Atténuer l'audio après l'activation pendant {{duration}}",
+    "Audio activation at": "Activation audio à {{threshold}}",
+    "Audio deactivation at": "Désactivation audio à {{threshold}}",
+    "Amplification dB": "Amplification +{{amplification}}dB",
+    "Echo Cancelation": "Annulation d'écho",
+    "Noise Suppression": "Réduction du bruit"
+}
