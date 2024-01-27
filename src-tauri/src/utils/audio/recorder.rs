@@ -8,7 +8,6 @@ use std::{
     time::Duration,
 };
 
-use serde::de::IntoDeserializer;
 use tokio::sync::broadcast::{self, Receiver};
 use tracing::{error, info, trace, warn};
 
@@ -16,35 +15,16 @@ use crate::{
     commands::utils::settings::{AudioOptions, AudioPreviewContainer, GlobalSettings, InputMode},
     errors::AnyError,
     mumble::proto::UdpTunnel,
-    utils::{audio::microphone::Microphone, messages::raw_message_builder},
+    utils::{
+        audio::{encoder::UDPEncoder, microphone::Microphone, processing::compress::Compressor},
+        messages::raw_message_builder,
+    },
 };
 
 use super::{
     encoder::Encoder,
     processing::voice_activation::{VoiceActivation, VoiceActivationType},
 };
-
-struct GlobalMaxAvg {
-    max_avg: f32,
-    max_avg_count: u64,
-}
-
-impl Default for GlobalMaxAvg {
-    fn default() -> Self {
-        Self {
-            max_avg: 0.0,
-            max_avg_count: 0,
-        }
-    }
-}
-
-impl GlobalMaxAvg {
-    fn update(&mut self, value: f32) {
-        self.max_avg_count += 1;
-        self.max_avg =
-            (self.max_avg * (self.max_avg_count - 1) as f32 + value) / self.max_avg_count as f32;
-    }
-}
 
 pub struct Recorder {
     audio_thread: Option<thread::JoinHandle<()>>,
@@ -89,7 +69,7 @@ impl Recorder {
 
             let (tx, rx) = mpsc::channel();
             let mut microphone = Microphone::new(tx).expect("Failed to create microphone");
-            let mut encoder = Encoder::new(microphone.config());
+            let mut encoder = UDPEncoder::new(microphone.config());
             match microphone.start() {
                 Ok(()) => {}
                 Err(e) => {
@@ -113,6 +93,13 @@ impl Recorder {
                 0.6,
                 0.3,
             ));
+            let mut compressor: Option<Compressor> = Some(Compressor::new(
+                sample_rate,
+                0.0,
+                0.0,
+                Duration::from_millis(0),
+                Duration::from_millis(0),
+            ));
 
             let mut audio_preview: Option<AudioPreviewContainer> = None;
 
@@ -120,6 +107,7 @@ impl Recorder {
                 update_settings(
                     &mut settings_channel,
                     &mut va,
+                    &mut compressor,
                     &microphone,
                     &mut audio_preview,
                 );
@@ -128,6 +116,9 @@ impl Recorder {
                 let mut value = rx.recv().expect("Failed to receive audio data");
                 if let Some(va) = va.as_mut() {
                     max_amplitude = va.process(&mut value);
+                }
+                if let Some(compress) = compressor.as_mut() {
+                    compress.process(&mut value);
                 }
 
                 if let Some(audio_preview) = audio_preview.as_mut() {
@@ -167,6 +158,7 @@ impl Recorder {
 fn update_settings<T: VoiceActivationType>(
     settings_channel: &mut Receiver<GlobalSettings>,
     va: &mut Option<VoiceActivation<T>>,
+    compressor: &mut Option<Compressor>,
     microphone: &Microphone,
     audio_settings: &mut Option<AudioPreviewContainer>,
 ) {
@@ -174,6 +166,7 @@ fn update_settings<T: VoiceActivationType>(
         Ok(GlobalSettings::AudioInputSettings(audio_settings)) => {
             info!("Received settings: {:?}", audio_settings);
             update_voice_activation_options(&audio_settings, va);
+            update_compressor_options(&audio_settings, compressor);
 
             let _ = microphone.volume_adjustment(audio_settings.amplification);
         }
@@ -211,6 +204,19 @@ fn update_voice_activation_options<T: VoiceActivationType>(
                 T::from(va_options.voice_hysteresis_upper_threshold).unwrap_or_else(T::zero),
                 T::from(va_options.voice_hysteresis_lower_threshold).unwrap_or_else(T::zero),
             );
+        }
+    };
+}
+
+fn update_compressor_options(audio_settings: &AudioOptions, compressor: &mut Option<Compressor>) {
+    if let Some(compressor) = compressor.as_mut() {
+        if let Some(compressor_options) = &audio_settings.compressor_options {
+            compressor.set_attack(Duration::from_millis(compressor_options.attack_time as u64));
+            compressor.set_release(Duration::from_millis(
+                compressor_options.release_time as u64,
+            ));
+            compressor.set_threshold(compressor_options.threshold);
+            compressor.set_ratio(compressor_options.ratio);
         }
     };
 }

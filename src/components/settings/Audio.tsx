@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import KeyboardIcon from '@mui/icons-material/Keyboard';
 import FloatingApply from "./components/FloatingApply";
 import { listen } from "@tauri-apps/api/event";
-import { InputMode, setAmplification, setFadeOutDuration, setInputMode, setVoiceHold, setVoiceHysteresis } from "../../store/features/users/audioSettings";
+import { InputMode, setAmplification, setAttackTime, setCompressorRatio, setCompressorThreshold, setFadeOutDuration, setInputMode, setReleaseTime, setVoiceHold, setVoiceHysteresis } from "../../store/features/users/audioSettings";
 import { RootState } from "../../store/store";
 import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
@@ -47,6 +47,12 @@ function AudioSettings() {
                 fade_out_duration: Math.floor(audioSettings.voice_activation_options.fade_out_duration),
                 voice_hysteresis_lower_threshold: audioSettings.voice_activation_options.voice_hysteresis_lower_threshold,
                 voice_hysteresis_upper_threshold: audioSettings.voice_activation_options.voice_hysteresis_upper_threshold,
+            },
+            compressor_options: {
+                threshold: audioSettings.compressor_options.threshold,
+                ratio: audioSettings.compressor_options.ratio,
+                attack_time: Math.floor(audioSettings.compressor_options.attack_time),
+                release_time: Math.floor(audioSettings.compressor_options.release_time),
             }
         };
         console.log(settings);
@@ -242,6 +248,71 @@ function AudioSettings() {
                         step={1}
                         max={20}
                         onChange={(e, v) => dispatch(setAmplification(v as number))}
+                        valueLabelDisplay="auto"
+                        aria-labelledby="non-linear-slider"
+                    />
+                </Grid>
+            </Box>
+            <Divider sx={{ my: 4 }} />
+            <Box>
+                <Grid item xs={4} sm={8} md={12} lg={12}>
+                    <Typography id="non-linear-slider" gutterBottom>
+                        {t("Compressor Threshold", { ns: "audio", threshold: audioSettings.compressor_options.threshold })}
+                    </Typography>
+                    <Slider
+                        value={audioSettings.compressor_options.threshold}
+                        min={0}
+                        step={0.01}
+                        max={2}
+                        onChange={(e, v) => dispatch(setCompressorThreshold(v as number))}
+                        valueLabelDisplay="auto"
+                        aria-labelledby="non-linear-slider"
+                    />
+                </Grid>
+                <Grid item xs={4} sm={8} md={12} lg={12}>
+                    <Typography id="non-linear-slider" gutterBottom>
+                        {t("Compressor Ratio", { ns: "audio", ratio: audioSettings.compressor_options.ratio })}
+                    </Typography>
+                    <Slider
+                        value={audioSettings.compressor_options.ratio}
+                        min={0}
+                        step={1}
+                        max={1000}
+                        onChange={(e, v) => dispatch(setCompressorRatio(v as number))}
+                        valueLabelDisplay="auto"
+                        aria-labelledby="non-linear-slider"
+                    />
+                </Grid>
+                <Grid item xs={4} sm={8} md={12} lg={12}>
+                    <Typography id="non-linear-slider" gutterBottom>
+                        {t("Attack Time", { ns: "audio", duration: valueLabelFormat(audioSettings.compressor_options.attack_time) })}
+                    </Typography>
+                    <Slider
+                        value={calculateVoiceHoldInverse(audioSettings.compressor_options.attack_time)}
+                        min={0}
+                        step={1}
+                        max={10}
+                        scale={calculateVoiceHold}
+                        getAriaValueText={valueLabelFormat}
+                        valueLabelFormat={valueLabelFormat}
+                        onChange={(e, value) => dispatch(setAttackTime(calculateVoiceHold(value as number)))}
+                        valueLabelDisplay="auto"
+                        aria-labelledby="non-linear-slider"
+                    />
+                </Grid>
+                <Grid item xs={4} sm={8} md={12} lg={12}>
+                    <Typography id="non-linear-slider" gutterBottom>
+                        {t("Release Time", { ns: "audio", duration: valueLabelFormat(audioSettings.compressor_options.release_time) })}
+                    </Typography>
+                    <Slider
+                        value={calculateVoiceHoldInverse(audioSettings.compressor_options.release_time)}
+                        min={0}
+                        step={1}
+                        max={10}
+                        scale={calculateVoiceHold}
+                        getAriaValueText={valueLabelFormat}
+                        valueLabelFormat={valueLabelFormat}
+                        onChange={(e, value) => dispatch(setReleaseTime(calculateVoiceHold(value as number)))}
                         valueLabelDisplay="auto"
                         aria-labelledby="non-linear-slider"
                     />

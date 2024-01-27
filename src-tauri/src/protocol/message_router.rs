@@ -3,7 +3,7 @@
 use std::error::Error;
 
 use tokio::sync::broadcast::{Receiver, Sender};
-use tracing::{error, trace, warn};
+use tracing::{error, info, trace, warn};
 
 use crate::{
     commands::utils::settings::GlobalSettings,
@@ -73,7 +73,7 @@ impl MessageRouter {
                     .user_manager
                     .get_user_by_id(actor)
                     .ok_or_else(|| Box::new(ApplicationError::new("msg")) as Box<dyn Error>)?;
-                self.text_manager.add_text_message(text_message, actor)?;
+                self.text_manager.add_text_message(text_message, actor);
             }
             None => {
                 error!("Received text message without actor: {:?}", text_message);
@@ -152,12 +152,17 @@ impl MessageRouter {
                     //self.shutdown().await?;
                 }
             }
-            crate::utils::messages::MessageTypes::CodecVersion => {}
+            crate::utils::messages::MessageTypes::CodecVersion => {
+                let codec_version = Self::handle_downcast::<mumble::proto::CodecVersion>(message)?;
+                self.voice_manager.set_codec(&codec_version);
+            }
             crate::utils::messages::MessageTypes::UserStats => {}
             crate::utils::messages::MessageTypes::RequestBlob => {}
             crate::utils::messages::MessageTypes::ServerConfig => {}
             crate::utils::messages::MessageTypes::SuggestConfig => {}
-            crate::utils::messages::MessageTypes::PluginDataTransmission => {}
+            crate::utils::messages::MessageTypes::PluginDataTransmission => {
+                info!("Received plugin data transmission");
+            }
         };
 
         Ok(())

@@ -46,13 +46,13 @@ fn to_legacy_version(version: u64) -> u32 {
 }
 
 pub fn init_connection(username: &str, channel: &Sender<Vec<u8>>, package_info: &PackageInfo) {
-    let version = from_components(
-        package_info.version.major + 2,
+    let fancy_version = from_components(
+        package_info.version.major,
         package_info.version.minor,
         package_info.version.patch,
     );
 
-    let mumble_version = from_components(1, 5, 0);
+    let mumble_version = from_components(1, 4, 0);
 
     let info = os_info::get();
 
@@ -67,8 +67,8 @@ pub fn init_connection(username: &str, channel: &Sender<Vec<u8>>, package_info: 
         )),
         os_version: Some(info.version().to_string()),
         release: Some(package_info.package_name()),
-        version_v2: Some(version),
-        fancy_version: Some(version),
+        version_v2: Some(mumble_version),
+        fancy_version: Some(fancy_version),
     };
 
     let buffer = message_builder(&version).unwrap_or_default();
@@ -76,7 +76,7 @@ pub fn init_connection(username: &str, channel: &Sender<Vec<u8>>, package_info: 
 
     let auth = mumble::proto::Authenticate {
         opus: Some(true),
-        celt_versions: vec![-2_147_483_632, -2_147_483_637],
+        celt_versions: vec![0, -2_147_483_632, -2_147_483_637],
         password: None,
         tokens: vec![],
         username: Some(username.to_string()),

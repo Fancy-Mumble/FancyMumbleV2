@@ -31,6 +31,14 @@ pub struct VoiceActivationOptions {
     pub voice_hysteresis_upper_threshold: f32,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct CompressorOptions {
+    pub attack_time: usize,
+    pub release_time: usize,
+    pub threshold: f32,
+    pub ratio: f32,
+}
+
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
 pub enum InputMode {
     VoiceActivation = 0,
@@ -42,6 +50,7 @@ pub struct AudioOptions {
     pub amplification: f32,
     pub input_mode: InputMode,
     pub voice_activation_options: Option<VoiceActivationOptions>,
+    pub compressor_options: Option<CompressorOptions>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

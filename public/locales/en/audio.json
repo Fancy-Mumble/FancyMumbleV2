@@ -11,5 +11,9 @@
     "Audio deactivation at": "Audio deactivation at {{threshold}}",
     "Amplification dB": "Amplification +{{amplification}}dB",
     "Echo Cancelation": "Echo Cancelation",
-    "Noise Suppression": "Noise Suppression"
+    "Noise Suppression": "Noise Suppression",
+    "Compressor Threshold": "Compressor Threshold {{threshold}}dB",
+    "Compressor Ratio": "Compressor Ratio {{ratio}}:1",
+    "Attack Time": "Attack Time {{duration}}",
+    "Release Time": "Release Time {{duration}}"
 }

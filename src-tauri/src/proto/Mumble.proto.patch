@@ -7,3 +7,14 @@ index c3a23f2..d7ce213 100644
      optional uint64 version_v2 = 5;
 +    // Fancy Mumble version string.
 +    optional uint64 fancy_version = 6;
+@@ -282,6 +282,10 @@ message TextMessage {
+     repeated uint32 tree_id = 4;
+     // The UTF-8 encoded message. May be HTML if the server allows.
+     required string message = 5;
++    // unique identifier for this message
++    optional string message_id = 6;
++    // message timestamp
++    optional uint64 timestamp = 7;
+ }
+ 
+ message PermissionDenied {

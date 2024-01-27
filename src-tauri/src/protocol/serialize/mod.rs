@@ -14,13 +14,15 @@ impl Serialize for TextMessage {
     where
         S: serde::Serializer,
     {
-        let mut s = serializer.serialize_struct("TextMessage", 5)?;
+        let mut s = serializer.serialize_struct("TextMessage", 7)?;
 
         s.serialize_field("actor", &self.actor)?;
         s.serialize_field("channel_id", &self.channel_id)?;
         s.serialize_field("message", &self.message)?;
         s.serialize_field("session", &self.session)?;
         s.serialize_field("tree_id", &self.tree_id)?;
+        s.serialize_field("timestamp", &self.timestamp)?;
+        s.serialize_field("message_id", &self.message_id)?;
         s.end()
     }
 }

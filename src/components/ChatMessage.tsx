@@ -65,8 +65,7 @@ const generateDate = (timestamp: number) => {
 const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message, messageId, onLoaded }) => {
     const userList = useSelector((state: RootState) => state.reducer.userInfo);
     const dispatch = useDispatch();
-    const { t, i18n } = useTranslation();
-    const [loaded, setLoaded] = React.useState(false);
+    const { t } = useTranslation();
 
     const user = React.useMemo(() =>
         userList.users.find(e => e.id === message.sender.user_id)
@@ -80,7 +79,7 @@ const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message, messageId
     }, [dispatch, messageId]);
 
     const likeMessage = React.useCallback((messageId: string) => {
-        invoke('like_message', { messageId: messageId });
+        invoke('like_message', { messageId: messageId, reciever: userList.users.map(e => e.id) });
     }, []);
 
     return (
@@ -95,7 +94,7 @@ const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message, messageId
                     <Link className="user-info" href="#">{message.sender.user_name}</Link> - {date}
                 </Typography>
                 <Tooltip title={t("Like")}>
-                    <IconButton aria-label="Example" size="small" onClick={e => likeMessage("abc")}>
+                    <IconButton aria-label="Example" size="small" onClick={e => likeMessage(message.id)}>
                         <ThumbUpOffAltIcon fontSize="small" color="disabled" />
                     </IconButton>
                 </Tooltip>

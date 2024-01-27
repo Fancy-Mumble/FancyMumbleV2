@@ -13,7 +13,6 @@ use async_trait::async_trait;
 use serde::Serialize;
 use std::collections::{hash_map::Entry, HashMap};
 use tokio::sync::broadcast::{Receiver, Sender};
-use tracing::error;
 
 const SAMPLE_RATE: u32 = 48000;
 const CHANNELS: opus::Channels = opus::Channels::Mono;
@@ -30,7 +29,7 @@ pub struct Manager {
     user_audio_info: HashMap<u32, AudioInfo>,
     audio_player: Player,
     recoder: Recorder,
-    decoder: audio::decoder::Decoder,
+    decoder: Box<dyn audio::decoder::Decoder>,
 }
 
 impl Manager {
@@ -63,7 +62,7 @@ impl Manager {
             user_audio_info: HashMap::new(),
             audio_player: player,
             recoder,
-            decoder: audio::decoder::Decoder::new(SAMPLE_RATE, CHANNELS),
+            decoder: Box::new(audio::decoder::UDPDecoder::new(SAMPLE_RATE, CHANNELS)),
         })
     }
 
@@ -117,6 +116,13 @@ impl Manager {
         self.server_channel.send(message_builder(&blob_request)?)?;
 
         Ok(())
+    }
+
+    pub(crate) fn set_codec(&self, codec_version: &mumble::proto::CodecVersion) {
+        send_to_frontend(
+            &self.frontend_channel,
+            &FrontendMessage::new("set_codec", format!("{codec_version:?}")),
+        );
     }
 }
 

@@ -4,11 +4,13 @@ use std::{
     sync::RwLock,
 };
 
-use reqwest::Identity;
 use tauri::State;
 use tracing::{info, trace};
 
-use crate::{utils::{constants::get_project_dirs, server::{Server, UserIdentity}}, errors::certificate_error::CertificateError};
+use crate::{
+    errors::certificate_error::CertificateError,
+    utils::{constants::get_project_dirs, server::Server},
+};
 
 use super::utils::settings::FrontendSettings;
 
@@ -168,24 +170,24 @@ pub fn get_frontend_settings(
     Ok(settings_data)
 }
 
-
 #[tauri::command]
 pub fn get_identity_certs() -> Result<Vec<String>, String> {
     let project_dirs = get_project_dirs()
-        .ok_or_else(|| CertificateError::new("Unable to load project dir")).map_err(|e| format!("{:?}", e))?;
+        .ok_or_else(|| CertificateError::new("Unable to load project dir"))
+        .map_err(|e| format!("{e:?}"))?;
     let data_dir = project_dirs.data_dir();
 
     if !data_dir.exists() {
-        std::fs::create_dir_all(&data_dir).map_err(|e| format!("{:?}", e))?;
+        std::fs::create_dir_all(data_dir).map_err(|e| format!("{e:?}"))?;
     }
 
     let mut certs = Vec::new();
 
-    let dir_entries = fs::read_dir(&data_dir)
-        .map_err(|e| format!("Error reading directory: {}", e))?;
+    let dir_entries =
+        fs::read_dir(data_dir).map_err(|e| format!("Error reading directory: {e}"))?;
 
     for entry in dir_entries {
-        let entry = entry.map_err(|e| format!("Error reading directory entry: {}", e))?;
+        let entry = entry.map_err(|e| format!("Error reading directory entry: {e}"))?;
         let file_name = entry.file_name();
         let file_name_str = file_name.to_string_lossy();
 

@@ -1,7 +1,8 @@
 use crate::{
-    connection::{Connection, PingThread, threads::MAX_PING_FAILURES},
+    connection::{threads::MAX_PING_FAILURES, Connection, PingThread},
     mumble,
-    utils::{messages::message_builder, frontend::send_to_frontend}, protocol::serialize::message_container::FrontendMessage,
+    protocol::serialize::message_container::FrontendMessage,
+    utils::{frontend::send_to_frontend, messages::message_builder},
 };
 use std::{
     sync::atomic::Ordering,
@@ -67,7 +68,7 @@ impl PingThread for Connection {
                                     deadman_counter += 1;
                                     if deadman_counter > MAX_PING_FAILURES {
                                         let message = FrontendMessage::new("ping_timeout", "Timeout while sending Ping");
-                                        send_to_frontend(&frontend_channel, &message)
+                                        send_to_frontend(&frontend_channel, &message);
                                     }
                                 },
                             }
