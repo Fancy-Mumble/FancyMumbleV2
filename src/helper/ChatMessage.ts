@@ -30,7 +30,8 @@ export class ChatMessageHandler {
             channel_id: [0],
             tree_id: [0],
             message: data,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            id: ""
         })
         this.setChatMessage("");
     }
