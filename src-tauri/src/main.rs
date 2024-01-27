@@ -35,7 +35,7 @@ use crate::commands::{
     enable_audio_info, get_audio_devices, like_message, logout, send_message,
     set_audio_input_setting, set_audio_output_setting, set_user_image,
     settings_cmd::{
-        get_identity_certs, get_frontend_settings, get_server_list, save_frontend_settings,
+        get_frontend_settings, get_identity_certs, get_server_list, save_frontend_settings,
         save_server,
     },
     web_cmd::{get_open_graph_data_from_website, open_browser},

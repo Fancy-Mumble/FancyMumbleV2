@@ -4,11 +4,13 @@ use std::{
 };
 
 use serde::Serialize;
-use tracing::{debug, error, info};
+use tracing::{debug, info};
 
 use crate::{
-    errors::AnyError, mumble, protocol::serialize::message_container::FrontendMessage,
-    utils::{messages::message_builder, frontend::send_to_frontend},
+    errors::AnyError,
+    mumble,
+    protocol::serialize::message_container::FrontendMessage,
+    utils::{frontend::send_to_frontend, messages::message_builder},
 };
 
 use super::Update;

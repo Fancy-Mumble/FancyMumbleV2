@@ -24,14 +24,6 @@ pub struct CertificateBuilder {
 }
 
 impl CertificateBuilder {
-    pub const fn new() -> Self {
-        Self {
-            load_or_generate_new: false,
-            store_to_project_dir: false,
-            identity: None,
-        }
-    }
-
     pub fn try_from(identity: &Option<String>) -> Self {
         Self {
             load_or_generate_new: false,
@@ -56,11 +48,21 @@ impl CertificateBuilder {
         let data_dir = project_dirs.data_dir();
 
         if !data_dir.exists() {
-            std::fs::create_dir_all(&data_dir)?;
+            std::fs::create_dir_all(data_dir)?;
         }
 
-        let certificate_path = data_dir.join(self.identity.as_ref().map_or("certificate.pem".to_string(), |v| format!("cert_{}.pem", v)));
-        let private_key_path = data_dir.join(self.identity.as_ref().map_or("private_key.pem".to_string(), |v| format!("priv_key_{}.pem", v)));
+        let certificate_path = data_dir.join(
+            self.identity
+                .as_ref()
+                .map_or("certificate.pem".to_string(), |v| format!("cert_{v}.pem")),
+        );
+        let private_key_path = data_dir.join(
+            self.identity
+                .as_ref()
+                .map_or("private_key.pem".to_string(), |v| {
+                    format!("priv_key_{v}.pem")
+                }),
+        );
 
         if self.load_or_generate_new {
             trace!("Trying to load certificate from project dir");

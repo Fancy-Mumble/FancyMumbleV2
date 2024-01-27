@@ -1,7 +1,6 @@
-use serde::Serialize;
-use tracing::error;
-
-use crate::{protocol::serialize::message_container::FrontendMessage, utils::frontend::send_to_frontend};
+use crate::{
+    protocol::serialize::message_container::FrontendMessage, utils::frontend::send_to_frontend,
+};
 
 use tokio::sync::broadcast::Sender;
 
@@ -17,7 +16,6 @@ impl Manager {
             _server_channel: server_channel,
         }
     }
-
 
     pub fn notify_disconnected(&self, message: &Option<String>) {
         let msg = FrontendMessage::new("disconnected", message);

@@ -2,7 +2,7 @@ use base64::{engine::general_purpose, Engine as _};
 use std::collections::{hash_map::Entry, HashMap};
 
 use serde::{Deserialize, Serialize};
-use tracing::{debug, error, info, trace, warn};
+use tracing::{debug, info, trace};
 
 use crate::{
     errors::AnyError,
@@ -10,7 +10,8 @@ use crate::{
     protocol::serialize::message_container::FrontendMessage,
     utils::{
         file::{read_data_from_cache, store_data_in_cache},
-        messages::message_builder, frontend::send_to_frontend,
+        frontend::send_to_frontend,
+        messages::message_builder,
     },
 };
 
@@ -66,10 +67,10 @@ pub struct UpdateableUserState {
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct SyncInfo {
-        pub session: Option<u32>,
-        pub max_bandwidth: Option<u32>,
-        pub welcome_text: Option<String>,
-        pub permissions: Option<u64>,
+    pub session: Option<u32>,
+    pub max_bandwidth: Option<u32>,
+    pub welcome_text: Option<String>,
+    pub permissions: Option<u64>,
 }
 
 #[derive(Debug, Default, Serialize)]
@@ -100,7 +101,6 @@ impl Update<mumble::proto::UserState> for User {
 
 pub struct Manager {
     users: HashMap<u32, User>,
-    current_user_id: Option<u32>,
     frontend_channel: Sender<String>,
     server_channel: Sender<Vec<u8>>,
 }
@@ -109,7 +109,6 @@ impl Manager {
     pub fn new(send_to: Sender<String>, server_channel: Sender<Vec<u8>>) -> Self {
         Self {
             users: HashMap::new(),
-            current_user_id: None,
             frontend_channel: send_to,
             server_channel,
         }
@@ -320,14 +319,14 @@ impl Manager {
     }
 
     pub fn notify_current_user(&mut self, sync_info: &mumble::proto::ServerSync) {
-            let sync_info = SyncInfo {
-                session: sync_info.session,
-                max_bandwidth: sync_info.max_bandwidth,
-                welcome_text: sync_info.welcome_text.clone(),
-                permissions: sync_info.permissions,
-            };
-            let message = FrontendMessage::new("sync_info", sync_info);
-            send_to_frontend(&self.frontend_channel, &message);
+        let sync_info = SyncInfo {
+            session: sync_info.session,
+            max_bandwidth: sync_info.max_bandwidth,
+            welcome_text: sync_info.welcome_text.clone(),
+            permissions: sync_info.permissions,
+        };
+        let message = FrontendMessage::new("sync_info", sync_info);
+        send_to_frontend(&self.frontend_channel, &message);
     }
 }
 

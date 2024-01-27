@@ -11,14 +11,19 @@ pub struct DecodedMessage {
     pub data: Vec<i16>,
 }
 
+pub trait Decoder: Send {
+    fn decode_audio(&mut self, audio_data: &[u8]) -> AnyError<DecodedMessage>;
+}
+
 #[allow(clippy::struct_field_names)]
-pub struct Decoder {
+#[allow(clippy::module_name_repetitions)]
+pub struct UDPDecoder {
     decoder_map: DecoderMap,
     sample_rate: u32,
     channels: opus::Channels,
 }
 
-impl Decoder {
+impl UDPDecoder {
     pub fn new(sample_rate: u32, channels: opus::Channels) -> Self {
         Self {
             decoder_map: DecoderMap::new(sample_rate, channels),
@@ -26,12 +31,14 @@ impl Decoder {
             channels,
         }
     }
+}
 
+impl Decoder for UDPDecoder {
     // we want a downcast, because we are reading from a stream
     #[allow(clippy::cast_possible_truncation)]
     // We are aware of the possible truncation, but we are not using the full range of u32
     #[allow(clippy::cast_sign_loss)]
-    pub fn decode_audio(&mut self, audio_data: &[u8]) -> AnyError<DecodedMessage> {
+    fn decode_audio(&mut self, audio_data: &[u8]) -> AnyError<DecodedMessage> {
         let audio_header = audio_data[0];
 
         let audio_type = (audio_header & 0xE0) >> 5;
@@ -114,3 +121,25 @@ impl DecoderMap {
         Ok(opus::Decoder::new(sample_rate, channels)?)
     }
 }
+
+// pub struct ProtobufDecoder {
+//     decoder_map: DecoderMap,
+//     sample_rate: u32,
+//     channels: opus::Channels,
+// }
+
+// impl ProtobufDecoder {
+//     pub fn new(sample_rate: u32, channels: opus::Channels) -> Self {
+//         Self {
+//             decoder_map: DecoderMap::new(sample_rate, channels),
+//             sample_rate,
+//             channels,
+//         }
+//     }
+// }
+
+// impl Decoder for ProtobufDecoder {
+//     fn decode_audio(&mut self, audio_data: &[u8]) -> AnyError<DecodedMessage> {
+//         Err("Not implemented".into())
+//     }
+// }

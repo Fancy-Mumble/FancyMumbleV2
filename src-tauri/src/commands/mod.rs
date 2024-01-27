@@ -161,11 +161,12 @@ pub async fn logout(state: State<'_, ConnectionState>) -> Result<(), String> {
 #[tauri::command]
 pub async fn like_message(
     message_id: String,
+    reciever: Vec<u32>,
     state: State<'_, ConnectionState>,
 ) -> Result<(), String> {
     let guard = state.connection.lock().await;
     if let Some(guard) = guard.as_ref() {
-        if let Err(e) = guard.like_message(&message_id) {
+        if let Err(e) = guard.like_message(&message_id, reciever) {
             return Err(format!("{e:?}"));
         }
     }

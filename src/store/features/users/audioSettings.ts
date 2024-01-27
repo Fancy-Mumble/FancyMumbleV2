@@ -12,10 +12,18 @@ interface VoiceActivationOptions {
     voice_hysteresis_upper_threshold: number;
 }
 
+interface CompressorOptions {
+    attack_time: number,
+    release_time: number,
+    threshold: number,
+    ratio: number,
+}
+
 interface AudioInputSettings {
     amplification: number;
     input_mode: InputMode;
     voice_activation_options: VoiceActivationOptions;
+    compressor_options: CompressorOptions;
 }
 
 const initialState: AudioInputSettings = {
@@ -26,7 +34,12 @@ const initialState: AudioInputSettings = {
         fade_out_duration: 850,
         voice_hysteresis_lower_threshold: 0.03,
         voice_hysteresis_upper_threshold: 0.07
-
+    },
+    compressor_options: {
+        attack_time: 0.1,
+        release_time: 0.1,
+        threshold: -30.0,
+        ratio: 10.0
     }
 };
 
@@ -52,10 +65,33 @@ export const frontendSettings = createSlice({
         setVoiceHysteresis(state, action) {
             state.voice_activation_options.voice_hysteresis_lower_threshold = action.payload[0];
             state.voice_activation_options.voice_hysteresis_upper_threshold = action.payload[1];
-        }
+        },
+        setAttackTime(state, action) {
+            state.compressor_options.attack_time = action.payload
+        },
+        setReleaseTime(state, action) {
+            state.compressor_options.release_time = action.payload
+        },
+        setCompressorThreshold(state, action) {
+            state.compressor_options.threshold = action.payload
+        },
+        setCompressorRatio(state, action) {
+            state.compressor_options.ratio = action.payload
+        },
     },
 })
 
-export const { updateAudioSettings, setAmplification, setInputMode, setVoiceHold, setFadeOutDuration, setVoiceHysteresis } = frontendSettings.actions
+export const {
+    updateAudioSettings,
+    setAmplification,
+    setInputMode,
+    setVoiceHold,
+    setFadeOutDuration,
+    setVoiceHysteresis,
+    setAttackTime,
+    setReleaseTime,
+    setCompressorThreshold,
+    setCompressorRatio
+} = frontendSettings.actions
 
 export default frontendSettings.reducer
