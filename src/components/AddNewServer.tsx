@@ -54,12 +54,12 @@ function AddNewServer({ serverInfo, identityCerts, onSave, onConnect }: Readonly
                     <Box mt={2}>
                         <Autocomplete
                             value={identity}
-                            onChange={(event, newValue: IdentitySelectionType) => {
+                            onChange={(event, newValue: string | IdentitySelectionType | null) => {
                                 if (typeof newValue === 'string') {
                                     setIdentity({
                                         name: newValue,
                                     });
-                                } else if (newValue && newValue.inputValue) {
+                                } else if (newValue?.inputValue) {
                                     // Create a new value from the user input
                                     setIdentity({
                                         name: newValue.inputValue,
@@ -69,26 +69,30 @@ function AddNewServer({ serverInfo, identityCerts, onSave, onConnect }: Readonly
                                 }
                             }}
                             filterOptions={(options, params) => {
-                                const filtered = filter(options, params);
+                                if (typeof options !== 'string') {
+                                    const filtered = filter(options as IdentitySelectionType[], params);
 
-                                const { inputValue } = params;
-                                // Suggest the creation of a new value
-                                const isExisting = options.some((option) => inputValue === option);
-                                if (inputValue !== '' && !isExisting) {
-                                    filtered.push({
-                                        inputValue,
-                                        name: `Add "${inputValue}"`,
-                                    });
+                                    const { inputValue } = params;
+                                    // Suggest the creation of a new value
+                                    const isExisting = options.some((option) => typeof option !== 'string' && inputValue === option?.name);
+                                    if (inputValue !== '' && !isExisting) {
+                                        filtered.push({
+                                            inputValue,
+                                            name: `Add "${inputValue}"`,
+                                        });
+                                    }
+
+                                    return filtered;
+                                } else {
+                                    return [];
                                 }
-
-                                return filtered;
                             }}
                             selectOnFocus
                             clearOnBlur
                             handleHomeEndKeys
                             id="free-solo-with-text-demo"
                             options={identityCertsObj}
-                            getOptionLabel={(option: IdentitySelectionType) => {
+                            getOptionLabel={(option: string | IdentitySelectionType) => {
                                 // Value selected with enter, right from the input
                                 if (typeof option === 'string') {
                                     return option;
@@ -100,7 +104,7 @@ function AddNewServer({ serverInfo, identityCerts, onSave, onConnect }: Readonly
                                 // Regular option
                                 return option.name;
                             }}
-                            renderOption={(props, option) => <li {...props}>{option.name}</li>}
+                            renderOption={(props, option) => <li {...props}>{typeof option === 'string' ? option : option.name}</li>}
                             freeSolo
                             renderInput={(params) => (
                                 <TextField {...params} label={t("Client Certitcate")} />

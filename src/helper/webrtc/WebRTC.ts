@@ -92,6 +92,7 @@ export class WebRTCViewer {
     private configuration: { iceServers: { urls: string; }[]; };
     private stream: MediaStream | null = null;
     private onStreamListeners: ((stream: MediaStream) => void)[] = [];
+    private peerConnection: RTCPeerConnection | null = null;
 
     constructor(signalingServerUrl: string, userId: number, roomId: number) {
         this.configuration = { 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }] };
@@ -148,7 +149,7 @@ export class WebRTCViewer {
 
     onStreamEnd(callback: () => void) {
         if (this.peerConnection) {
-            this.peerConnection.onremovestream = callback;
+            this.peerConnection.ontrack = null;
             this.peerConnection.oniceconnectionstatechange = () => {
                 if (this.peerConnection?.iceConnectionState === 'disconnected') {
                     callback();
