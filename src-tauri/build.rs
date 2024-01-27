@@ -13,6 +13,10 @@ const MUMBLE_PROTO_SHA256: &str =
     "0f86d85938ff2268e3eb05ce0120805fb049ad0d062f4d01c6657b048dcc9245";
 const PATCHED_MUMBLE_PROTO_HASH: &str =
     "ebadea7bcb720da05149076b1b0ec7a9ff1107a5107a4137b75e8e45fb52f68d";
+const DOWNLOAD_MUMBLE_UDP_PROTO_DIR: &str =
+    "https://raw.githubusercontent.com/mumble-voip/mumble/6a48c0478477054b4e7356b0bd7dc9da24cf0880/src/MumbleUDP.proto";
+const MUMBLE_UDP_PROTO_SHA256: &str =
+    "8087983b0d9a12e11380cad99870a0ef3cee7550b13a114a733aa835acd3d040";
 
 fn apply(diff: Patch, old: &str) -> String {
     let old_lines = old.lines().collect::<Vec<&str>>();
@@ -81,6 +85,7 @@ async fn download_file(
 
 fn main() -> io::Result<()> {
     let mumble_proto = Path::new("src/proto/Mumble.proto");
+    let mumble_udp_proto = Path::new("src/proto/MumbleUDP.proto");
     let patch_file = Path::new("src/proto/Mumble.proto.patch");
 
     let mumble_proto_bytes = read_file_as_bytes(mumble_proto).unwrap_or_default();
@@ -90,20 +95,29 @@ fn main() -> io::Result<()> {
     if hash != PATCHED_MUMBLE_PROTO_HASH {
         let rt = Runtime::new()?;
         rt.block_on(async {
-            let resonse_file =
+            let response_file =
                 download_file(DOWNLOAD_MUMBLE_PROTO_DIR, MUMBLE_PROTO_SHA256, mumble_proto)
                     .await
                     .expect("Failed to download Mumble.proto");
-            let response_str = str::from_utf8(&resonse_file).expect("Failed to parse response");
+            let response_str = str::from_utf8(&response_file).expect("Failed to parse response");
 
             let patch_output = read_file_as_bytes(patch_file).expect("Failed to read file");
             let patch = Patch::from_single(patch_output.as_str()).expect("Failed to parse patch");
             let new_content = apply(patch, response_str);
             write_to_file(new_content.as_bytes(), mumble_proto);
+
+            download_file(
+                DOWNLOAD_MUMBLE_UDP_PROTO_DIR,
+                MUMBLE_UDP_PROTO_SHA256,
+                mumble_udp_proto,
+            )
+            .await
+            .expect("Failed to download MumbleUDP.proto");
         });
     }
 
     prost_build::compile_protos(&["src/proto/Mumble.proto"], &["src/"])?;
+    prost_build::compile_protos(&["src/proto/MumbleUDP.proto"], &["src/"])?;
     tauri_build::build();
 
     Ok(())

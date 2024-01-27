@@ -29,6 +29,7 @@ use self::threads::ConnectionThread;
 
 const QUEUE_SIZE: usize = 256;
 const BUFFER_SIZE: usize = 8192;
+const FANCY_MUMBLE_DATA_ID: &str = "fancy_mumble";
 
 struct ServerData {
     username: String,
@@ -162,12 +163,12 @@ impl Connection {
     }
 
     //TODO: Move to output Thread
-    pub fn like_message(&self, message_id: &str) -> AnyError<()> {
+    pub fn like_message(&self, message_id: &str, reciever: Vec<u32>) -> AnyError<()> {
         let like_message = mumble::proto::PluginDataTransmission {
             sender_session: None,
-            receiver_sessions: Vec::new(),
+            receiver_sessions: reciever,
             data: Some(message_id.as_bytes().to_vec()),
-            data_id: None,
+            data_id: Some(FANCY_MUMBLE_DATA_ID.to_owned()),
         };
         self.tx_out.send(message_builder(&like_message)?)?;
 

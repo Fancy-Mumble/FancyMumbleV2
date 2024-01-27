@@ -17,7 +17,9 @@ export interface TextMessage {
     // The UTF-8 encoded message. May be HTML if the server allows.
     message: string,
     // custom property to keep track of time
-    timestamp: number
+    timestamp: number,
+    // unique id of the message
+    id: string
 }
 
 

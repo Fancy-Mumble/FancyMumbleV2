@@ -4,7 +4,7 @@ use serde::Serialize;
 use tokio::sync::broadcast::Sender;
 use tracing::error;
 
-use crate::{errors::AnyError, mumble, protocol::serialize::message_container::FrontendMessage};
+use crate::{mumble, protocol::serialize::message_container::FrontendMessage};
 
 use super::user::User;
 
@@ -19,6 +19,7 @@ struct TextMessage {
     sender: SenderInfo,
     message: String,
     timestamp: u128,
+    id: Option<String>,
 }
 
 pub struct Manager {
@@ -64,21 +65,27 @@ impl Manager {
         self.notify(Some(last));
     }
 
-    pub fn add_text_message(
-        &mut self,
-        text_message: mumble::proto::TextMessage,
-        user: &User,
-    ) -> AnyError<()> {
+    pub fn add_text_message(&mut self, text_message: mumble::proto::TextMessage, user: &User) {
+        let timestamp = text_message.timestamp.map_or_else(
+            || {
+                SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_millis()
+            },
+            u128::from,
+        );
+
         let message = TextMessage {
             sender: SenderInfo {
                 user_id: user.id,
                 user_name: user.name.clone(),
             },
             message: text_message.message,
-            timestamp: SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis(),
+            timestamp,
+            id: text_message.message_id,
         };
         self.message_log.push(message);
         self.notify_last();
-        Ok(())
     }
 }

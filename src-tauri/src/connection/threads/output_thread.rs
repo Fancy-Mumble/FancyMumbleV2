@@ -34,6 +34,8 @@ impl OutputThread for Connection {
                                 channel_id: result.channel_id.iter().copied().collect(),
                                 tree_id: Vec::new(),
                                 message: result.message,
+                                message_id: None,
+                                timestamp: None,
                             };
                             trace!("Sending message: {:?}", message);
                             let buffer = message_builder(&message).unwrap_or_default();
