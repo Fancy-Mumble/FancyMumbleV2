@@ -6,5 +6,6 @@
     "Primary": "Primaire",
     "Accent": "Accent",
     "Disable Auto-Scroll": "Désactiver le défilement automatique",
-    "Always auto-scroll, even if scrolled up": "Toujours défilement automatique, même si défilé vers le haut"
+    "Always auto-scroll, even if scrolled up": "Toujours défilement automatique, même si défilé vers le haut",
+    "Enable WYSIWYG Editor": "Activer l'éditeur WYSIWYG"
 }

@@ -14,12 +14,9 @@ mod utils;
 #[cfg(test)]
 mod tests;
 
-use std::{
-    collections::HashMap,
-    sync::{Arc, RwLock},
-};
+use std::{collections::HashMap, sync::Arc};
 
-use commands::{settings_cmd::FrontendSettingsState, web_cmd::CrawlerState, ConnectionState};
+use commands::{web_cmd::CrawlerState, ConnectionState};
 use tauri_plugin_window_state::{StateFlags, WindowExt};
 use tokio::sync::Mutex;
 
@@ -34,11 +31,11 @@ use crate::commands::{
     change_user_state, connect_to_server, crop_and_store_image, disable_audio_info,
     enable_audio_info, get_audio_devices, like_message, logout, send_message,
     set_audio_input_setting, set_audio_output_setting, set_user_image,
-    settings_cmd::{
-        get_frontend_settings, get_identity_certs, get_server_list, save_frontend_settings,
-        save_server,
+    settings_cmd::{get_identity_certs, get_server_list, save_server},
+    web_cmd::{
+        get_open_graph_data_from_website, get_tenor_search_results, get_tenor_trending_results,
+        open_browser,
     },
-    web_cmd::{get_open_graph_data_from_website, open_browser},
     zip_cmd::{convert_to_base64, unzip_data_from_utf8, zip_data_to_utf8},
 };
 
@@ -64,6 +61,7 @@ async fn main() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_window_state::Builder::default().build())
+        .plugin(tauri_plugin_store::Builder::default().build())
         .setup(|app| {
             app.manage(ConnectionState {
                 connection: Mutex::new(None),
@@ -77,9 +75,6 @@ async fn main() {
             });
             app.manage(CrawlerState {
                 crawler: Mutex::new(None),
-            });
-            app.manage(FrontendSettingsState {
-                state: RwLock::new(false),
             });
             if let Some(window) = app.get_window("main") {
                 window.restore_state(StateFlags::all())?;
@@ -103,13 +98,13 @@ async fn main() {
             convert_to_base64,
             open_browser,
             get_open_graph_data_from_website,
-            save_frontend_settings,
-            get_frontend_settings,
             get_identity_certs,
             set_audio_input_setting,
             set_audio_output_setting,
             enable_audio_info,
-            disable_audio_info
+            disable_audio_info,
+            get_tenor_search_results,
+            get_tenor_trending_results
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

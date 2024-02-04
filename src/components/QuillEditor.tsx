@@ -1,124 +1,708 @@
-import React, { useEffect, useRef, useState } from 'react';
+/*
+React-Quill
+https://github.com/zenoamaro/react-quill
+*/
+
+import React from 'react';
+import ReactDOM from 'react-dom';
+import isEqual from 'lodash/isEqual';
 
 import Quill, {
     QuillOptionsStatic,
     RangeStatic,
     BoundsStatic,
     StringMap,
-    Sources,
-    TextChangeHandler,
+    Sources
 } from 'quill';
+import Delta from "quill-delta";
 
-import 'quill/dist/quill.snow.css';
+import 'quill/dist/quill.bubble.css';
+import "./styles/Quill.css";
+const Link = Quill.import('formats/link');
+const BlockEmbed = Quill.import('blots/block/embed');
+Link.PROTOCOL_WHITELIST = ['http', 'https', 'mailto', 'tel', 'radar', 'rdar', 'smb', 'sms', 'data'];
 
-Quill.register
+class VideoBlot extends BlockEmbed {
+    static create(value: string) {
+        const node = super.create();
+        node.setAttribute('src', value);
+        node.setAttribute('controls', '');
+        node.setAttribute('width', '100%');
+        node.setAttribute('height', 'auto');
+        return node;
+    }
 
-interface QuillEditorProps {
-    theme?: 'bubble' | 'snow' | string;
-    placeholder?: string;
-    readOnly?: boolean;
-    bounds?: string;
-    debug?: 'error' | 'warn' | 'log' | boolean;
-    formats?: string[];
-    modules?: any;
-    scrollingContainer?: string | HTMLElement | undefined;
-    style?: React.CSSProperties;
-    onKeyDown?: (this: HTMLDivElement, ev: KeyboardEvent) => any;
-    onChange?: (content: string) => void;
-    onPaste?: (this: HTMLDivElement, ev: ClipboardEvent) => any;
-    multiline?: boolean;
-    value?: string;
+    static value(node: HTMLElement) {
+        return node.getAttribute('src');
+    }
 }
 
-export const QuillEditor: React.FC<QuillEditorProps> = ({
-    theme = 'snow',
-    placeholder = 'Compose an epic...',
-    readOnly = false,
-    bounds = 'document.body',
-    debug = 'warn',
-    formats = [],
-    modules = {
-        toolbar: {
-            toolbar: '#toolbar'
+VideoBlot.blotName = 'video';
+VideoBlot.tagName = 'video';
+
+Quill.register(VideoBlot);
+
+// Merged namespace hack to export types along with default object
+// See: https://github.com/Microsoft/TypeScript/issues/2719
+namespace QuillEditor {
+    export type Value = string | Delta;
+    export type Range = RangeStatic | null;
+
+    export interface QuillOptions extends QuillOptionsStatic {
+        tabIndex?: number,
+    }
+
+    export interface ReactQuillProps {
+        bounds?: string | HTMLElement,
+        children?: React.ReactElement<any>,
+        className?: string,
+        defaultValue?: Value,
+        formats?: string[],
+        id?: string,
+        modules?: StringMap,
+        onChange?(
+            value: string,
+            delta: Delta,
+            source: Sources,
+            editor: UnprivilegedEditor,
+        ): void,
+        onChangeSelection?(
+            selection: Range,
+            source: Sources,
+            editor: UnprivilegedEditor,
+        ): void,
+        onFocus?(
+            selection: Range,
+            source: Sources,
+            editor: UnprivilegedEditor,
+        ): void,
+        onBlur?(
+            previousSelection: Range,
+            source: Sources,
+            editor: UnprivilegedEditor,
+        ): void,
+        onKeyDown?: React.EventHandler<any>,
+        onKeyPress?: React.EventHandler<any>,
+        onKeyUp?: React.EventHandler<any>,
+        placeholder?: string,
+        preserveWhitespace?: boolean,
+        readOnly?: boolean,
+        scrollingContainer?: string | HTMLElement,
+        style?: React.CSSProperties,
+        tabIndex?: number,
+        theme?: string,
+        value?: Value,
+    }
+
+    export interface UnprivilegedEditor {
+        getLength(): number;
+        getText(index?: number, length?: number): string;
+        getHTML(): string;
+        getBounds(index: number, length?: number): BoundsStatic;
+        getSelection(focus?: boolean): RangeStatic;
+        getContents(index?: number, length?: number): Delta;
+    }
+}
+
+// Re-import everything from namespace into scope for comfort
+import Value = QuillEditor.Value;
+import Range = QuillEditor.Range;
+import QuillOptions = QuillEditor.QuillOptions;
+import ReactQuillProps = QuillEditor.ReactQuillProps;
+import UnprivilegedEditor = QuillEditor.UnprivilegedEditor;
+
+interface ReactQuillState {
+    generation: number,
+}
+
+class QuillEditor extends React.Component<ReactQuillProps, ReactQuillState> {
+
+    static readonly displayName = 'React Quill'
+
+    /*
+    Export Quill to be able to call `register`
+    */
+    static readonly Quill = Quill;
+
+    /*
+    Changing one of these props should cause a full re-render and a
+    re-instantiation of the Quill editor.
+    */
+    dirtyProps: (keyof ReactQuillProps)[] = [
+        'modules',
+        'formats',
+        'bounds',
+        'theme',
+        'children',
+    ]
+
+    /*
+    Changing one of these props should cause a regular update. These are mostly
+    props that act on the container, rather than the quillized editing area.
+    */
+    cleanProps: (keyof ReactQuillProps)[] = [
+        'id',
+        'className',
+        'style',
+        'placeholder',
+        'tabIndex',
+        'onChange',
+        'onChangeSelection',
+        'onFocus',
+        'onBlur',
+        'onKeyPress',
+        'onKeyDown',
+        'onKeyUp',
+    ]
+
+    static defaultProps = {
+        theme: 'snow',
+        modules: {},
+        readOnly: false,
+    }
+
+    state: ReactQuillState = {
+        generation: 0,
+    }
+
+    /*
+    The Quill Editor instance.
+    */
+    editor?: Quill
+
+    /*
+    Reference to the element holding the Quill editing area.
+    */
+    editingArea?: React.ReactInstance | null
+
+    /*
+    Tracks the internal value of the Quill editor
+    */
+    value: Value
+
+    /*
+    Tracks the internal selection of the Quill editor
+    */
+    selection: Range = null
+
+    /*
+    Used to compare whether deltas from `onChange` are being used as `value`.
+    */
+    lastDeltaChangeSet?: Delta
+
+    /*
+    Stores the contents of the editor to be restored after regeneration.
+    */
+    regenerationSnapshot?: {
+        delta: Delta,
+        selection: Range,
+    }
+
+    /*
+    A weaker, unprivileged proxy for the editor that does not allow accidentally
+    modifying editor state.
+    */
+    unprivilegedEditor?: UnprivilegedEditor
+
+    pasteListenerEvent!: (e: ClipboardEvent) => void;
+
+    constructor(props: ReactQuillProps) {
+        super(props);
+        const value = this.isControlled() ? props.value : props.defaultValue;
+        this.value = value ?? '';
+    }
+
+    validateProps(props: ReactQuillProps): void {
+        if (React.Children.count(props.children) > 1) throw new Error(
+            'The Quill editing area can only be composed of a single React element.'
+        );
+
+        if (React.Children.count(props.children)) {
+            const child = React.Children.only(props.children);
+            if (child?.type === 'textarea') throw new Error(
+                'Quill does not support editing on a <textarea>. Use a <div> instead.'
+            );
         }
-    },
-    scrollingContainer = undefined,
-    style = {},
-    onKeyDown,
-    onChange,
-    onPaste,
-    multiline = false,
-    value = ''
-}) => {
-    const editorRef = useRef<HTMLDivElement | null>(null);
-    const quillRef = useRef(); // This will hold the Quill instance
-    const [toolbarVisible, setToolbarVisible] = useState(multiline);
-    let quill: Quill | undefined = undefined;
-    let textChangeListener: TextChangeHandler | undefined = undefined;
 
-    // This runs once on component mount
-    useEffect(() => {
-        if (editorRef.current) {
-            console.log("editorRef.current", editorRef.current);
-            quill = new Quill(editorRef.current, {
-                theme,
-                placeholder,
-                readOnly,
-                bounds,
-                debug,
-                formats,
-                modules,
-                scrollingContainer
-            });
+        if (
+            this.lastDeltaChangeSet &&
+            props.value === this.lastDeltaChangeSet
+        ) throw new Error(
+            'You are passing the `delta` object from the `onChange` event back ' +
+            'as `value`. You most probably want `editor.getContents()` instead. ' +
+            'See: https://github.com/zenoamaro/react-quill#using-deltas'
+        );
+    }
 
-            // Set the initial value
-            quill.root.innerHTML = value;
+    shouldComponentUpdate(nextProps: ReactQuillProps, nextState: ReactQuillState) {
+        this.validateProps(nextProps);
 
-            // Add event listeners
-            if (onKeyDown)
-                quill.root.addEventListener('keydown', onKeyDown);
-            if (onPaste)
-                quill.root.addEventListener('paste', onPaste);
+        // If the editor hasn't been instantiated yet, or the component has been
+        // regenerated, we already know we should update.
+        if (!this.editor || this.state.generation !== nextState.generation) {
+            return true;
+        }
 
-            if (onChange) {
-                textChangeListener = () => {
-                    onChange(quill?.root.innerHTML || '');
+        // Handle value changes in-place
+        if ('value' in nextProps) {
+            const prevContents = this.getEditorContents();
+            const nextContents = nextProps.value ?? '';
+
+            // NOTE: Seeing that Quill is missing a way to prevent edits, we have to
+            //       settle for a hybrid between controlled and uncontrolled mode. We
+            //       can't prevent the change, but we'll still override content
+            //       whenever `value` differs from current state.
+            // NOTE: Comparing an HTML string and a Quill Delta will always trigger a
+            //       change, regardless of whether they represent the same document.
+            if (!this.isEqualValue(nextContents, prevContents)) {
+                this.setEditorContents(this.editor, nextContents);
+            }
+        }
+
+        // Handle read-only changes in-place
+        if (nextProps.readOnly !== this.props.readOnly) {
+            this.setEditorReadOnly(this.editor, nextProps.readOnly!);
+        }
+
+        // Clean and Dirty props require a render
+        return [...this.cleanProps, ...this.dirtyProps].some((prop) => {
+            return !isEqual(nextProps[prop], this.props[prop]);
+        });
+    }
+
+    shouldComponentRegenerate(nextProps: ReactQuillProps): boolean {
+        // Whenever a `dirtyProp` changes, the editor needs reinstantiation.
+        return this.dirtyProps.some((prop) => {
+            return !isEqual(nextProps[prop], this.props[prop]);
+        });
+    }
+
+    componentDidMount() {
+        this.instantiateEditor();
+        this.setEditorContents(this.editor!, this.getEditorContents());
+    }
+
+    componentWillUnmount() {
+        this.destroyEditor();
+    }
+
+    componentDidUpdate(prevProps: ReactQuillProps, prevState: ReactQuillState) {
+        // If we're changing one of the `dirtyProps`, the entire Quill Editor needs
+        // to be re-instantiated. Regenerating the editor will cause the whole tree,
+        // including the container, to be cleaned up and re-rendered from scratch.
+        // Store the contents so they can be restored later.
+        if (this.editor && this.shouldComponentRegenerate(prevProps)) {
+            const delta = this.editor.getContents();
+            const selection = this.editor.getSelection();
+            this.regenerationSnapshot = { delta, selection };
+            this.setState({ generation: this.state.generation + 1 });
+            this.destroyEditor();
+        }
+
+        // The component has been regenerated, so it must be re-instantiated, and
+        // its content must be restored to the previous values from the snapshot.
+        if (this.state.generation !== prevState.generation) {
+            const { delta, selection } = this.regenerationSnapshot!;
+            delete this.regenerationSnapshot;
+            this.instantiateEditor();
+            const editor = this.editor!;
+            editor.setContents(delta);
+            postpone(() => this.setEditorSelection(editor, selection));
+        }
+    }
+
+    instantiateEditor(): void {
+        if (this.editor) {
+            this.hookEditor(this.editor);
+        } else {
+            this.editor = this.createEditor(
+                this.getEditingArea(),
+                this.getEditorConfig()
+            );
+        }
+    }
+
+    destroyEditor(): void {
+        if (!this.editor) return;
+        this.unhookEditor(this.editor);
+    }
+
+    /*
+    We consider the component to be controlled if `value` is being sent in props.
+    */
+    isControlled(): boolean {
+        return 'value' in this.props;
+    }
+
+    getEditorConfig(): QuillOptions {
+        return {
+            bounds: this.props.bounds,
+            formats: this.props.formats,
+            modules: this.props.modules,
+            placeholder: this.props.placeholder,
+            readOnly: this.props.readOnly,
+            scrollingContainer: this.props.scrollingContainer,
+            tabIndex: this.props.tabIndex,
+            theme: this.props.theme,
+        };
+    }
+
+    getEditor(): Quill {
+        if (!this.editor) throw new Error('Accessing non-instantiated editor');
+        return this.editor;
+    }
+
+    /**
+    Creates an editor on the given element. The editor will be passed the
+    configuration, have its events bound,
+    */
+    createEditor(element: Element, config: QuillOptions) {
+        const editor = new Quill(element, config);
+        if (config.tabIndex != null) {
+            this.setEditorTabIndex(editor, config.tabIndex);
+        }
+        this.hookEditor(editor);
+        return editor;
+    }
+
+    hookEditor(editor: Quill) {
+        // Expose the editor on change events via a weaker, unprivileged proxy
+        // object that does not allow accidentally modifying editor state.
+        this.unprivilegedEditor = this.makeUnprivilegedEditor(editor);
+        // Using `editor-change` allows picking up silent updates, like selection
+        // changes on typing.
+        editor.on('editor-change', this.onEditorChange);
+        this.setClipboardMatcher(editor);
+    }
+
+    unhookEditor(editor: Quill) {
+        editor.off('editor-change', this.onEditorChange);
+        editor.root.removeEventListener('paste', this.pasteListenerEvent);
+    }
+
+    getEditorContents(): Value {
+        return this.value;
+    }
+
+    getEditorSelection(): Range {
+        return this.selection;
+    }
+
+    /*
+    True if the value is a Delta instance or a Delta look-alike.
+    */
+    isDelta(value: any): boolean {
+        return value && value.ops;
+    }
+
+    /*
+    Special comparison function that knows how to compare Deltas.
+    */
+    isEqualValue(value: any, nextValue: any): boolean {
+        if (this.isDelta(value) && this.isDelta(nextValue)) {
+            return isEqual(value.ops, nextValue.ops);
+        } else {
+            return isEqual(value, nextValue);
+        }
+    }
+
+    /*
+    Replace the contents of the editor, but keep the previous selection hanging
+    around so that the cursor won't move.
+    */
+    setEditorContents(editor: Quill, value: Value) {
+        this.value = value;
+        const sel = this.getEditorSelection();
+        if (typeof value === 'string') {
+            editor.setContents(editor.clipboard.convert({ html: value }));
+        } else {
+            editor.setContents(value);
+        }
+        postpone(() => this.setEditorSelection(editor, sel));
+    }
+
+    setEditorSelection(editor: Quill, range: Range) {
+        this.selection = range;
+        if (range) {
+            // Validate bounds before applying.
+            const length = editor.getLength();
+            range.index = Math.max(0, Math.min(range.index, length - 1));
+            range.length = Math.max(0, Math.min(range.length, (length - 1) - range.index));
+            editor.setSelection(range);
+        }
+    }
+
+    setEditorTabIndex(editor: Quill, tabIndex: number) {
+        if (editor?.scroll?.domNode) {
+            (editor.scroll.domNode as HTMLElement).tabIndex = tabIndex;
+        }
+    }
+
+    setEditorReadOnly(editor: Quill, value: boolean) {
+        if (value) {
+            editor.disable();
+        } else {
+            editor.enable();
+        }
+    }
+
+    /*
+    Returns a weaker, unprivileged proxy object that only exposes read-only
+    accessors found on the editor instance, without any state-modifying methods.
+    */
+    makeUnprivilegedEditor(editor: Quill) {
+        const e = editor;
+        return {
+            getHTML: () => e.root.innerHTML,
+            getLength: e.getLength.bind(e),
+            getText: e.getText.bind(e),
+            getContents: e.getContents.bind(e),
+            getSelection: e.getSelection.bind(e),
+            getBounds: e.getBounds.bind(e),
+        };
+    }
+
+    getEditingArea(): Element {
+        if (!this.editingArea) {
+            throw new Error('Instantiating on missing editing area');
+        }
+        const element = ReactDOM.findDOMNode(this.editingArea);
+        if (!element) {
+            throw new Error('Cannot find element for editing area');
+        }
+        if (element.nodeType === 3) {
+            throw new Error('Editing area cannot be a text node');
+        }
+        return element as Element;
+    }
+
+    /*
+    Renders an editor area, unless it has been provided one to clone.
+    */
+    renderEditingArea(): JSX.Element {
+        const { children, preserveWhitespace } = this.props;
+        const { generation } = this.state;
+
+        const properties = {
+            key: generation,
+            ref: (instance: React.ReactInstance | null) => {
+                this.editingArea = instance
+            },
+        };
+
+        if (React.Children.count(children)) {
+            return React.cloneElement(
+                React.Children.only(children)!,
+                properties
+            );
+        }
+
+        return preserveWhitespace ?
+            <pre {...properties} /> :
+            <div {...properties} />;
+    }
+
+    render() {
+        return (
+            <div
+                id={this.props.id}
+                style={this.props.style}
+                key={this.state.generation}
+                className={`quill ${this.props.className ?? ''}`}
+                onKeyDown={this.props.onKeyDown}
+                onKeyUp={this.props.onKeyUp}
+                role="textbox"
+                tabIndex={0}
+            >
+                {this.renderEditingArea()}
+            </div>
+        );
+    }
+
+    onEditorChange = (
+        eventName: 'text-change' | 'selection-change',
+        rangeOrDelta: Range | Delta,
+        oldRangeOrDelta: Range | Delta,
+        source: Sources,
+    ) => {
+        if (eventName === 'text-change') {
+            this.onEditorChangeText?.(
+                this.editor!.root.innerHTML,
+                rangeOrDelta as Delta,
+                source,
+                this.unprivilegedEditor!
+            );
+        } else if (eventName === 'selection-change') {
+            this.onEditorChangeSelection?.(
+                rangeOrDelta as RangeStatic,
+                source,
+                this.unprivilegedEditor!
+            );
+        }
+    };
+
+    resizeImageAndInsertEmbed(reader: FileReader, editor: Quill, embedType: string) {
+        // add code to resize the image
+        const img = new Image();
+        img.src = reader.result as string;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 800;
+            const MAX_HEIGHT = 800;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+                if (width > MAX_WIDTH) {
+                    height *= MAX_WIDTH / width;
+                    width = MAX_WIDTH;
                 }
-
-                quill.on('text-change', textChangeListener);
+            } else if (height > MAX_HEIGHT) {
+                width *= MAX_HEIGHT / height;
+                height = MAX_HEIGHT;
             }
 
-
-            // Check for multiline to show/hide toolbar
-            if (multiline) {
-                quill.on('text-change', () => {
-                    const text = quill?.getText();
-                    const lineCount = (text?.match(/\n/g) || []).length;
-                    setToolbarVisible(lineCount > 1);
-                });
-            }
-        }
-
-        // Clean up on component unmount
-        return () => {
-            if (quill) {
-                if (onKeyDown) {
-                    quill.root.removeEventListener('keydown', onKeyDown);
-                }
-
-                if (textChangeListener) {
-                    quill?.off('text-change', textChangeListener);
-                }
-
-                if (onPaste) {
-                    quill.root.removeEventListener('paste', onPaste);
-                }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx?.drawImage(img, 0, 0, width, height);
+            const resizedImage = canvas.toDataURL('image/jpeg');
+            const range = editor.getSelection();
+            if (range) {
+                editor.insertEmbed(range.index, embedType, resizedImage, 'user');
             }
         };
-    }, []); // Empty array means this effect runs once on mount and clean up on unmount
+    }
 
-    return <div className="quill-wrapper" style={style}>
-        {toolbarVisible && <div id="toolbar">/* Add toolbar contents here */</div>}
-        <div ref={editorRef} />
-    </div>;
-};
+    handleMediaPaste = (
+        e: ClipboardEvent,
+        editor: Quill,
+        item: DataTransferItem,
+        type: "image" | "video",
+        embedType: string
+    ) => {
+        e.preventDefault();
+        const blob = item.getAsFile();
+        const self = this;
+        if (blob) {
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                if (reader.result && (reader.result as string).length > 0x7fffff) {
+                    if (type === "image") {
+                        self.resizeImageAndInsertEmbed(reader, editor, embedType);
+                    }
+                }
+                let mediaNode: HTMLImageElement | HTMLVideoElement;
+                switch (type) {
+                    case 'image':
+                        mediaNode = document.createElement('img');
+                        break;
+                    case 'video':
+                        mediaNode = document.createElement('video');
+                        mediaNode.controls = true;
+                        break;
+                    default:
+                        mediaNode = document.createElement('img');
+                        break;
+                }
+                mediaNode.src = event.target!.result as string;
+                const range = editor.getSelection();
+                if (range) {
+                    editor.insertEmbed(range.index, embedType, mediaNode.src, 'user');
+                }
+            };
+            reader.readAsDataURL(blob);
+        }
+    };
+
+    handleImagePaste = (e: ClipboardEvent, editor: Quill, item: DataTransferItem) => {
+        this.handleMediaPaste(e, editor, item, 'image', 'image');
+    };
+
+    handleVideoPaste = (e: ClipboardEvent, editor: Quill, item: DataTransferItem) => {
+        this.handleMediaPaste(e, editor, item, 'video', 'video');
+    };
+
+    pasteListener = (e: ClipboardEvent, editor: Quill) => {
+        if (e.clipboardData?.items?.length) {
+            const items = e.clipboardData.items;
+            for (const item of Array.from(items)) {
+                if (item?.type.indexOf('image') !== -1) this.handleImagePaste(e, editor, item);
+                if (item?.type.indexOf('video') !== -1) this.handleVideoPaste(e, editor, item);
+            }
+        }
+    };
+
+    setClipboardMatcher = (editor: Quill) => {
+        this.pasteListenerEvent = (e: ClipboardEvent) => this.pasteListener(e, editor);
+        editor.root.addEventListener('paste', this.pasteListenerEvent);
+    }
+
+    onEditorChangeText(
+        value: string,
+        delta: Delta,
+        source: Sources,
+        editor: UnprivilegedEditor,
+    ): void {
+        if (!this.editor) return;
+
+        // We keep storing the same type of value as what the user gives us,
+        // so that value comparisons will be more stable and predictable.
+        const nextContents = this.isDelta(this.value)
+            ? editor.getContents()
+            : editor.getHTML();
+
+        if (nextContents !== this.getEditorContents()) {
+            // Taint this `delta` object, so we can recognize whether the user
+            // is trying to send it back as `value`, preventing a likely loop.
+            this.lastDeltaChangeSet = delta;
+
+            this.value = nextContents;
+            this.props.onChange?.(value, delta, source, editor);
+        }
+    }
+
+    onEditorChangeSelection(
+        nextSelection: RangeStatic,
+        source: Sources,
+        editor: UnprivilegedEditor,
+    ): void {
+        if (!this.editor) return;
+        const currentSelection = this.getEditorSelection();
+        const hasGainedFocus = !currentSelection && nextSelection;
+        const hasLostFocus = currentSelection && !nextSelection;
+
+        if (isEqual(nextSelection, currentSelection)) return;
+
+        this.selection = nextSelection;
+        this.props.onChangeSelection?.(nextSelection, source, editor);
+
+        if (hasGainedFocus) {
+            this.props.onFocus?.(nextSelection, source, editor);
+        } else if (hasLostFocus) {
+            this.props.onBlur?.(currentSelection, source, editor);
+        }
+    }
+
+    focus(): void {
+        if (!this.editor) return;
+        this.editor.focus();
+    }
+
+    blur(): void {
+        if (!this.editor) return;
+        this.selection = null;
+        this.editor.blur();
+    }
+}
+
+/*
+Small helper to execute a function in the next micro-tick.
+*/
+function postpone(fn: (value: void) => void) {
+    Promise.resolve().then(fn);
+}
+
+// Compatibility Export to avoid `require(...).default` on CommonJS.
+// See: https://github.com/Microsoft/TypeScript/issues/2719
+export default QuillEditor;

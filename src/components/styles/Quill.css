@@ -1,0 +1,12 @@
+.ql-tooltip {
+    z-index: 999;
+}
+
+.ql-editor.ql-blank::before {
+    color: var(--mui-palette-text-disabled);
+}
+
+.ql-editor {
+    max-height: 200px;
+    overflow-y: auto;
+}

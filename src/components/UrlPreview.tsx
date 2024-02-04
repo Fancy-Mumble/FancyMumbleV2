@@ -3,7 +3,6 @@ import "./styles/UserInfo.css";
 import "./styles/common.css"
 import { useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api";
-import { s } from "@tauri-apps/api/app-373d24a3";
 import { openInBrowser } from "../helper/BrowserUtils";
 import { useSelector } from "react-redux";
 import { RootState } from "../store/store";
@@ -31,7 +30,7 @@ function UrlPreview(props: UrlPreviewProps) {
     }
 
     useEffect(() => {
-        if (!linkPreview.enabled) return;
+        if (!linkPreview?.enabled) return;
         if (!linkPreview.allow_all && !linkPreview.urls.some(v => {
             let url = new URL(props.href);
             return url.hostname.endsWith(v);

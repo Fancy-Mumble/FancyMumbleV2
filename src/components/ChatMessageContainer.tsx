@@ -1,5 +1,5 @@
-import { Avatar, Box, Card, CardContent, Grid, List, Typography } from "@mui/material";
-import React, { ReactElement, useEffect, useMemo, useRef, useState } from "react";
+import { Avatar, Box, Grid, List, Typography } from "@mui/material";
+import React, { ReactElement, useEffect, useMemo, useState } from "react";
 import { MemoChatMessage } from "./ChatMessage";
 import { useSelector } from "react-redux";
 import { RootState } from "../store/store";
@@ -20,41 +20,48 @@ interface GroupedMessages {
 
 
 const ChatMessageContainer = (props: ChatMessageContainerProps) => {
-	const { t, i18n } = useTranslation();
+	const { t } = useTranslation();
 	const userList = useSelector((state: RootState) => state.reducer.userInfo);
 	const advancedSettings = useSelector((state: RootState) => state.reducer.frontendSettings.advancedSettings);
 	const chatContainer: React.RefObject<HTMLDivElement> = React.createRef();
 	const messagesEndRef: React.RefObject<HTMLDivElement> = React.createRef();
 	const [userInfoAnchor, setUserInfoAnchor] = React.useState<HTMLElement | null>(null);
 	const [currentPopoverUserId, setCurrentPopoverUserId]: any = useState(null);
-	const [userScrolled, setUserScrolled] = useState(false);
-	const prevPropsRef = useRef(props);
 
 	const scrollToBottom = () => {
-		if (advancedSettings.disableAutoscroll) {
+		if (advancedSettings?.disableAutoscroll) {
 			return;
 		}
 		new Promise(r => setTimeout(r, 100)).then(() => {
-			messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+			console.log("End Ref", messagesEndRef.current);
+			if(messagesEndRef.current) {
+				messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+			} else {
+				// workaround for when the ref is not set yet
+				document.getElementById("msg-end-ref")?.scrollIntoView({ behavior: "smooth" });
+			}
 		});
 	}
 
 	useEffect(() => {
 		let messages = props.messages;
 		if (messages.length > 0) {
-			const isScrolledToBottom = !advancedSettings.disableAutoscroll && (advancedSettings.alwaysScrollDown || ((chatContainer?.current?.scrollHeight || 0) - (chatContainer?.current?.scrollTop || 0) >= (chatContainer?.current?.clientHeight || 0) * 1.2));
+			const scrollTrigger = (chatContainer?.current?.clientHeight ?? 0) * 1.2;
+			const scrollPosition = (chatContainer?.current?.scrollHeight ?? 0) - (chatContainer?.current?.scrollTop ?? 0);
+			const isWithinTrigger = scrollPosition >= scrollTrigger;
+			const shouldScrollDown = advancedSettings?.alwaysScrollDown || isWithinTrigger;
 
-			if (isScrolledToBottom) {
-				messagesEndRef?.current?.scrollIntoView({ behavior: 'smooth' });
+			if (shouldScrollDown) {
+				scrollToBottom();
 			}
 		}
 	}, [props.messages]);
 
 	useEffect(() => {
-		if (!userScrolled || advancedSettings.alwaysScrollDown) {
+		if (advancedSettings?.alwaysScrollDown) {
 			scrollToBottom();
 		}
-	}, [props, userScrolled]); // Depend on props and userScrolled
+	}, [props]); // Depend on props and userScrolled
 
 	useEffect(() => {
 		const images = Array.from(document.getElementsByTagName('img'));
@@ -138,7 +145,7 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 	const emptyChatMessageContainer = useMemo(() => {
 		if (props.messages.length === 0) {
 			return (
-				<Grid container sx={{ height: '100%', width: '100%' }} justifyContent="center" alignItems="center">
+				<Grid container sx={{ height: '100%', width: '100%', userSelect: 'none' }} justifyContent="center" alignItems="center">
 					<Grid item>
 						<Box sx={{ backgroundColor: 'transparent' }}>
 							<Typography variant="h2" sx={{ color: 'transparent', textShadow: '2px 2px 3px rgba(50,50,50,0.5)', backgroundClip: 'text', backgroundColor: '#333', textAlign: "center" }}>{t("write something")}</Typography>
@@ -160,7 +167,7 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 						<Avatar
 							sx={{ position: 'sticky', top: 10 }}
 							className="avatar"
-							src={getProfileImage(group.user?.id || 0, userList)}
+							src={getProfileImage(group.user?.id ?? 0, userList)}
 							onClick={e => { setCurrentPopoverUserId(group.user?.id); setUserInfoAnchor(e.currentTarget); console.log(e.currentTarget) }}
 							variant="rounded"
 						/>
@@ -179,7 +186,7 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 			{chatElements}
 			{emptyChatMessageContainer}
 			{currentPopoverUserId && userIdToPopoverMap.get(currentPopoverUserId)}
-			<div ref={messagesEndRef} />
+			<div id="msg-end-ref" ref={messagesEndRef} />
 		</Box>
 	);
 }
