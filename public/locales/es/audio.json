@@ -1,0 +1,19 @@
+{
+    "Audio": "Audio",
+    "Input Device": "Dispositivo de entrada",
+    "Microphone": "Micrófono",
+    "Voice Activation": "Activación de voz",
+    "Push To Talk": "Pulsar para hablar",
+    "Automatically detect Microphone sensitivity": "Detectar automáticamente la sensibilidad del micrófono",
+    "Hold Activation for": "Mantener activación durante {{duration}}",
+    "Fade-out Audio after activation for": "Desvanecer audio después de la activación durante {{duration}}",
+    "Audio activation at": "Activación de audio en {{threshold}}",
+    "Audio deactivation at": "Desactivación de audio en {{threshold}}",
+    "Amplification dB": "Amplificación +{{amplification}}dB",
+    "Echo Cancelation": "Cancelación de eco",
+    "Noise Suppression": "Supresión de ruido",
+    "Compressor Threshold": "Umbral del compresor {{threshold}}dB",
+    "Compressor Ratio": "Relación del compresor {{ratio}}:1",
+    "Attack Time": "Tiempo de ataque {{duration}}",
+    "Release Time": "Tiempo de liberación {{duration}}"
+}

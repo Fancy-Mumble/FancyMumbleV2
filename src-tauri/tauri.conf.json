@@ -15,6 +15,9 @@
       "globalShortcut": {
         "all": true
       },
+      "path": {
+        "all": true
+      },
       "shell": {
         "all": false,
         "execute": false,

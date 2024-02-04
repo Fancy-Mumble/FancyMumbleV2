@@ -18,6 +18,7 @@ import WebRTCPreview from "./WebRTCPreview";
 function Sidebar() {
     const signalingServerUrl = "http://127.0.0.1:4000";
     const navigate = useNavigate();
+    const [screenCasted, setScreenCasted] = useState(false);
     const [logoutInProgress, setLogoutInProgress] = useState(false);
     const [showWebRtcWindow, setShowWebRtcWindow] = useState(false);
     const [webRtcStreamer, setWebRtcStreamer] = useState<WebRTCStreamer | undefined>(undefined);
@@ -42,6 +43,9 @@ function Sidebar() {
     }, [navigate]);
 
     useEffect(() => {
+        if(!screenCasted) {
+            return;
+        }
         const viewer = new WebRTCViewer(signalingServerUrl, currentUserId ?? 0, currentChannelId ?? 0);
         viewer.listen();
         viewer.onStream((stream) => {
@@ -58,6 +62,7 @@ function Sidebar() {
             }
             viewer.stop();
             setShowWebRtcWindow(false);
+            setScreenCasted(false);
         };
     }, [currentUserId, currentChannelId]);
 
@@ -68,6 +73,7 @@ function Sidebar() {
         const rtc = new WebRTCStreamer(signalingServerUrl, currentUserId ?? 0, currentChannelId ?? 0);
         setWebRtcStreamer(rtc);
         setShowWebRtcWindow(true);
+        setScreenCasted(true);
         await rtc?.start();
     };
 

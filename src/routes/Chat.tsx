@@ -6,40 +6,43 @@ import Sidebar from '../components/Sidebar';
 import { RootState } from '../store/store';
 import { useDispatch, useSelector } from 'react-redux';
 import ChatInput from '../components/ChatInput';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ChatInfoBar from '../components/ChatInfoBar';
 import EventLog from '../components/EventLog';
-import { invoke } from '@tauri-apps/api';
+import QuillChatInput from '../components/QuillChatInput';
+import { persistentStorage } from '../store/persistance/persist';
 import { updateFrontendSettings } from '../store/features/users/frontendSettings';
+import { updateAudioSettings } from '../store/features/users/audioSettings';
 
 
 function Chat() {
     const [showLog, setShowLog] = useState(false);
 
     const messageLog = useSelector((state: RootState) => state.reducer.chatMessage);
+    const useWYSIWYG = useSelector((state: RootState) => state.reducer.frontendSettings?.advancedSettings?.useWYSIWYG);
     const dispatch = useDispatch();
 
-    useEffect(() => {
-        invoke<string>('get_frontend_settings', { settingsName: 'general' }).then((result) => {
-            console.log("settings: ", result);
-            dispatch(updateFrontendSettings(JSON.parse(result)));
-        }).catch(e => {
-            console.log(e);
-        });
+    const fetchSettings = useCallback(async () => {
+        const frontendSettings = await persistentStorage.get("frontendSettings");
+        const audioSettings = await persistentStorage.get("audioSettings");
 
-        invoke<any>('get_frontend_settings', { settingsName: 'audio_input' }).then((result) => {
-            let parsedSettings = JSON.parse(result);
-            if(parsedSettings?.AudioInput) {
-                dispatch(updateFrontendSettings(parsedSettings.AudioInput));
-                invoke('set_audio_input_setting', { 'settings': parsedSettings.AudioInput }).then(() => {
-                    console.log("set_audio_input_setting: ", parsedSettings.AudioInput);
-                }).catch(e => {
-                    console.log(e);
-                });
-            }
-        });
-    }, []);
+        dispatch(updateFrontendSettings(frontendSettings));
+        dispatch(updateAudioSettings(audioSettings));
+        console.log("Settings fetched");
+    }, [])
+
+    useEffect(() => {
+        fetchSettings();
+    }, [fetchSettings]);
+
+    let selectChatInput = useMemo(() => {
+        if (useWYSIWYG) {
+            return (<QuillChatInput />);
+        } else {
+            return (<ChatInput />);
+        }
+    }, [useWYSIWYG]);
 
     return (
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'row' }}>
@@ -59,7 +62,7 @@ function Chat() {
                     }}></Box>
                     <ChatInfoBar onShowLog={setShowLog} />
                     <ChatMessageContainer messages={messageLog}></ChatMessageContainer>
-                    <ChatInput />
+                    {selectChatInput}
                 </Box>
             </Box>
             <EventLog showLog={showLog} />

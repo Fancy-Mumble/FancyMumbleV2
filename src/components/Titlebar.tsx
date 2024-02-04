@@ -8,15 +8,21 @@ import './styles/Titlebar.css';
 
 function Titlebar() {
     return (
-        <Paper data-tauri-drag-region sx={{ width: '100%', display: 'flex', justifyContent: 'end', zIndex: 9999}}>
+        <Paper data-tauri-drag-region sx={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'end',
+            zIndex: 9999,
+            userSelect: 'none',
+        }}>
             <IconButton size="small" onClick={(e) => appWindow.minimize()} className="titlebar-button" >
-                <MinimizeIcon sx={{ fontSize: 18 }}/>
+                <MinimizeIcon sx={{ fontSize: 18 }} />
             </IconButton >
             <IconButton size="small" onClick={(e) => appWindow.toggleMaximize()} className="titlebar-button">
-                <FilterNoneIcon sx={{ fontSize: 18 }}/>
+                <FilterNoneIcon sx={{ fontSize: 18 }} />
             </IconButton >
             <IconButton size="small" onClick={(e) => appWindow.close()} className="titlebar-button" color="error">
-                <CloseIcon sx={{ fontSize: 18 }}/>
+                <CloseIcon sx={{ fontSize: 18 }} />
             </IconButton >
         </Paper>
     )

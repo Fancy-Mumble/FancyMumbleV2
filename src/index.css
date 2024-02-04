@@ -49,10 +49,9 @@ body {
   display: flex;
   place-items: center;
   min-width: 320px;
-  height: calc(100% - 2px);
+  height: calc(100%);
   align-items: center;
   justify-content: center;
-  border: #2f2f2f 1px solid;
 }
 
 h1 {

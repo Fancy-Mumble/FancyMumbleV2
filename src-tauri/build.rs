@@ -118,6 +118,7 @@ fn main() -> io::Result<()> {
 
     prost_build::compile_protos(&["src/proto/Mumble.proto"], &["src/"])?;
     prost_build::compile_protos(&["src/proto/MumbleUDP.proto"], &["src/"])?;
+    prost_build::compile_protos(&["src/proto/Fancy.proto"], &["src/"])?;
     tauri_build::build();
 
     Ok(())

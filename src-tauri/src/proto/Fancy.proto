@@ -1,0 +1,10 @@
+
+syntax = "proto3";
+
+package FancyProto;
+
+option optimize_for = SPEED;
+
+message LikeMessage {
+    string message = 1;
+}

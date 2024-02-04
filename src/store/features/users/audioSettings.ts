@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { persistentStorage } from "../../persistance/persist";
 
 export enum InputMode {
     VoiceActivation = 0,
@@ -19,14 +20,14 @@ interface CompressorOptions {
     ratio: number,
 }
 
-interface AudioInputSettings {
+export interface AudioInputSettings {
     amplification: number;
     input_mode: InputMode;
     voice_activation_options: VoiceActivationOptions;
     compressor_options: CompressorOptions;
 }
 
-const initialState: AudioInputSettings = {
+const defaultValues: AudioInputSettings = {
     amplification: 13.0,
     input_mode: InputMode.VoiceActivation,
     voice_activation_options: {
@@ -43,12 +44,14 @@ const initialState: AudioInputSettings = {
     }
 };
 
+const initialState: AudioInputSettings = defaultValues;
+
 export const frontendSettings = createSlice({
     name: 'channel',
     initialState,
     reducers: {
         updateAudioSettings: (state, action) => {
-            state = action.payload;
+            Object.assign(state, action.payload);
         },
         setAmplification: (state, action) => {
             state.amplification = action.payload;
@@ -57,10 +60,10 @@ export const frontendSettings = createSlice({
             state.input_mode = action.payload;
         },
         setVoiceHold(state, action) {
-            state.voice_activation_options.voice_hold = action.payload
+            state.voice_activation_options.voice_hold = action.payload;
         },
         setFadeOutDuration(state, action) {
-            state.voice_activation_options.fade_out_duration = action.payload
+            state.voice_activation_options.fade_out_duration = action.payload;
         },
         setVoiceHysteresis(state, action) {
             state.voice_activation_options.voice_hysteresis_lower_threshold = action.payload[0];

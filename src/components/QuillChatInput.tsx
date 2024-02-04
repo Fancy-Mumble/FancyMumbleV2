@@ -1,71 +1,53 @@
-import { Box, Button, Divider, Fade, IconButton, InputBase, Paper, Popper, Tooltip } from "@mui/material";
+import { useCallback, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { ChatMessageHandler } from "../helper/ChatMessage";
+import { RootState } from "../store/store";
+import QuillEditor from "./QuillEditor";
+import { Box, Button, Divider, Fade, IconButton, Paper, Popper, Tooltip } from "@mui/material";
 import SendIcon from '@mui/icons-material/Send';
 import DeleteIcon from '@mui/icons-material/Delete';
 import GifIcon from '@mui/icons-material/Gif';
-import { useCallback, useMemo, useState } from "react";
-import { ChatMessageHandler } from "../helper/ChatMessage";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../store/store";
-import { formatBytes } from "../helper/Fomat";
 import GifSearch, { GifResult } from "./GifSearch";
-import { useTranslation } from "react-i18next";
+import { t } from "i18next";
 
-function ChatInput() {
+function QuillChatInput() {
     const dispatch = useDispatch();
-    const { t, i18n } = useTranslation();
-
-    const [showGifSearch, setShowGifSearch] = useState(false);
-    const [showDeleteMessageConfirmation, setShowDeleteMessageConfirmation] = useState(false);
-
     const [chatMessage, setChatMessage] = useState("");
-    const [gifSearchAnchor, setGifSearchAnchor] = useState<HTMLElement>();
+    const [showDeleteMessageConfirmation, setShowDeleteMessageConfirmation] = useState(false);
     const [messageDeleteAnchor, setMessageDeleteAnchor] = useState<HTMLElement>();
+    const [showGifSearch, setShowGifSearch] = useState(false);
+    const [gifSearchAnchor, setGifSearchAnchor] = useState<HTMLElement>();
+
+    const chatMessageHandler = useMemo(() => new ChatMessageHandler(dispatch, setChatMessage), [dispatch]);
     const currentUser = useSelector((state: RootState) => state.reducer.userInfo?.currentUser);
     const channelInfo = useSelector((state: RootState) => state.reducer.channel);
-
     const currentChannel = useMemo(() => channelInfo.find(e => e.channel_id === currentUser?.channel_id)?.name, [channelInfo, currentUser]);
-    const chatMessageHandler = useMemo(() => new ChatMessageHandler(dispatch, setChatMessage), [dispatch]);
 
-    const deleteMessages = useCallback(() => {
-        chatMessageHandler.deleteMessages();
-    }, [chatMessageHandler]);
-
-    const keyDownHandler = useCallback((e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const keyDownHandler = (e: KeyboardEvent) => {
         if (e && e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             chatMessageHandler.sendChatMessage(chatMessage, currentUser);
+            setChatMessage("");
         }
-    }, [chatMessage, chatMessageHandler, currentUser]);
-
-    const showGifPreview = useCallback((e: any) => {
-        setShowGifSearch(prev => !prev);
-        setGifSearchAnchor(e.currentTarget)
-    }, []);
+    };
 
     const showDeleteMessageConfirmationDialog = useCallback((e: any) => {
         setShowDeleteMessageConfirmation(prev => !prev);
         setMessageDeleteAnchor(e.currentTarget)
     }, []);
 
-    const pasteEvent = useCallback((event: any) => {
-        let items = event.clipboardData.items;
-        for (const item of items) {
-            if (item.type.indexOf('image') !== -1) {
-                const file = item.getAsFile();
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = function () {
-                    if (reader.result && (reader.result as string).length > 0x7fffff) {
-                        chatMessageHandler.sendCustomChatMessage(t("Image too large", { size: formatBytes((reader.result as string).length), maximum: formatBytes(0x7fffff) }), currentUser);
-                        return;
-                    }
-                    const legacyImageSize = 600; // Adapt image size for legacy clients
-                    let img = `<img src="${reader.result}" width="${legacyImageSize}" />`;
-                    chatMessageHandler.sendCustomChatMessage(img, currentUser);
-                };
-            }
-        }
-    }, [chatMessageHandler, currentUser]);
+    const showGifPreview = useCallback((e: any) => {
+        setShowGifSearch(prev => !prev);
+        setGifSearchAnchor(e.currentTarget)
+    }, []);
+
+    const deleteMessages = useCallback(() => {
+        chatMessageHandler.deleteMessages();
+    }, [chatMessageHandler]);
+
+    function updateContent(content: string): void {
+        setChatMessage(content);
+    }
 
     function sendGif(gif: GifResult): void {
         chatMessageHandler.sendCustomChatMessage(`<img src="${gif.media[0].gif.url}" width="${gif.media[0].gif.dims[0]}" />`, currentUser);
@@ -75,22 +57,20 @@ function ChatInput() {
         <Box m={2} sx={{ display: 'flex' }}>
             <Paper
                 component="form"
-                sx={{ p: '2px 4px', display: 'flex', alignItems: 'center', width: 400, flexGrow: 1 }}
+                sx={{ p: '2px 4px', display: 'flex', width: 400, flexGrow: 1, alignItems: 'flex-start' }}
             >
                 <Tooltip title={t("Delete all messages", { ns: "user_interaction" })}>
                     <IconButton sx={{ p: '10px' }} aria-label="menu" onClick={showDeleteMessageConfirmationDialog}>
                         <DeleteIcon />
                     </IconButton>
                 </Tooltip>
-                <InputBase
-                    sx={{ ml: 1, flex: 1 }}
-                    placeholder={t("Send Message to Channel", { ns: "user_interaction", channel: currentChannel })}
-                    inputProps={{ 'aria-label': 'Send Message to ' + currentChannel }}
-                    onChange={e => setChatMessage(e.target.value)}
-                    onKeyDown={keyDownHandler}
+                <QuillEditor
+                    style={{ flexGrow: 1, maxHeight: 200 }}
+                    onKeyDown={(e: KeyboardEvent) => keyDownHandler(e)}
+                    onChange={(content: string) => updateContent(content)}
                     value={chatMessage}
-                    onPaste={pasteEvent}
-                    multiline
+                    theme="bubble"
+                    placeholder={t("Send Message to Channel", { ns: "user_interaction", channel: currentChannel })}
                 />
                 <IconButton onClick={showGifPreview}>
                     <GifIcon />
@@ -121,7 +101,7 @@ function ChatInput() {
                 )}
             </Popper>
         </Box>
-    )
+    );
 }
 
-export default ChatInput;
+export default QuillChatInput;
