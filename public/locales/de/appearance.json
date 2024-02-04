@@ -6,5 +6,6 @@
     "Primary": "Primär",
     "Accent": "Akzent",
     "Disable Auto-Scroll": "Automatisches Scrollen deaktivieren",
-    "Always auto-scroll, even if scrolled up": "Immer automatisch scrollen, auch wenn nach oben gescrollt wurde"
+    "Always auto-scroll, even if scrolled up": "Immer automatisch scrollen, auch wenn nach oben gescrollt wurde",
+    "Enable WYSIWYG Editor": "WYSIWYG-Editor aktivieren"
 }

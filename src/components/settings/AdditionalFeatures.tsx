@@ -1,11 +1,12 @@
-import { Alert, Box, Container, Divider, Grid, Switch, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, Container, Divider, Grid, Switch, TextField, Typography } from '@mui/material';
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
-import { updateApiKey, FrontendSettings, updateLinkPreview } from '../../store/features/users/frontendSettings';
+import { updateApiKey, FrontendSettings, updateFrontendSettings, clearFrontendSettings } from '../../store/features/users/frontendSettings';
 import { invoke } from '@tauri-apps/api';
 import { ActionCreatorWithPayload } from '@reduxjs/toolkit';
 import { t } from 'i18next';
+import { persistFrontendSettings, persistentStorage } from '../../store/persistance/persist';
 
 
 interface AdditionalFeaturesProps {
@@ -24,56 +25,67 @@ const AdditionalFeatures: React.FC<AdditionalFeaturesProps> = React.memo(({ }) =
         }
     }
 
-    function updateEnabled() {
-        updateLinkPreviewState((state) => {
-            let newState = !frontendSettings.link_preview.enabled;
-            state.link_preview.enabled = newState;
+    async function updateEnabled() {
+        await updateLinkPreviewState((state) => {
+            console.log(state.link_preview);
+            if (state.link_preview && frontendSettings.link_preview) {
+                let newState = !frontendSettings.link_preview.enabled;
+                state.link_preview.enabled = newState;
+            } else {
+                state.link_preview = { enabled: true, allow_all: false, urls: [] };
+            }
 
             return state;
-        }, updateLinkPreview);
+        });
     }
 
-    function updateAllowAll() {
-        updateLinkPreviewState((state) => {
-            let newState = !frontendSettings.link_preview.allow_all;
-            state.link_preview.allow_all = newState;
+    async function updateAllowAll() {
+        await updateLinkPreviewState((state) => {
+            if (state.link_preview && frontendSettings.link_preview) {
+                let newState = !frontendSettings.link_preview.allow_all;
+                state.link_preview.allow_all = newState;
+            } else {
+                state.link_preview = { enabled: true, allow_all: true, urls: [] };
+            }
 
             return state;
-        }, updateLinkPreview);
+        });
     }
 
-    function updateAllowedUrls(urls: string[]) {
-        updateLinkPreviewState((state) => {
-            state.link_preview.urls = urls;
+    async function updateAllowedUrls(urls: string[]) {
+        await updateLinkPreviewState((state) => {
+            if (state.link_preview) {
+                state.link_preview.urls = urls;
+            } else {
+                state.link_preview = { enabled: true, allow_all: false, urls: urls };
+            }
             return state;
-        }, updateLinkPreview);
+        });
     }
 
-    function updateTenorApiKey(value: string): void {
-        updateLinkPreviewState((state) => {
-            state.api_keys.tenor = value;
+    async function updateTenorApiKey(value: string) {
+        await updateLinkPreviewState((state) => {
+            if (state.api_keys) {
+                state.api_keys.tenor = value;
+            } else {
+                state.api_keys = { tenor: value };
+            }
             return state;
-        }, updateApiKey);
+        });
     }
 
-    function updateLinkPreviewState(stateChangeFunction: (newState: FrontendSettings) => FrontendSettings, call: ActionCreatorWithPayload<any, any>) {
+    async function updateLinkPreviewState(stateChangeFunction: (newState: FrontendSettings) => any) {
         let stateClone = JSON.parse(JSON.stringify(frontendSettings));
         stateClone = stateChangeFunction(stateClone);
-
-        let storedData = stateClone.link_preview;
-        console.log(storedData);
-        invoke('save_frontend_settings', { settingsName: 'general', data: { 'LinkPreview': storedData } }).then(() => {
-            console.log('Saved settings: ', storedData);
-        }).catch(e => {
-            console.log(e);
+        await persistFrontendSettings(stateClone).catch((e: any) => {
             setErrorMessage('Failed to save settings: ' + e);
         });
 
-        dispatch(call(stateClone));
+        dispatch(updateFrontendSettings(stateClone));
     }
 
     function allowAllSetting() {
-        if (!frontendSettings.link_preview.enabled) return (<Box />);
+        if (!frontendSettings.link_preview?.enabled) return (<Box />);
 
         return (
             <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12, lg: 18 }} sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
@@ -81,14 +93,14 @@ const AdditionalFeatures: React.FC<AdditionalFeaturesProps> = React.memo(({ }) =
                     <Typography variant="h6">{t('Allow URLs from all sources', { ns: "privacy" })}</Typography>
                 </Grid>
                 <Grid item xs={4} sm={8} md={6} lg={6}>
-                    <Switch {...label} checked={frontendSettings.link_preview.allow_all || false} onChange={() => updateAllowAll()} />
+                    <Switch {...label} checked={frontendSettings.link_preview?.allow_all || false} onChange={async () => await updateAllowAll()} />
                 </Grid>
             </Grid>
         )
     }
 
     function linkPreviewSettings() {
-        if (!frontendSettings.link_preview.enabled || frontendSettings.link_preview.allow_all) return (<Box />);
+        if (!frontendSettings.link_preview?.enabled || frontendSettings.link_preview?.allow_all) return (<Box />);
 
         return (
             <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12, lg: 18 }} sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
@@ -96,7 +108,7 @@ const AdditionalFeatures: React.FC<AdditionalFeaturesProps> = React.memo(({ }) =
                     <Typography variant="h6">{t('Allowed Link Preview Urls', { ns: "privacy" })}</Typography>
                 </Grid>
                 <Grid item xs={4} sm={8} md={6} lg={6}>
-                    <TextField {...label} value={frontendSettings.link_preview.urls.join('\n')} multiline onChange={(text) => updateAllowedUrls(text.target.value.split(/\r?\n/))} maxRows={10} />
+                    <TextField {...label} value={frontendSettings.link_preview?.urls.join('\n')} multiline onChange={async (text) => await updateAllowedUrls(text.target.value.split(/\r?\n/))} maxRows={10} />
                 </Grid>
             </Grid>
         )
@@ -114,7 +126,7 @@ const AdditionalFeatures: React.FC<AdditionalFeaturesProps> = React.memo(({ }) =
                             <Typography variant="h6">{t('Enable Link Preview', { ns: "privacy" })}</Typography>
                         </Grid>
                         <Grid item xs={4} sm={8} md={6} lg={6}>
-                            <Switch {...label} checked={frontendSettings.link_preview.enabled} onChange={() => updateEnabled()} />
+                            <Switch {...label} checked={frontendSettings.link_preview?.enabled ?? false} onChange={async () => await updateEnabled()} />
                         </Grid>
                     </Grid>
                     {allowAllSetting()}
@@ -127,7 +139,7 @@ const AdditionalFeatures: React.FC<AdditionalFeaturesProps> = React.memo(({ }) =
                             <Typography variant="h6">{t('Tenor API Key', { ns: "privacy" })}</Typography>
                         </Grid>
                         <Grid item xs={4} sm={8} md={6} lg={6}>
-                            <TextField {...label} value={frontendSettings.api_keys.tenor} onChange={(text) => updateTenorApiKey(text.target.value)} maxRows={10} />
+                            <TextField {...label} value={frontendSettings.api_keys?.tenor} onChange={async (text) => await updateTenorApiKey(text.target.value)} maxRows={10} />
                         </Grid>
                     </Grid>
                 </Box>

@@ -28,5 +28,7 @@
     "Server": "Server",
     "Port": "Port",
     "Username": "Username",
-    "Client Certitcate": "Client Certitcate"
+    "Client Certitcate": "Client Certitcate",
+    "Advanced Settings": "Advanced Settings",
+    "Beta": "Beta"
 }

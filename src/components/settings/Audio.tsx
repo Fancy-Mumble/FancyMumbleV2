@@ -9,6 +9,7 @@ import { InputMode, setAmplification, setAttackTime, setCompressorRatio, setComp
 import { RootState } from "../../store/store";
 import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
+import { persistAudioSettings } from "../../store/persistance/persist";
 
 function AudioSettings() {
     let [inputDevice, setInputDevice] = useState('');
@@ -55,9 +56,8 @@ function AudioSettings() {
                 release_time: Math.floor(audioSettings.compressor_options.release_time),
             }
         };
-        console.log(settings);
-        invoke('save_frontend_settings', { settingsName: 'audio_input', data: { 'AudioInput': settings } });
         invoke('set_audio_input_setting', { 'settings': settings });
+        persistAudioSettings({...audioSettings});
     }
 
     function calculateVoiceHold(value: number) {

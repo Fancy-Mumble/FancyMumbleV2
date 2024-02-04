@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { persistentStorage } from "../../persistance/persist";
 
 export interface LinkPreviewSettings {
   enabled: boolean,
@@ -13,16 +14,16 @@ export interface ApiKeys {
 export interface AdvancedSettings {
   disableAutoscroll: boolean;
   alwaysScrollDown: boolean;
+  useWYSIWYG: boolean;
 }
 
 export interface FrontendSettings {
-  api_keys: ApiKeys;
-  link_preview: LinkPreviewSettings;
-  advancedSettings: AdvancedSettings
+  api_keys?: ApiKeys;
+  link_preview?: LinkPreviewSettings;
+  advancedSettings?: AdvancedSettings
 }
 
-
-const initialState: FrontendSettings = {
+const defaultValues: FrontendSettings = {
   link_preview: {
     enabled: true,
     allow_all: false,
@@ -34,8 +35,10 @@ const initialState: FrontendSettings = {
   advancedSettings: {
     disableAutoscroll: false,
     alwaysScrollDown: false,
+    useWYSIWYG: false
   }
 };
+const initialState: FrontendSettings = defaultValues;
 
 export const frontendSettings = createSlice({
   name: 'channel',
@@ -43,20 +46,24 @@ export const frontendSettings = createSlice({
   reducers: {
     updateLinkPreview: (state, action) => {
       state.link_preview = action.payload;
+      console.log("updateLinkPreview: ", action.payload)
     },
     updateApiKey: (state, action) => {
       state.api_keys = action.payload;
     },
     updateFrontendSettings: (state, action) => {
-      state = action.payload;
+      Object.assign(state, action.payload);
     },
     updateAdvancedSettings: (state, action) => {
       console.log("updateAdvancedSettings: ", action.payload);
       state.advancedSettings = action.payload;
+    },
+    clearFrontendSettings: (state) => {
+      Object.assign(state, {});
     }
   },
 })
 
-export const { updateFrontendSettings, updateLinkPreview, updateApiKey, updateAdvancedSettings } = frontendSettings.actions
+export const { updateFrontendSettings, updateLinkPreview, updateApiKey, updateAdvancedSettings, clearFrontendSettings } = frontendSettings.actions
 
 export default frontendSettings.reducer

@@ -1,0 +1,18 @@
+{
+    "Are you sure you want to delete all messages?": "¿Estás seguro de que quieres eliminar todos los mensajes?",
+    "Yes": "Sí",
+    "No": "No",
+    "Skip": "Saltar",
+    "Cancel": "Cancelar",
+    "Like": "Me gusta",
+    "Message": "Mensaje",
+    "Go Back": "Volver",
+    "Save": "Guardar",
+    "Connect": "Conectar",
+    "Apply": "Aplicar",
+    "Discard": "Descartar",
+    "write user a message": "escribe un mensaje a {{user}}...",
+    "Delete all messages": "Eliminar todos los mensajes",
+    "Send Message to Channel": "Enviar mensaje a {{channel}}",
+    "User Joined the Server": "{{user}} se unió al servidor"
+}

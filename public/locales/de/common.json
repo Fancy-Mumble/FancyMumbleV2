@@ -27,5 +27,7 @@
     "Description": "Beschreibung",
     "Server": "Server",
     "Port": "Port",
-    "Username": "Benutzername"
+    "Username": "Benutzername",
+    "Advanced Settings": "Erweiterte Einstellungen",
+    "Beta": "Beta"
 }
