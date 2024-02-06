@@ -33,8 +33,8 @@ use crate::commands::{
     set_audio_input_setting, set_audio_output_setting, set_user_image,
     settings_cmd::{get_identity_certs, get_server_list, save_server},
     web_cmd::{
-        get_open_graph_data_from_website, get_tenor_search_results, get_tenor_trending_results,
-        open_browser,
+        convert_url_to_base64, get_open_graph_data_from_website, get_tenor_search_results,
+        get_tenor_trending_results, open_browser,
     },
     zip_cmd::{convert_to_base64, unzip_data_from_utf8, zip_data_to_utf8},
 };
@@ -104,7 +104,8 @@ async fn main() {
             enable_audio_info,
             disable_audio_info,
             get_tenor_search_results,
-            get_tenor_trending_results
+            get_tenor_trending_results,
+            convert_url_to_base64
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
