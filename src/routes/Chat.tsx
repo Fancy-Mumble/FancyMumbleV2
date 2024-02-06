@@ -14,6 +14,7 @@ import QuillChatInput from '../components/QuillChatInput';
 import { persistentStorage } from '../store/persistance/persist';
 import { updateFrontendSettings } from '../store/features/users/frontendSettings';
 import { updateAudioSettings } from '../store/features/users/audioSettings';
+import { invoke } from '@tauri-apps/api';
 
 
 function Chat() {
@@ -26,6 +27,7 @@ function Chat() {
     const fetchSettings = useCallback(async () => {
         const frontendSettings = await persistentStorage.get("frontendSettings");
         const audioSettings = await persistentStorage.get("audioSettings");
+        invoke('set_audio_input_setting', { 'settings': audioSettings });
 
         dispatch(updateFrontendSettings(frontendSettings));
         dispatch(updateAudioSettings(audioSettings));

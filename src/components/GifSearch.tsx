@@ -1,12 +1,14 @@
-import { Box, Fade, ImageList, ImageListItem, Paper, Popper, Skeleton, TextField } from '@mui/material'
-import React, { useEffect, useState } from 'react';
+import { Box, CircularProgress, Fade, ImageList, ImageListItem, Paper, Popper, Skeleton, TextField } from '@mui/material'
+import React, { useEffect, useMemo, useState } from 'react';
 import SearchIcon from '@mui/icons-material/Search';
 import { useTranslation } from 'react-i18next';
-import { debounce } from 'lodash';
+import { debounce, set } from 'lodash';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store/store';
 import { invoke } from '@tauri-apps/api';
 import { use } from 'i18next';
+import { Gif } from '@mui/icons-material';
+import ContainedBackdrop from './utils/ContainedBackdrop';
 
 interface MediaElement {
   webm: {
@@ -144,10 +146,17 @@ interface ErrorElement {
 }
 
 interface GifSearchProps {
-  open: boolean
-  anchor: HTMLElement | undefined
-  onGifSelected?: (gif: GifResult) => void
+  open: boolean;
+  anchor: HTMLElement | undefined;
+  onGifSelected?: (gif: GifResult) => void;
+  ready?: boolean;
 }
+
+const defaultProps: GifSearchProps = {
+  ready: true,
+  open: false,
+  anchor: undefined,
+};
 
 const handleSearchChange = debounce(async (
   value: string,
@@ -183,13 +192,14 @@ function GifSearch(props: Readonly<GifSearchProps>) {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [itemData, setItemData] = useState<GidResultContainer | ErrorElement | EmptyResult[]>([{}, {}, {}, {}, {}, {}]);
+  let tenorApiKeyAvailable = tenorApiKey && tenorApiKey.length > 0;
 
   useEffect(() => {
     handleSearchChange(search, tenorApiKey, setItemData);
   }, [search]);
 
   useEffect(() => {
-    if(!tenorApiKey || tenorApiKey.length === 0) {
+    if (!tenorApiKey || tenorApiKey.length === 0) {
       return;
     }
 
@@ -197,7 +207,7 @@ function GifSearch(props: Readonly<GifSearchProps>) {
       apiKey: tenorApiKey
     }).then((result) => {
       const resultObj = JSON.parse(result as string);
-      if(resultObj.error) {
+      if (resultObj.error) {
         console.log(resultObj.error);
         return;
       }
@@ -208,11 +218,31 @@ function GifSearch(props: Readonly<GifSearchProps>) {
   }, [tenorApiKey]);
 
   function handleGifClick(gif: GifResult) {
-    console.log("clicked");
     if (props.onGifSelected) {
       props.onGifSelected(gif);
+      setSearch("");
     }
   }
+
+  const showImageList = useMemo(() => {
+    return ((itemData as GidResultContainer)?.results ?? itemData).map((item, i) => {
+      if (Object.keys(item).length === 0) {
+        return (
+          <ImageListItem key={i}>
+            <Skeleton variant="rectangular" width={180} height={100} />
+          </ImageListItem>
+        );
+      } else {
+        const imgElement = item as GifResult;
+
+        return (
+          <ImageListItem key={imgElement.id} sx={{ cursor: 'pointer' }}>
+            <img src={imgElement.media[0].nanogif.url} alt={imgElement.title} loading="lazy" onClick={() => handleGifClick(imgElement)} />
+          </ImageListItem>
+        );
+      }
+    });
+  }, [itemData]);
 
   console.log("Data: ", itemData);
   return (
@@ -222,6 +252,7 @@ function GifSearch(props: Readonly<GifSearchProps>) {
           <Paper sx={{ p: 1 }}>
             <Box>
               <TextField
+                autoFocus
                 fullWidth
                 label={t("Search Tenor")}
                 InputProps={{
@@ -235,32 +266,20 @@ function GifSearch(props: Readonly<GifSearchProps>) {
               />
             </Box>
             <Box sx={{ width: '100%' }}>
-              <ImageList sx={{ width: 500, height: 450 }} cols={3} rowHeight={164} >
-                {((itemData as GidResultContainer)?.results ?? itemData).map((item, i) => {
-                  if (Object.keys(item).length === 0) {
-                    return (
-                      <ImageListItem key={i}>
-                        <Skeleton variant="rectangular" width={180} height={100} />
-                      </ImageListItem>
-                    );
-                  } else {
-                    const imgElement = item as GifResult;
-
-                    return (
-                      <ImageListItem key={imgElement.id} sx={{ cursor: 'pointer' }}>
-                        <img src={imgElement.media[0].nanogif.url} alt={imgElement.title} loading="lazy" onClick={() => handleGifClick(imgElement)} />
-                      </ImageListItem>
-                    );
-                  }
-                })}
-              </ImageList>
+              <ContainedBackdrop open={props.ready || !tenorApiKeyAvailable || false}>
+                <ImageList sx={{ width: 500, height: 450 }} cols={3} rowHeight={164} >
+                  {showImageList}
+                </ImageList>
+              </ContainedBackdrop>
             </Box>
-            {tenorApiKey && tenorApiKey.length > 0 ? null : <Box>{t("Tenor API Key not set")}</Box>}
+            {tenorApiKeyAvailable ? null : <Box>{t("Tenor API Key not set")}</Box>}
           </Paper>
         </Fade>
       )}
     </Popper>
   )
 }
+
+GifSearch.defaultProps = defaultProps;
 
 export default GifSearch

@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { useSelector } from 'react-redux';
 import { RootState } from "../store/store";
 import { WebRTCStreamer, WebRTCViewer } from "../helper/webrtc/WebRTC";
-import './Sidebar.css';
+import './styles/Sidebar.css';
 import ChannelViewer from "./ChannelViewer";
 import CurrentUserInfo from "./CurrentUserInfo";
 import { LoadingButton } from "@mui/lab";

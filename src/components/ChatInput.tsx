@@ -9,6 +9,7 @@ import { RootState } from "../store/store";
 import { formatBytes } from "../helper/Fomat";
 import GifSearch, { GifResult } from "./GifSearch";
 import { useTranslation } from "react-i18next";
+import { invoke } from "@tauri-apps/api";
 
 function ChatInput() {
     const dispatch = useDispatch();
@@ -18,6 +19,7 @@ function ChatInput() {
     const [showDeleteMessageConfirmation, setShowDeleteMessageConfirmation] = useState(false);
 
     const [chatMessage, setChatMessage] = useState("");
+    const [gifSearchAvailable, setGifSearchAvailable] = useState(false);
     const [gifSearchAnchor, setGifSearchAnchor] = useState<HTMLElement>();
     const [messageDeleteAnchor, setMessageDeleteAnchor] = useState<HTMLElement>();
     const currentUser = useSelector((state: RootState) => state.reducer.userInfo?.currentUser);
@@ -68,7 +70,12 @@ function ChatInput() {
     }, [chatMessageHandler, currentUser]);
 
     function sendGif(gif: GifResult): void {
-        chatMessageHandler.sendCustomChatMessage(`<img src="${gif.media[0].gif.url}" width="${gif.media[0].gif.dims[0]}" />`, currentUser);
+        setGifSearchAvailable(true);
+        invoke('convert_url_to_base64', { url: gif.media[0].gif.url }).then((result) => {
+            chatMessageHandler.sendCustomChatMessage(`<img src="${result}" width="${gif.media[0].gif.dims[0]}" />`, currentUser);
+            setGifSearchAvailable(false);
+            setShowGifSearch(false);
+        });
     }
 
     return (
@@ -100,7 +107,7 @@ function ChatInput() {
                     <SendIcon />
                 </IconButton>
             </Paper>
-            <GifSearch open={showGifSearch} anchor={gifSearchAnchor} onGifSelected={(gif) => sendGif(gif)} />
+            <GifSearch open={showGifSearch} anchor={gifSearchAnchor} onGifSelected={(gif) => sendGif(gif)} ready={gifSearchAvailable} />
             <Popper open={showDeleteMessageConfirmation} anchorEl={messageDeleteAnchor} transition>
                 {({ TransitionProps }) => (
                     <Fade {...TransitionProps}>

@@ -1,3 +1,4 @@
+use base64::{engine::general_purpose, Engine};
 use serde_json::json;
 use tauri::State;
 use tokio::sync::Mutex;
@@ -74,4 +75,18 @@ async fn get_tenor_results(api_key: &str, api: &str, params: String) -> Result<S
         .map_err(|e| format!("{e:?}"))?;
 
     Ok(response)
+}
+#[tauri::command]
+pub async fn convert_url_to_base64(url: &str) -> Result<String, String> {
+    let content = reqwest::get(url)
+        .await
+        .map_err(|e| format!("{e:?}"))?
+        .bytes()
+        .await
+        .map_err(|e| format!("{e:?}"))?;
+
+    let encoded = general_purpose::STANDARD.encode(content);
+    let mime_type = mime_guess::from_path(url).first_or_octet_stream();
+
+    Ok(format!("data:{mime_type};base64,{encoded}"))
 }

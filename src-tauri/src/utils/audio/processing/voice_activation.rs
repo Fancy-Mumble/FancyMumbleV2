@@ -18,8 +18,9 @@ impl<T: Signed + Copy + Default + PartialOrd + MulAssign + NumCast + core::fmt::
 pub struct VoiceActivation<T: VoiceActivationType> {
     upper_threshold: T,
     lower_threshold: T,
-    fade_out_samples: usize,
+    fade_samples: usize,
     fade_out_count: usize,
+    fade_in_count: usize,
     voice_activation_hold_offset: f32,
     sample_rate: usize,
 }
@@ -46,8 +47,9 @@ impl<T: VoiceActivationType> VoiceActivation<T> {
         Self {
             upper_threshold,
             lower_threshold,
-            fade_out_samples,
+            fade_samples: fade_out_samples,
             fade_out_count: 0,
+            fade_in_count: 0,
             voice_activation_hold_offset,
             sample_rate,
         }
@@ -85,7 +87,7 @@ impl<T: VoiceActivationType> VoiceActivation<T> {
                 self.sample_rate,
             );
         self.voice_activation_hold_offset = voice_activation_hold_offset;
-        self.fade_out_samples = fade_out_samples;
+        self.fade_samples = fade_out_samples;
     }
 
     pub fn process(&mut self, new_data: &mut [T]) -> T {
@@ -114,12 +116,13 @@ impl<T: VoiceActivationType> VoiceActivation<T> {
             if vad.update(&amplitude) {
                 // If the VAD is on, reset the fade out counter
                 self.fade_out_count = 0;
-            } else if self.fade_out_count < self.fade_out_samples {
+            } else if self.fade_out_count < self.fade_samples {
+                self.fade_in_count = 0;
                 // If the VAD is off, increment the fade out counter
                 self.fade_out_count += FRAME_SIZE;
-                if self.fade_out_count > self.fade_out_samples {
+                if self.fade_out_count > self.fade_samples {
                     // If the fade out counter exceeds the fade out samples, clamp it
-                    self.fade_out_count = self.fade_out_samples;
+                    self.fade_out_count = self.fade_samples;
                 } // Apply the fade out function to the frame
                 let fade_out_factor = self.calculate_fadeout(); // Calculate the fade out factor
                 for x in frame.iter_mut() {
@@ -140,7 +143,7 @@ impl<T: VoiceActivationType> VoiceActivation<T> {
         let voice_activation_hold_offset = self.voice_activation_hold_offset;
         let inverse_offset = 1.0 - voice_activation_hold_offset;
 
-        let ratio = self.fade_out_count as f32 / self.fade_out_samples as f32;
+        let ratio = self.fade_out_count as f32 / self.fade_samples as f32;
         let adjusted_ratio = (ratio - voice_activation_hold_offset) * (1.0 / inverse_offset);
         let fade_out_factor = 1.0 - (adjusted_ratio.max(0.0).ln_1p() * inverse_offset).min(1.0);
 
