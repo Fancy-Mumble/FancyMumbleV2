@@ -1,0 +1,11 @@
+{
+    "Appearance": "外观",
+    "Colors": "颜色",
+    "Background Image": "背景图片",
+    "Profile Image": "个人资料图片",
+    "Primary": "主颜色",
+    "Accent": "强调色",
+    "Disable Auto-Scroll": "禁用自动滚动",
+    "Always auto-scroll, even if scrolled up": "始终自动滚动，即使向上滚动",
+    "Enable WYSIWYG Editor": "启用可视化编辑器"
+}

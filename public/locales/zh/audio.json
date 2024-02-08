@@ -1,0 +1,19 @@
+{
+    "Audio": "音频",
+    "Input Device": "输入设备",
+    "Microphone": "麦克风",
+    "Voice Activation": "语音激活",
+    "Push To Talk": "按键说话",
+    "Automatically detect Microphone sensitivity": "自动检测麦克风灵敏度",
+    "Hold Activation for": "保持激活{{duration}}",
+    "Fade-out Audio after activation for": "激活{{duration}}后淡出音频",
+    "Audio activation at": "音频激活阈值{{threshold}}",
+    "Audio deactivation at": "音频停止激活阈值{{threshold}}",
+    "Amplification dB": "放大 +{{amplification}}dB",
+    "Echo Cancelation": "回声消除",
+    "Noise Suppression": "噪音抑制",
+    "Compressor Threshold": "压缩器阈值{{threshold}}dB",
+    "Compressor Ratio": "压缩器比例{{ratio}}:1",
+    "Attack Time": "激活时间{{duration}}",
+    "Release Time": "释放时间{{duration}}"
+}
