@@ -1,0 +1,18 @@
+{
+    "Are you sure you want to delete all messages?": "确定要删除所有消息吗？",
+    "Yes": "好",
+    "No": "不要",
+    "Skip": "跳过",
+    "Cancel": "取消",
+    "Like": "赞喔",
+    "Message": "消息",
+    "Go Back": "返回",
+    "Save": "保存",
+    "Connect": "连接",
+    "Apply": "应用",
+    "Discard": "放弃",
+    "write user a message": "发送给 {{user}} ...",
+    "Delete all messages": "删除所有消息",
+    "Send Message to Channel": "发送消息到 {{channel}}",
+    "User Joined the Server": "{{user}} 加入了服务器"
+}
