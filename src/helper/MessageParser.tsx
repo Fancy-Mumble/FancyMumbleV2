@@ -65,6 +65,14 @@ class DOMMessageParser {
         return this;
     }
 
+    parseForVideos() {
+        Array.from(this.document.querySelectorAll('video')).forEach(e => {
+            e.setAttribute('class', 'user-video-element');
+        });
+
+        return this;
+    }
+
     parseForLinks() {
         Array.from(this.document.querySelectorAll('a')).forEach(e => {
             let replaced = !this.replacementUrl.every(r => {

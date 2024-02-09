@@ -1,4 +1,4 @@
-import { Box, CircularProgress, Fade, ImageList, ImageListItem, Paper, Popper, Skeleton, TextField } from '@mui/material'
+import { Box, CircularProgress, Fade, ImageList, ImageListItem, LinearProgress, Paper, Popper, Skeleton, TextField } from '@mui/material'
 import React, { useEffect, useMemo, useState } from 'react';
 import SearchIcon from '@mui/icons-material/Search';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +9,7 @@ import { invoke } from '@tauri-apps/api';
 import { use } from 'i18next';
 import { Gif } from '@mui/icons-material';
 import ContainedBackdrop from './utils/ContainedBackdrop';
+import InfiniteScroll from 'react-infinite-scroll-component';
 
 interface MediaElement {
   webm: {
@@ -131,7 +132,7 @@ export interface GifResult {
   composite: any;
 }
 
-interface GidResultContainer {
+interface GifResultContainer {
   results: GifResult[];
   next: string;
 }
@@ -140,9 +141,17 @@ interface EmptyResult {
 
 }
 
+function instanceOfEmptyResult(object: any): object is EmptyResult {
+  return Object.keys(object)?.length === 0;
+}
+
 interface ErrorElement {
   code: number;
   error: string;
+}
+
+function instanceOfErrorElement(object: any): object is ErrorElement {
+  return 'code' in object && 'error' in object;
 }
 
 interface GifSearchProps {
@@ -158,10 +167,12 @@ const defaultProps: GifSearchProps = {
   anchor: undefined,
 };
 
+const LOAD_ELEMENTS = 20;
+
 const handleSearchChange = debounce(async (
   value: string,
   tenorApiKey: string | undefined,
-  setItemData: React.Dispatch<React.SetStateAction<GidResultContainer | ErrorElement | EmptyResult[]>>
+  setItemData: React.Dispatch<React.SetStateAction<GifResultContainer | ErrorElement | EmptyResult[]>>
 ) => {
   if (tenorApiKey) {
     if (value.length === 0) {
@@ -169,19 +180,19 @@ const handleSearchChange = debounce(async (
         apiKey: tenorApiKey
       });
       const resultObj = JSON.parse(result as string);
-      setItemData(resultObj as GidResultContainer);
+      setItemData(resultObj as GifResultContainer);
       return;
     }
     const result = await invoke('get_tenor_search_results', {
       apiKey: tenorApiKey,
       query: value,
-      limit: 10,
+      limit: LOAD_ELEMENTS,
       pos: 0,
     });
     const resultObj = JSON.parse(result as string);
     console.log(resultObj);
 
-    setItemData(resultObj as GidResultContainer);
+    setItemData(resultObj as GifResultContainer);
   }
 }, 1000);
 
@@ -191,12 +202,38 @@ function GifSearch(props: Readonly<GifSearchProps>) {
 
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
-  const [itemData, setItemData] = useState<GidResultContainer | ErrorElement | EmptyResult[]>([{}, {}, {}, {}, {}, {}]);
+  const [position, setPosition] = useState(0);
+  const [itemData, setItemData] = useState<GifResultContainer | ErrorElement | EmptyResult[]>([]);
   let tenorApiKeyAvailable = tenorApiKey && tenorApiKey.length > 0;
 
   useEffect(() => {
+    setPosition(0);
     handleSearchChange(search, tenorApiKey, setItemData);
   }, [search]);
+
+  const loadMore = async () => {
+    console.log("Load more");
+    if (tenorApiKey && search.length > 0) {
+      invoke('get_tenor_search_results', {
+        apiKey: tenorApiKey,
+        query: search,
+        limit: LOAD_ELEMENTS,
+        pos: position + LOAD_ELEMENTS,
+      }).then((result) => {
+        const resultObj = JSON.parse(result as string);
+
+        if (instanceOfEmptyResult(itemData) || instanceOfErrorElement(itemData)) {
+          setItemData(resultObj as GifResultContainer);
+        }
+
+        let currentData = itemData as GifResultContainer;
+        currentData.results.push(...(resultObj as GifResultContainer).results);
+        setItemData(currentData);
+        console.log(itemData);
+        setPosition(position + LOAD_ELEMENTS);
+      });
+    }
+  }
 
   useEffect(() => {
     if (!tenorApiKey || tenorApiKey.length === 0) {
@@ -211,7 +248,7 @@ function GifSearch(props: Readonly<GifSearchProps>) {
         console.log(resultObj.error);
         return;
       }
-      setItemData(resultObj as GidResultContainer);
+      setItemData(resultObj as GifResultContainer);
     }).catch(e => {
       console.log(e);
     });
@@ -225,14 +262,17 @@ function GifSearch(props: Readonly<GifSearchProps>) {
   }
 
   const showImageList = useMemo(() => {
-    return ((itemData as GidResultContainer)?.results ?? itemData).map((item, i) => {
-      if (Object.keys(item).length === 0) {
-        return (
-          <ImageListItem key={i}>
-            <Skeleton variant="rectangular" width={180} height={100} />
-          </ImageListItem>
-        );
-      } else {
+    if (instanceOfEmptyResult(itemData) || instanceOfErrorElement(itemData)) {
+      return (
+        <ImageListItem>
+          <Skeleton variant="rectangular" width={180} height={100} />
+        </ImageListItem>
+      );
+    }
+
+    let results = (itemData as GifResultContainer).results;
+    return (
+      results.map((item, i) => {
         const imgElement = item as GifResult;
 
         return (
@@ -240,11 +280,19 @@ function GifSearch(props: Readonly<GifSearchProps>) {
             <img src={imgElement.media[0].nanogif.url} alt={imgElement.title} loading="lazy" onClick={() => handleGifClick(imgElement)} />
           </ImageListItem>
         );
-      }
-    });
-  }, [itemData]);
 
-  console.log("Data: ", itemData);
+      })
+    );
+  }, [itemData, position]);
+
+  const loadingElement = useMemo(() => {
+    return (
+      <Box>
+        <LinearProgress />
+      </Box>
+    );
+  }, []);
+
   return (
     <Popper open={props.open} anchorEl={props.anchor} transition>
       {({ TransitionProps }) => (
@@ -265,11 +313,19 @@ function GifSearch(props: Readonly<GifSearchProps>) {
                 }}
               />
             </Box>
-            <Box sx={{ width: '100%' }}>
+            <Box id="scrolableDiv" sx={{ width: '100%', height: 450, overflowY: 'scroll' }}>
               <ContainedBackdrop open={props.ready || !tenorApiKeyAvailable || false}>
-                <ImageList sx={{ width: 500, height: 450 }} cols={3} rowHeight={164} >
-                  {showImageList}
-                </ImageList>
+                <InfiniteScroll
+                  dataLength={(itemData as GifResultContainer).results?.length ?? 0}
+                  next={loadMore}
+                  hasMore={true}
+                  loader={loadingElement}
+                  scrollableTarget="scrolableDiv"
+                >
+                  <ImageList sx={{ width: 400 }} cols={3} rowHeight={164} variant="masonry" >
+                    {showImageList}
+                  </ImageList>
+                </InfiniteScroll>
               </ContainedBackdrop>
             </Box>
             {tenorApiKeyAvailable ? null : <Box>{t("Tenor API Key not set")}</Box>}

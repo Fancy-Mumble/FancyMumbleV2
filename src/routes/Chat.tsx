@@ -12,9 +12,10 @@ import ChatInfoBar from '../components/ChatInfoBar';
 import EventLog from '../components/EventLog';
 import QuillChatInput from '../components/QuillChatInput';
 import { persistentStorage } from '../store/persistance/persist';
-import { updateFrontendSettings } from '../store/features/users/frontendSettings';
+import { FrontendSettings, updateFrontendSettings } from '../store/features/users/frontendSettings';
 import { updateAudioSettings } from '../store/features/users/audioSettings';
 import { invoke } from '@tauri-apps/api';
+import i18n from '../i18n/i18n';
 
 
 function Chat() {
@@ -25,12 +26,16 @@ function Chat() {
     const dispatch = useDispatch();
 
     const fetchSettings = useCallback(async () => {
-        const frontendSettings = await persistentStorage.get("frontendSettings");
+        const frontendSettings = await persistentStorage.get<FrontendSettings>("frontendSettings");
         const audioSettings = await persistentStorage.get("audioSettings");
         invoke('set_audio_input_setting', { 'settings': audioSettings });
 
         dispatch(updateFrontendSettings(frontendSettings));
         dispatch(updateAudioSettings(audioSettings));
+
+        if (frontendSettings?.language?.language) {
+            i18n.changeLanguage(frontendSettings.language.language);
+        }
         console.log("Settings fetched");
     }, [])
 

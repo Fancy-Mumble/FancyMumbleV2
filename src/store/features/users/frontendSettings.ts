@@ -17,10 +17,15 @@ export interface AdvancedSettings {
   useWYSIWYG: boolean;
 }
 
+export interface LanguageSettings {
+  language: string;
+}
+
 export interface FrontendSettings {
   api_keys?: ApiKeys;
   link_preview?: LinkPreviewSettings;
   advancedSettings?: AdvancedSettings
+  language?: LanguageSettings;
 }
 
 const defaultValues: FrontendSettings = {
@@ -60,10 +65,13 @@ export const frontendSettings = createSlice({
     },
     clearFrontendSettings: (state) => {
       Object.assign(state, {});
+    },
+    setLanguage: (state, action) => {
+      state.language = action.payload;
     }
   },
 })
 
-export const { updateFrontendSettings, updateLinkPreview, updateApiKey, updateAdvancedSettings, clearFrontendSettings } = frontendSettings.actions
+export const { updateFrontendSettings, updateLinkPreview, updateApiKey, updateAdvancedSettings, clearFrontendSettings, setLanguage } = frontendSettings.actions
 
 export default frontendSettings.reducer
