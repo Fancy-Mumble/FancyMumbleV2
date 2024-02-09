@@ -9,7 +9,7 @@ import { invoke } from "@tauri-apps/api";
 import { TextMessage, deleteChatMessage } from "../store/features/users/chatMessageSlice";
 import ClearIcon from '@mui/icons-material/Clear';
 import { useDispatch, useSelector } from "react-redux";
-import React, { } from "react";
+import React, { useEffect } from "react";
 import { RootState } from "../store/store";
 import "./styles/ChatMessage.css";
 import MessageUIHelper from "../helper/MessageUIHelper";
@@ -28,6 +28,7 @@ const parseMessage = (message: string | undefined) => {
             .parseMarkdown()
             .parseDOM((dom) => dom
                 .parseForImages()
+                .parseForVideos()
                 .parseForLinks()
             )
             .buildString();
@@ -50,7 +51,7 @@ const parseUI = (message: string | undefined, onLoaded: () => void) => {
 }
 
 const generateDate = (timestamp: number) => {
-    let day = dayjs(timestamp).locale('de-de');
+    let day = dayjs(timestamp).locale('en-US');
     if (day.isToday()) {
         return day.format('HH:mm');
     } else if (day.isYesterday()) {
@@ -66,6 +67,34 @@ const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message, messageId
     const userList = useSelector((state: RootState) => state.reducer.userInfo);
     const dispatch = useDispatch();
     const { t } = useTranslation();
+
+    useEffect(() => {
+        console.log('Adding event listeners');
+        // yes, I know this is a bad practice, but I'm not sure how to do it better
+        document.querySelectorAll('.user-video-element').forEach(e => {
+            console.log(e);
+            e.addEventListener('mouseenter', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (e.target) {
+                    const videoElement = e.target as HTMLVideoElement;
+                    videoElement.play();
+                    videoElement.loop = true;
+                }
+            });
+
+            e.addEventListener('mouseleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if(e.target) {
+                    const videoElement = e.target as HTMLVideoElement;
+                    videoElement.pause();
+                    videoElement.loop = false;
+                }
+            });
+        });
+    }, []);
+
 
     const user = React.useMemo(() =>
         userList.users.find(e => e.id === message.sender.user_id)

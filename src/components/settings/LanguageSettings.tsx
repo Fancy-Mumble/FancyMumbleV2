@@ -1,22 +1,24 @@
 import { Box, Container, FormControlLabel, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Radio, RadioGroup, Typography, } from "@mui/material";
-import { useDispatch } from "react-redux";
-import { useTheme } from '@mui/material/styles';
+import { useDispatch, useSelector } from "react-redux";
 import './styles/Profile.css'
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { RootState } from "../../store/store";
+import { setLanguage } from "../../store/features/users/frontendSettings";
+import { persistFrontendSettings } from "../../store/persistance/persist";
 
 
 function LanguageSettings() {
-    const theme = useTheme();
     const dispatch = useDispatch();
     const [t, i18n] = useTranslation();
-    const [language, setLanguage] = useState(i18n.language);
+    let frontendSettings = useSelector((state: RootState) => state.reducer.frontendSettings);
+    let userLanguage = frontendSettings?.language?.language;
 
     let sortedLanguages = [...i18n.languages].sort((a, b) => a.localeCompare(b));
 
     function updateLanguageSettings(language: string) {
         i18n.changeLanguage(language);
-        setLanguage(language);
+        dispatch(setLanguage({ language: language }));
+        persistFrontendSettings(frontendSettings);
     }
 
     return (
@@ -28,7 +30,7 @@ function LanguageSettings() {
                         aria-labelledby="demo-radio-buttons-group-label"
                         defaultValue="female"
                         name="radio-buttons-group"
-                        value={language}
+                        value={userLanguage}
                         onChange={(e) => updateLanguageSettings(e.target.value)}
                     >
                         {sortedLanguages.map((e) => {

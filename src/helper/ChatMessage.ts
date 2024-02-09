@@ -20,7 +20,6 @@ export class ChatMessageHandler {
 
     public sendCustomChatMessage(data: string, userInfo: UsersState | undefined) {
         invoke('send_message', { chatMessage: data, channelId: userInfo?.channel_id });
-        console.log("customChatMessage", data);
         this.pushChatMessage({
             actor: userInfo?.id ?? 0,
             sender: {
@@ -32,7 +31,7 @@ export class ChatMessageHandler {
             message: data,
             timestamp: Date.now(),
             id: ""
-        })
+        });
         this.setChatMessage("");
     }
 
@@ -49,6 +48,9 @@ export class ChatMessageHandler {
             .parseCommands(userInfo, (chatMessage: string, userInfo: UsersState | undefined) => {
                 this.sendCustomChatMessage(chatMessage, userInfo);
             })
+            .parseDOM((dom) => dom
+                .parseForVideos()
+            )
             .parseMarkdown()
             .buildString();
         this.sendCustomChatMessage(message, userInfo);

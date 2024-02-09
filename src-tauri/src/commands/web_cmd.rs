@@ -2,6 +2,7 @@ use base64::{engine::general_purpose, Engine};
 use serde_json::json;
 use tauri::State;
 use tokio::sync::Mutex;
+use tracing::info;
 use webbrowser::{Browser, BrowserOptions};
 
 use super::helper::OpenGraphCrawler;
@@ -55,7 +56,6 @@ pub async fn get_tenor_search_results(
     pos: u32,
 ) -> Result<String, String> {
     let params = format!("&q={query}&limit={limit}&pos={pos}");
-
     get_tenor_results(api_key, "search", params).await
 }
 
@@ -66,6 +66,8 @@ pub async fn get_tenor_trending_results(api_key: &str) -> Result<String, String>
 
 async fn get_tenor_results(api_key: &str, api: &str, params: String) -> Result<String, String> {
     let url = format!("https://api.tenor.com/v1/{api}?key={api_key}{params}");
+
+    info!("params: {url}");
 
     let response = reqwest::get(&url)
         .await
