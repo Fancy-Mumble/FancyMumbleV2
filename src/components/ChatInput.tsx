@@ -71,8 +71,8 @@ function ChatInput() {
 
     function sendGif(gif: GifResult): void {
         setGifSearchAvailable(true);
-        invoke('convert_url_to_base64', { url: gif.media[0].gif.url }).then((result) => {
-            chatMessageHandler.sendCustomChatMessage(`<img src="${result}" width="${gif.media[0].gif.dims[0]}" />`, currentUser);
+        invoke('convert_url_to_base64', { url: gif.media[0].mp4.url }).then((result) => {
+            chatMessageHandler.sendCustomChatMessage(`<video autoplay src="${result}" width="${gif.media[0].gif.dims[0]}" />`, currentUser);
             setGifSearchAvailable(false);
             setShowGifSearch(false);
         });
