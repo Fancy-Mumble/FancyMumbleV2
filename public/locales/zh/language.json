@@ -1,15 +1,15 @@
 {
-    "Language": "Language",
-    "zh": "Chinese",
+    "Language": "语言",
+    "zh": "中文",
     "zh native": "中文",    
     "en": "English",
-    "en native": "English",
+    "en native": "英语",
     "de": "Deutsch",
-    "de native": "German",
+    "de native": "德语",
     "fr": "Français",
-    "fr native": "French",
+    "fr native": "法语",
     "es": "Español",
-    "es native": "Spanish",
+    "es native": "西班牙语",
     "dev": "Development",
-    "dev native": "Development"
+    "dev native": "开发"
 }
