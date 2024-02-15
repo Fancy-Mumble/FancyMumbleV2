@@ -1,4 +1,6 @@
 # Fancy Mumble V2
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FFancy-Mumble%2FFancyMumbleV2.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FFancy-Mumble%2FFancyMumbleV2?ref=badge_shield)
+
 
 Fancy Mumble is a Mumble client which focuses on additional features for [Mumble](https://github.com/mumble-voip/mumble).
 The main goal of this project is to improve the user experience while staying backward compatible with the original Mumble Server.
@@ -29,3 +31,6 @@ cargo tauri dev
 
 ![](.github/images/Screenshot%202023-04-17%20194703.png)
 ![](.github/images/Screenshot%202023-04-17%20194756.png)
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FFancy-Mumble%2FFancyMumbleV2.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FFancy-Mumble%2FFancyMumbleV2?ref=badge_large)
