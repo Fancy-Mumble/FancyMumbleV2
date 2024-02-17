@@ -13,6 +13,8 @@ import { UpdateableUserState, UsersState } from "../store/features/users/userSli
 import "./styles/common.css"
 import { useCallback, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { updateUIState, updateUserState } from "../store/features/users/frontendSettings";
+import { persistFrontendSettings } from "../store/persistance/persist";
 
 const selectCurrentUser = (state: RootState) => state.reducer.userInfo.currentUser;
 
@@ -31,7 +33,10 @@ const customEqual = (oldUser: UsersState | undefined, newUser: UsersState | unde
 
 function CurrentUserInfo() {
     const { t, i18n } = useTranslation();
+    const dispatch = useDispatch();
     const currentUser = useSelector(selectCurrentUser, customEqual);
+    const frontendSettings = useSelector((state: RootState) => state.reducer.frontendSettings);
+    const uiUserState = frontendSettings.user_state;
 
     const userBackground = useMemo(() => getBackgroundFromComment(currentUser), [currentUser?.comment]);
 
@@ -41,8 +46,15 @@ function CurrentUserInfo() {
 
             update(currentUser, currentUserClone);
             invoke('change_user_state', { userState: currentUserClone });
+            syncUiState(currentUserClone);
         }
     }, [currentUser]);
+
+    const syncUiState = (userInfo: UpdateableUserState) => {
+        let newState = { ...uiUserState, self_mute: userInfo?.self_mute ?? false, self_deaf: userInfo?.self_deaf ?? false };
+        dispatch(updateUserState(newState));
+        persistFrontendSettings({ ...frontendSettings, user_state: newState });
+    };
 
     const muteToggleUser = useCallback(() => {
         updateUserValue((currentUser, currentUserClone) => currentUserClone.self_mute = !currentUser.self_mute);

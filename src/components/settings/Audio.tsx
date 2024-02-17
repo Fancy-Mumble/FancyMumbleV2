@@ -193,7 +193,7 @@ function AudioSettings() {
                                 </Typography>
                                 <Slider
                                     min={0}
-                                    step={0.01}
+                                    step={0.001}
                                     max={1}
                                     getAriaLabel={() => ''}
                                     value={[audioSettings.voice_activation_options.voice_hysteresis_lower_threshold, audioSettings.voice_activation_options.voice_hysteresis_upper_threshold]}
@@ -244,8 +244,8 @@ function AudioSettings() {
                     </Typography>
                     <Slider
                         value={audioSettings.amplification}
-                        min={0}
-                        step={1}
+                        min={1}
+                        step={0.1}
                         max={20}
                         onChange={(e, v) => dispatch(setAmplification(v as number))}
                         valueLabelDisplay="auto"

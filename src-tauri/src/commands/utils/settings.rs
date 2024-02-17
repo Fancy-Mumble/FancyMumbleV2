@@ -71,6 +71,12 @@ pub struct AudioPreviewContainer {
     pub window: Arc<Mutex<tauri::Window>>,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct AudioUserState {
+    pub deaf: bool,
+    pub mute: bool,
+}
+
 #[allow(clippy::module_name_repetitions)]
 #[allow(clippy::enum_variant_names)]
 #[derive(Clone, Debug)]
@@ -78,6 +84,7 @@ pub enum GlobalSettings {
     AudioInputSettings(AudioOptions),
     AudioOutputSettings(AudioOutputSettings),
     AudioPreview(AudioPreviewContainer),
+    AudioUserState(AudioUserState),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
