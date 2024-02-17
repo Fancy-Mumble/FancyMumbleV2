@@ -30,7 +30,7 @@ use tracing_subscriber::{
 use crate::commands::{
     change_user_state, connect_to_server, crop_and_store_image, disable_audio_info,
     enable_audio_info, get_audio_devices, like_message, logout, send_message,
-    set_audio_input_setting, set_audio_output_setting, set_user_image,
+    set_audio_input_setting, set_audio_output_setting, set_audio_user_state, set_user_image,
     settings_cmd::{get_identity_certs, get_server_list, save_server},
     web_cmd::{
         convert_url_to_base64, get_open_graph_data_from_website, get_tenor_search_results,
@@ -105,7 +105,8 @@ async fn main() {
             disable_audio_info,
             get_tenor_search_results,
             get_tenor_trending_results,
-            convert_url_to_base64
+            convert_url_to_base64,
+            set_audio_user_state
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

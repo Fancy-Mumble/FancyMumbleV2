@@ -21,11 +21,22 @@ export interface LanguageSettings {
   language: string;
 }
 
+export interface UIState {
+  show_sidebar: boolean;
+}
+
+export interface UserState {
+  self_mute: boolean;
+  self_deaf: boolean;
+}
+
 export interface FrontendSettings {
   api_keys?: ApiKeys;
   link_preview?: LinkPreviewSettings;
   advancedSettings?: AdvancedSettings
   language?: LanguageSettings;
+  ui_state: UIState;
+  user_state: UserState;
 }
 
 const defaultValues: FrontendSettings = {
@@ -41,6 +52,13 @@ const defaultValues: FrontendSettings = {
     disableAutoscroll: false,
     alwaysScrollDown: false,
     useWYSIWYG: false
+  },
+  ui_state: {
+    show_sidebar: false
+  },
+  user_state: {
+    self_mute: true,
+    self_deaf: true
   }
 };
 const initialState: FrontendSettings = defaultValues;
@@ -63,6 +81,12 @@ export const frontendSettings = createSlice({
       console.log("updateAdvancedSettings: ", action.payload);
       state.advancedSettings = action.payload;
     },
+    updateUIState: (state, action) => {
+      state.ui_state = action.payload;
+    },
+    updateUserState: (state, action) => {
+      state.user_state = action.payload;
+    },
     clearFrontendSettings: (state) => {
       Object.assign(state, {});
     },
@@ -72,6 +96,15 @@ export const frontendSettings = createSlice({
   },
 })
 
-export const { updateFrontendSettings, updateLinkPreview, updateApiKey, updateAdvancedSettings, clearFrontendSettings, setLanguage } = frontendSettings.actions
+export const {
+  updateFrontendSettings,
+  updateLinkPreview,
+  updateApiKey,
+  updateAdvancedSettings,
+  clearFrontendSettings,
+  setLanguage,
+  updateUIState,
+  updateUserState
+} = frontendSettings.actions;
 
 export default frontendSettings.reducer

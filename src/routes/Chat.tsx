@@ -16,10 +16,12 @@ import { FrontendSettings, updateFrontendSettings } from '../store/features/user
 import { updateAudioSettings } from '../store/features/users/audioSettings';
 import { invoke } from '@tauri-apps/api';
 import i18n from '../i18n/i18n';
+import { updateCurrentUserListeningInfo } from '../store/features/users/userSlice';
 
 
 function Chat() {
     const [showLog, setShowLog] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const messageLog = useSelector((state: RootState) => state.reducer.chatMessage);
     const useWYSIWYG = useSelector((state: RootState) => state.reducer.frontendSettings?.advancedSettings?.useWYSIWYG);
@@ -32,6 +34,15 @@ function Chat() {
 
         dispatch(updateFrontendSettings(frontendSettings));
         dispatch(updateAudioSettings(audioSettings));
+        console.log("Settings fetched: ", frontendSettings);
+
+        let self_mute = frontendSettings?.user_state.self_mute ?? true;
+        let self_deaf = frontendSettings?.user_state.self_deaf ?? true;
+        dispatch(updateCurrentUserListeningInfo({
+            self_mute: self_mute,
+            self_deaf: self_deaf
+        }));
+        invoke('change_user_state', { userState: { self_mute: self_mute, self_deaf: self_deaf } });
 
         if (frontendSettings?.language?.language) {
             i18n.changeLanguage(frontendSettings.language.language);
@@ -40,7 +51,7 @@ function Chat() {
     }, [])
 
     useEffect(() => {
-        fetchSettings();
+        fetchSettings().then(() => setLoading(false));
     }, [fetchSettings]);
 
     let selectChatInput = useMemo(() => {
@@ -52,7 +63,7 @@ function Chat() {
     }, [useWYSIWYG]);
 
     return (
-        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'row' }}>
+        <Box sx={{ height: '100%', display: (loading ? 'none' : 'flex'), flexDirection: 'row' }}>
             <Sidebar />
             <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
                 <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>

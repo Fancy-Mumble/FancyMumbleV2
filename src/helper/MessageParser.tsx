@@ -30,14 +30,6 @@ class DOMMessageParser {
         DOMPurify.addHook('afterSanitizeAttributes', function (node) {
             console.log("Sanitizing attributes");
             DOMPurify.addHook('afterSanitizeAttributes', function (node) {
-                if (node.tagName && node.tagName === 'A' && node.hasAttribute('href')) {
-                    const href = node.getAttribute('href');
-                    if (href && href.startsWith('http')) {
-                        console.log("Sanitizing attributes for anchor: ", node.getAttribute('href'));
-                        node.removeAttribute('href');
-                    }
-                }
-
                 if (node.tagName && node.tagName === 'IMG' && node.hasAttribute('src')) {
                     const src = node.getAttribute('src');
                     if (src && src.startsWith('http')) {
