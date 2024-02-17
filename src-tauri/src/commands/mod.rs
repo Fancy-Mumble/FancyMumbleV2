@@ -24,7 +24,7 @@ use tokio::sync::{
 use tracing::{error, info, trace};
 
 use self::utils::settings::{
-    AudioOptions, AudioOutputSettings, AudioPreviewContainer, Coordinates, GlobalSettings,
+    AudioOptions, AudioOutputSettings, AudioPreviewContainer, AudioUserState, Coordinates, GlobalSettings
 };
 use image::{
     imageops::{self, FilterType},
@@ -313,6 +313,21 @@ pub async fn set_audio_output_setting(
         .await
         .as_ref()
         .map(|x| x.send(GlobalSettings::AudioOutputSettings(settings)));
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn set_audio_user_state(
+    state: State<'_, ConnectionState>,
+    settings: AudioUserState,
+) -> Result<(), String> {
+    trace!("Set setting: {:?}", settings);
+    state
+        .settings_channel
+        .lock()
+        .await
+        .as_ref()
+        .map(|x| x.send(GlobalSettings::AudioUserState(settings)));
     Ok(())
 }
 

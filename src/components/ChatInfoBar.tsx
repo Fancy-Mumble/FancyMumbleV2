@@ -2,30 +2,44 @@ import { Box, IconButton, Paper, Tooltip } from '@mui/material';
 
 
 import { RootState } from '../store/store';
-import { useSelector } from 'react-redux';
-import { useEffect, useMemo, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useEffect, useMemo } from 'react';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
 import React from 'react';
+import { updateUIState } from '../store/features/users/frontendSettings';
+import { persistFrontendSettings } from '../store/persistance/persist';
 
 interface ChatInfoBarProps {
     onShowLog: (showLog: boolean) => void;
 }
 
 const ChatInfoBar: React.FC<ChatInfoBarProps> = React.memo(({ onShowLog }) => {
-    const [showLog, setShowLog] = useState(false);
+    const dispatch = useDispatch();
+    const frontendSettings = useSelector((state: RootState) => state.reducer.frontendSettings);
+    const showSidebar = frontendSettings.ui_state.show_sidebar;
+
 
     const currentChannelId = useSelector((state: RootState) => state.reducer.userInfo.currentUser?.channel_id);
     const channelInfo = useSelector((state: RootState) => state.reducer.channel.find(e => e.channel_id === currentChannelId));
 
     const eventLogIcon = useMemo(() => {
-        if (!showLog) return (<AutoStoriesIcon sx={{ fontSize: 20 }} />);
-        else return (<KeyboardDoubleArrowRightIcon sx={{ fontSize: 20 }} />);
-    }, [showLog]);
+        if (!showSidebar) return (<AutoStoriesIcon sx={{ fontSize: 20 }} />);
+        return (<KeyboardDoubleArrowRightIcon sx={{ fontSize: 20 }} />);
+    }, [showSidebar]);
 
     useEffect(() => {
-        onShowLog(showLog);
-    }, [showLog, onShowLog]);
+        onShowLog(showSidebar);
+    }, [showSidebar, onShowLog]);
+
+    function toggleSidebar(): void {
+        console.log("old front end: ", frontendSettings)
+        let newSidebarState = !showSidebar;
+        let newState = { ...frontendSettings.ui_state, show_sidebar: newSidebarState };
+        dispatch(updateUIState(newState));
+        persistFrontendSettings({ ...frontendSettings, ui_state: newState });
+        console.log("front end settings updated: ", frontendSettings)
+    }
 
     return (
         <Box sx={{ flexShrink: 1 }}>
@@ -36,8 +50,8 @@ const ChatInfoBar: React.FC<ChatInfoBarProps> = React.memo(({ onShowLog }) => {
                     </Box>
                     <Box sx={{ flexGrow: 0 }}>
                         <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-                            <Tooltip title={showLog ? 'Hide Log' : 'Show Log'}>
-                                <IconButton size="small" onClick={() => setShowLog(!showLog)}>
+                            <Tooltip title={showSidebar ? 'Hide Log' : 'Show Log'}>
+                                <IconButton size="small" onClick={() => toggleSidebar()}>
                                     {eventLogIcon}
                                 </IconButton>
                             </Tooltip>

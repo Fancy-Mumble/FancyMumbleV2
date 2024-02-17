@@ -148,6 +148,12 @@ export const userSlice = createSlice({
         state.users[userIndex].talking = action.payload.talking;
       }
     },
+    updateCurrentUserListeningInfo(state, action: PayloadAction<{ self_mute: boolean, self_deaf: boolean }>) {
+      if (state.currentUser) {
+        state.currentUser.self_mute = action.payload.self_mute;
+        state.currentUser.self_deaf = action.payload.self_deaf;
+      }
+    },
     updateUserSettings(state, action: PayloadAction<{ user_id: number, settings: UserCommentSettings }>) {
       let userIndex = state.users.findIndex(e => e.id === action.payload.user_id);
       if (userIndex !== -1) {
@@ -215,6 +221,6 @@ export const userSlice = createSlice({
 })
 
 // Action creators are generated for each case reducer function
-export const { deleteUser, updateUserImage, updateCurrentUserById, updateConnected, updateUserTalkingInfo, updateUserSettings } = userSlice.actions
+export const { deleteUser, updateUserImage, updateCurrentUserById, updateConnected, updateUserTalkingInfo, updateUserSettings, updateCurrentUserListeningInfo } = userSlice.actions
 
 export default userSlice.reducer
