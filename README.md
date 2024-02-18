@@ -7,8 +7,8 @@ The main goal of this project is to improve the user experience while staying ba
 
 ## Features
 Currently, Fancy Mumble is under development and a lot of actual features of the original Mumble client are missing
-* [ ] Send Gif from a quick select menu
-* [ ] Link previews with additional privacy options
+* [x] Send Gif from a quick select menu
+* [x] Link previews with additional privacy options
 * [ ] Reactions
 * [ ] Share any File
 
@@ -29,8 +29,8 @@ cargo tauri dev
 
 ## Screenshots
 
-![](.github/images/Screenshot%202023-04-17%20194703.png)
-![](.github/images/Screenshot%202023-04-17%20194756.png)
+![](.github/images/Screenshot%202024-02-18%20213652.png)
+![](.github/images/Screenshot%202024-02-18%20214742.png)
 
 ## License
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FFancy-Mumble%2FFancyMumbleV2.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FFancy-Mumble%2FFancyMumbleV2?ref=badge_large)
