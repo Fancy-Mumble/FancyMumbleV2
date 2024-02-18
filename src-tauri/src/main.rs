@@ -17,7 +17,6 @@ mod tests;
 use std::{collections::HashMap, sync::Arc};
 
 use commands::{web_cmd::CrawlerState, ConnectionState};
-use tauri_plugin_window_state::{StateFlags, WindowExt};
 use tokio::sync::Mutex;
 
 use tauri::Manager;
@@ -28,7 +27,7 @@ use tracing_subscriber::{
 };
 
 use crate::commands::{
-    change_user_state, connect_to_server, crop_and_store_image, disable_audio_info,
+    change_user_state, close_app, connect_to_server, crop_and_store_image, disable_audio_info,
     enable_audio_info, get_audio_devices, like_message, logout, send_message,
     set_audio_input_setting, set_audio_output_setting, set_audio_user_state, set_user_image,
     settings_cmd::{get_identity_certs, get_server_list, save_server},
@@ -76,9 +75,6 @@ async fn main() {
             app.manage(CrawlerState {
                 crawler: Mutex::new(None),
             });
-            if let Some(window) = app.get_window("main") {
-                window.restore_state(StateFlags::all())?;
-            }
 
             Ok(())
         })
@@ -106,7 +102,8 @@ async fn main() {
             get_tenor_search_results,
             get_tenor_trending_results,
             convert_url_to_base64,
-            set_audio_user_state
+            set_audio_user_state,
+            close_app
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

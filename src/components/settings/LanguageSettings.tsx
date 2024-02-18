@@ -16,9 +16,12 @@ function LanguageSettings() {
     let sortedLanguages = [...i18n.languages].sort((a, b) => a.localeCompare(b));
 
     function updateLanguageSettings(language: string) {
+        let newLanguageSettings = { language: language };
+        let newFrontendSettings = { ...frontendSettings, language: newLanguageSettings };
+
         i18n.changeLanguage(language);
-        dispatch(setLanguage({ language: language }));
-        persistFrontendSettings(frontendSettings);
+        dispatch(setLanguage(newLanguageSettings));
+        persistFrontendSettings(newFrontendSettings);
     }
 
     return (

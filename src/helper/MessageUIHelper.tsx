@@ -1,4 +1,4 @@
-import { Container } from '@mui/material';
+import { Box, Container } from '@mui/material';
 import parse, { DOMNode, HTMLReactParserOptions, domToReact } from 'html-react-parser';
 import LightBoxImage from '../components/LightBoxImage';
 import UrlPreview from '../components/UrlPreview';
@@ -17,9 +17,9 @@ export default class MessageUIHelper {
             replace: ({ name, attribs, children }: any) => {
                 switch (name) {
                     case 'img':
-                        return (<Container  >
+                        return (<Box>
                             <LightBoxImage src={attribs.src} />
-                        </Container>);
+                        </Box>);
                     case 'a':
                         return (<Container>
                             <UrlPreview href={attribs.href} onLoaded={this.loaded} />

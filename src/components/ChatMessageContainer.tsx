@@ -27,6 +27,7 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 	const messagesEndRef: React.RefObject<HTMLDivElement> = React.createRef();
 	const [userInfoAnchor, setUserInfoAnchor] = React.useState<HTMLElement | null>(null);
 	const [currentPopoverUserId, setCurrentPopoverUserId]: any = useState(null);
+	const [processedMessages, setProcessedMessages] = React.useState<TextMessage[]>([]);
 
 	const scrollToBottom = () => {
 		if (advancedSettings?.disableAutoscroll) {
@@ -44,6 +45,10 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 	}
 
 	useEffect(() => {
+		setProcessedMessages(props.messages);
+	}, [props.messages]);
+
+	useEffect(() => {
 		let messages = props.messages;
 		if (messages.length > 0) {
 			const scrollTrigger = (chatContainer?.current?.clientHeight ?? 0) * 1.2;
@@ -55,7 +60,7 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 				scrollToBottom();
 			}
 		}
-	}, [props.messages]);
+	}, [processedMessages]);
 
 	useEffect(() => {
 		if (advancedSettings?.alwaysScrollDown) {
@@ -89,7 +94,7 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 				img.removeEventListener('load', handleImageLoad);
 			});
 		};
-	}, [props.messages]);
+	}, [processedMessages]);
 
 	const userIdToUserMap = useMemo(() => {
 		if (!userList) return new Map<number, UsersState>();
@@ -105,7 +110,7 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 		let groupedMessages: Array<GroupedMessages> = [];
 		let prevUser: UsersState | undefined = undefined;
 
-		props.messages.forEach((el) => {
+		processedMessages.forEach((el) => {
 			let currentUser = userIdToUserMap.get(el.sender.user_id);
 			if (currentUser?.id !== prevUser?.id || groupedMessages.length === 0) {
 				groupedMessages.push({ user: currentUser, messages: [] });
@@ -124,7 +129,7 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 		});
 
 		return groupedMessages;
-	}, [props.messages]);
+	}, [processedMessages]);
 
 	const userIdToPopoverMap = useMemo(() => {
 		const popoverMap = new Map<number, ReactElement>();
@@ -143,7 +148,7 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 	}, [userIdToUserMap, userInfoAnchor]);
 
 	const emptyChatMessageContainer = useMemo(() => {
-		if (props.messages.length === 0) {
+		if (processedMessages.length === 0) {
 			return (
 				<Grid container sx={{ height: '100%', width: '100%', userSelect: 'none' }} justifyContent="center" alignItems="center">
 					<Grid item>
@@ -155,10 +160,10 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 			);
 		}
 		return null;
-	}, [props.messages]);
+	}, [processedMessages]);
 
 	const chatElements = useMemo(() => {
-		if (!memoizedMessages || props.messages.length === 0) return null;
+		if (!memoizedMessages || processedMessages.length === 0) return null;
 
 		return (<List sx={{ width: '100%', maxWidth: '100%' }}>
 			{memoizedMessages.map((group, index) => (
