@@ -43,8 +43,9 @@ const parseMessage = (message: string | undefined) => {
 const parseUI = (message: string | undefined, onLoaded: () => void) => {
     if (message && message.includes('<')) {
         let messageParser = new MessageUIHelper(message, () => onLoaded());
+        let element = messageParser.build();
 
-        return { standalone: true, element: messageParser.build() };
+        return { standalone: messageParser.containsImages, element: element };
     }
 
     return { standalone: false, element: message };

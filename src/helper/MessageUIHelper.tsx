@@ -5,6 +5,7 @@ import UrlPreview from '../components/UrlPreview';
 
 export default class MessageUIHelper {
     private input: string;
+    private _containsImages: boolean = false;
     private loaded: (() => void) | undefined;
 
     constructor(input: string, loaded?: () => void) {
@@ -12,11 +13,16 @@ export default class MessageUIHelper {
         this.loaded = loaded;
     }
 
+    get containsImages() {
+        return this._containsImages;
+    }
+
     build() {
         const options: HTMLReactParserOptions = {
             replace: ({ name, attribs, children }: any) => {
                 switch (name) {
                     case 'img':
+                        this._containsImages = true;
                         return (<Box>
                             <LightBoxImage src={attribs.src} />
                         </Box>);
