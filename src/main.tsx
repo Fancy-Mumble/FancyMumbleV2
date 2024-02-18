@@ -14,6 +14,11 @@ import hljs from 'highlight.js';
 import { marked } from 'marked';
 import { markedHighlight } from 'marked-highlight';
 import './i18n/i18n';
+import 'dayjs/locale/de';
+import 'dayjs/locale/en';
+import 'dayjs/locale/zh';
+import 'dayjs/locale/fr';
+import 'dayjs/locale/es';
 
 import 'highlight.js/styles/base16/equilibrium-gray-dark.css';
 

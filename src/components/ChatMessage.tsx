@@ -44,14 +44,14 @@ const parseUI = (message: string | undefined, onLoaded: () => void) => {
     if (message && message.includes('<')) {
         let messageParser = new MessageUIHelper(message, () => onLoaded());
 
-        return messageParser.build();
+        return { standalone: true, element: messageParser.build() };
     }
 
-    return message;
+    return { standalone: false, element: message };
 }
 
-const generateDate = (timestamp: number) => {
-    let day = dayjs(timestamp).locale('en-US');
+const generateDate = (timestamp: number, locale = 'en') => {
+    let day = dayjs(timestamp).locale(locale);
     if (day.isToday()) {
         return day.format('HH:mm');
     } else if (day.isYesterday()) {
@@ -65,6 +65,7 @@ const generateDate = (timestamp: number) => {
 
 const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message, messageId, onLoaded }) => {
     const userList = useSelector((state: RootState) => state.reducer.userInfo);
+    const locale = useSelector((state: RootState) => state.reducer.frontendSettings.language?.language);
     const dispatch = useDispatch();
     const { t } = useTranslation();
 
@@ -86,7 +87,7 @@ const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message, messageId
             e.addEventListener('mouseleave', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                if(e.target) {
+                if (e.target) {
                     const videoElement = e.target as HTMLVideoElement;
                     videoElement.pause();
                     videoElement.loop = false;
@@ -101,7 +102,7 @@ const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message, messageId
         , [userList, message.sender.user_id]);
 
     const parsedMessage = React.useMemo(() => parseUI(parseMessage(message.message), onLoaded), [message.message]);
-    const date = React.useMemo(() => generateDate(message.timestamp), [message.timestamp]);
+    const date = React.useMemo(() => generateDate(message.timestamp, locale), [message.timestamp]);
 
     const deleteMessageEvent = React.useCallback(() => {
         dispatch(deleteChatMessage(messageId));
@@ -111,13 +112,21 @@ const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message, messageId
         invoke('like_message', { messageId: messageId, reciever: userList.users.map(e => e.id) });
     }, []);
 
+    const messageElement = React.useMemo(() => {
+        if (parsedMessage.standalone) {
+            return (<Grid item className="message-container-inner">{parsedMessage.element}</Grid>);
+        }
+
+        return (<Grid item className="message-container-inner">
+            <Box className={`message ${false ? "sender" : "receiver"}`}>
+                {parsedMessage.element}
+            </Box>
+        </Grid>);
+    }, [parsedMessage]);
+
     return (
         <Grid item xs={10} className="message-container">
-            <Grid item className="message-container-inner">
-                <Box className={`message ${false ? "sender" : "receiver"}`}>
-                    {parsedMessage}
-                </Box>
-            </Grid>
+            {messageElement}
             <Grid item className="message-metadata">
                 <Typography variant="subtitle2" className="metadata">
                     <Link className="user-info" href="#">{message.sender.user_name}</Link> - {date}
