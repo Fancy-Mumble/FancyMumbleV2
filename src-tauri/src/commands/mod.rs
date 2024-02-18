@@ -16,7 +16,8 @@ use crate::{
     protocol::message_transmitter::MessageTransmitter,
     utils::{audio::device_manager::AudioDeviceManager, constants::get_project_dirs},
 };
-use tauri::State;
+use tauri::{AppHandle, State};
+use tauri_plugin_window_state::{AppHandleExt, StateFlags};
 use tokio::sync::{
     broadcast::{self, Receiver, Sender},
     Mutex,
@@ -24,7 +25,8 @@ use tokio::sync::{
 use tracing::{error, info, trace};
 
 use self::utils::settings::{
-    AudioOptions, AudioOutputSettings, AudioPreviewContainer, AudioUserState, Coordinates, GlobalSettings
+    AudioOptions, AudioOutputSettings, AudioPreviewContainer, AudioUserState, Coordinates,
+    GlobalSettings,
 };
 use image::{
     imageops::{self, FilterType},
@@ -350,4 +352,13 @@ pub async fn enable_audio_info(state: State<'_, ConnectionState>) -> Result<(), 
         }))
     });
     Ok(())
+}
+
+#[allow(clippy::needless_pass_by_value)] // tauri command
+#[tauri::command]
+pub fn close_app(app: AppHandle) {
+    if let Err(e) = app.save_window_state(StateFlags::all()) {
+        error!("Failed to save window state: {:?}", e);
+    }
+    app.exit(0);
 }

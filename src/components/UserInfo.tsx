@@ -25,13 +25,14 @@ function UserInfo(props: UserInfoProps) {
     const [voiceAdjustment, setVoiceAdjustment] = useState(0.0);
     const { t, i18n } = useTranslation();
     const userInfo = useSelector((state: RootState) => state.reducer.userInfo).currentUser;
+    const locale = useSelector((state: RootState) => state.reducer.frontendSettings.language?.language) ?? 'en';
 
     const dispatch = useDispatch();
     const chatMessageHandler = new ChatMessageHandler(dispatch, setChatMessage);
 
-    let mutedText = props.userInfo?.mutedSince ? dayjs(props.userInfo?.mutedSince).fromNow() : '';
-    let deafenedText = props.userInfo?.deafenedSince ? dayjs(props.userInfo?.deafenedSince).fromNow() : '';
-    let joinedText = props.userInfo?.joinedSince ? dayjs(props.userInfo?.joinedSince).fromNow() : '';
+    let mutedText = props.userInfo?.mutedSince ? dayjs(props.userInfo?.mutedSince).locale(locale).fromNow() : '';
+    let deafenedText = props.userInfo?.deafenedSince ? dayjs(props.userInfo?.deafenedSince).locale(locale).fromNow() : '';
+    let joinedText = props.userInfo?.joinedSince ? dayjs(props.userInfo?.joinedSince).locale(locale).fromNow() : '';
 
     function generateCardMedia() {
         if (background) {
