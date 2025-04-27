@@ -38,9 +38,9 @@ const ChatInfoBar: React.FC<ChatInfoBarProps> = React.memo(({ }) => {
     }
 
     return (
-        <Box sx={{ flexShrink: 1 }}>
-            <Paper elevation={0} sx={{ backgroundImage: `url(${channelInfo?.channelImage})`, backgroundSize: 'contain' }}>
-                <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', backdropFilter: 'blur(20px)', textShadow: '1px 1px #000' }}>
+        <Box sx={{ flexShrink: 1, background: '#000000' }}>
+            <Paper elevation={0} sx={{ borderRadius: 0, padding: 1 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center',textShadow: '1px 1px #000' }}>
                     <Box sx={{ flexGrow: 1, paddingLeft: 1 }}>
                         {channelInfo?.name}
                     </Box>

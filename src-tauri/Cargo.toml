@@ -12,58 +12,57 @@ rust-version = "1.77"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = { version = "2.0.0-rc.0", features = [] }
-prost-build = "0.12.3"
-reqwest = { version = "0.12", features = ["cookies"] }
+tauri-build = { version = "2.2.0", features = [] }
+prost-build = "0.13.5"
+reqwest = { version = "0.12.15", features = ["cookies"] }
 sha2 = "0.10.6"
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1.44.2", features = ["full"] }
 patch = "0.7.0"
 
 [dependencies]
-serde_json = "1.0"
-serde = { version = "1.0", features = ["derive"] }
-tauri = { version = "^2.1.1", features = [] }
-futures = "0.3.4"
+serde_json = "1.0.140"
+serde = { version = "1.0.219", features = ["derive"] }
+tauri = { version = "^2.5.1", features = [] }
+futures = "0.3.31"
 tokio = { version = "1", features = ["full"] }
 tokio-native-tls = "0.3.1"
-prost = "0.12.3"
+prost = "0.13.5"
 byteorder = "1.4.3"
-async-trait = "0.1.68"
-tracing = "0.1"
-tracing-subscriber = {version = "0.3", features = ["env-filter"] }
-base64 = "0.22.0"
-os_info = "3"
-rodio = "0.17.1"
-directories = "5.0.1"
-num-traits = "0.2"
-brotli = "5.0.0"
-webbrowser = "0.8.10"
+async-trait = "0.1.88"
+tracing = "0.1.41"
+tracing-subscriber = {version = "0.3.19", features = ["env-filter"] }
+base64 = "0.22.1"
+os_info = "3.10.0"
+rodio = "0.20.1"
+directories = "6.0.0"
+num-traits = "0.2.19"
+brotli = "8.0.0"
+webbrowser = "1.0.4"
 reqwest = "0.12"
-scraper = "0.19"
+scraper = "0.23.1"
 tauri-plugin-window-state = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v2" , version = "2.0.0" }
 tauri-plugin-store = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v2" , version = "2.0.0" }
 symphonia = "0.5.3"
-mime_guess = "2.0.4"
-uuid = "1.7.0"
-tauri-plugin-dialog = "2.0.0-rc.0"
-#audiopus_sys = { git = "F:/Dokumente/projekte/rust/audiopus_sys", branch = "0.0.9" }
-audiopus_sys = { git = "file:///mnt/f/Dokumente/projekte/rust/audiopus_sys", branch = "0.0.11" }
+mime_guess = "2.0.5"
+uuid = "1.16.0"
+tauri-plugin-dialog = "2.2.1"
+audiopus_sys = { git = "https://github.com/SetZero/audiopus_sys", branch = "master" }
+image = "0.25.6"
 opus =  "0.3.0"
-tauri-plugin-os = "2.0.0-rc.0"
+tauri-plugin-os = "2.2.1"
 
 [dev-dependencies]
-tempfile = "3.5.0"
-mockall = "0.12.1"
+tempfile = "3.19.1"
+mockall = "0.13.1"
 tokio-test = "0.4.2"
-xshell = "0.2.3"
+xshell = "0.2.7"
 
 [target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))'.dependencies]
-image = "0.25.1"
-openssl = "0.10.52"
+
+openssl = "0.10.72"
 
 [target.'cfg(target_os = "android")'.dependencies]
 oboe = { version = "0.6.1", features = [ "java-interface", "shared-stdcxx" ] } # Android
-image = {version = "0.25.1", features = ["gif", "png"], default-features = false} # zune jpeg is broken in android builds
 openssl = { version = "0.10", features = ["vendored"] }
 
 [features]

@@ -8,7 +8,6 @@ use std::cmp;
 use crate::{mumble, utils::messages::message_builder};
 use tauri::PackageInfo;
 use tokio::sync::broadcast::Sender;
-use tracing::info;
 
 const OFFSET_MAJOR: u64 = 48;
 const OFFSET_MINOR: u64 = 32;

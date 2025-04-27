@@ -289,6 +289,7 @@ function GifSearch(props: Readonly<GifSearchProps>) {
     return (
       <Box>
         <LinearProgress />
+        {tenorApiKeyAvailable ? null : <Box>{t("Tenor API Key not set")}</Box>}
       </Box>
     );
   }, []);
@@ -328,7 +329,6 @@ function GifSearch(props: Readonly<GifSearchProps>) {
                 </InfiniteScroll>
               </ContainedBackdrop>
             </Box>
-            {tenorApiKeyAvailable ? null : <Box>{t("Tenor API Key not set")}</Box>}
           </Paper>
         </Fade>
       )}

@@ -235,7 +235,6 @@ impl Manager {
         let comment_hash = user_info.comment_hash.clone().unwrap_or_default();
         let session = user_info.session();
 
-        let a = self.app_handle.path();
         let updated_from_cache = update_user_comment_and_pfp_from_cache(
             &comment_hash,
             &texture_hash,

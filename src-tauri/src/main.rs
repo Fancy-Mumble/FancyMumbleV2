@@ -14,7 +14,6 @@ mod utils;
 #[cfg(test)]
 mod tests;
 
-use core::panic;
 use std::{collections::HashMap, sync::Arc};
 
 use commands::{web_cmd::CrawlerState, ConnectionState};

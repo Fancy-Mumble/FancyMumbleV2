@@ -22,7 +22,6 @@ use tokio::sync::{
     Mutex,
 };
 use tracing::{error, info, trace};
-use tracing_subscriber::fmt::format;
 
 use self::utils::settings::{
     AudioOptions, AudioOutputSettings, AudioPreviewContainer, AudioUserState, Coordinates,

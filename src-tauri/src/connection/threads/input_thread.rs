@@ -3,7 +3,6 @@ use std::sync::atomic::Ordering;
 use crate::connection::Connection;
 use crate::protocol::message_router::MessageRouter;
 use crate::protocol::stream_reader::StreamReader;
-use tauri::AppHandle;
 use tokio::select;
 use tokio::time;
 

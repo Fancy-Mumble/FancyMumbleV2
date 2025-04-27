@@ -6,9 +6,11 @@ export default defineConfig({
   clearScreen: false,
   // Tauri expects a fixed port, fail if that port is not available
   server: {
-    host: true, // for development
+    // for development
     strictPort: true,
-    hmr: true,
+    hmr: {
+      host: '192.168.1.132',
+    },
     watch: {
       usePolling: true,
     }

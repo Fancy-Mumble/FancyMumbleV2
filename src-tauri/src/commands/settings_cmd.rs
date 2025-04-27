@@ -6,7 +6,7 @@ use std::{
 use tauri::Manager;
 use tracing::{info, trace};
 
-use crate::{errors::certificate_error::CertificateError, utils::server::Server};
+use crate::utils::server::Server;
 
 const SERVER_SETTINS_FILE: &str = "server.json";
 
