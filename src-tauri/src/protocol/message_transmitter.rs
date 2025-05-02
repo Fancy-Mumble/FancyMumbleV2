@@ -1,7 +1,7 @@
 use std::sync::{Arc, RwLock};
 
 use crate::connection::threads::DEADMAN_INTERVAL;
-use crate::connection::traits::{HandleMessage, Shutdown};
+use crate::connection::traits::Shutdown;
 use crate::errors::AnyError;
 use async_trait::async_trait;
 use tauri::Emitter;
@@ -72,6 +72,3 @@ impl Shutdown for MessageTransmitter {
         Ok(())
     }
 }
-
-#[async_trait]
-impl HandleMessage for MessageTransmitter {}

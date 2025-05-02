@@ -24,7 +24,7 @@ pub struct UDPDecoder {
 }
 
 impl UDPDecoder {
-    pub fn new(sample_rate: u32, channels: opus::Channels) -> Self {
+    pub const fn new(sample_rate: u32, channels: opus::Channels) -> Self {
         Self {
             decoder_map: DecoderMap::new(sample_rate, channels),
             sample_rate,
@@ -98,7 +98,7 @@ struct DecoderMap {
 }
 
 impl DecoderMap {
-    fn new(sample_rate: u32, channels: opus::Channels) -> Self {
+    const fn new(sample_rate: u32, channels: opus::Channels) -> Self {
         Self {
             sample_rate,
             channels,

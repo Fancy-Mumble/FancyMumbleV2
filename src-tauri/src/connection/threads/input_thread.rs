@@ -30,7 +30,7 @@ impl InputThread for Connection {
                         message_channels,
                         back_channel,
                         settings_channel_copy,
-                        app_handle_clone,
+                        &app_handle_clone,
                     );
 
                     match message_reader {

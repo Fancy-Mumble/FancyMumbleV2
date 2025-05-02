@@ -1,6 +1,7 @@
 use std::fmt::Display;
 use std::fmt::Write;
 use std::io::Read;
+use std::path::Path;
 
 use image::codecs::gif::GifDecoder;
 use image::{AnimationDecoder, GenericImageView};
@@ -10,7 +11,6 @@ use tracing::{debug, info};
 
 use crate::errors::application_error::ApplicationError;
 use crate::errors::AnyError;
-use std::path::PathBuf;
 
 pub struct ImageInfo {
     pub data: Vec<u8>,
@@ -125,20 +125,18 @@ impl From<image::ImageFormat> for ImageFormat {
     }
 }
 
-fn get_cache_path_from_hash(hash: &[u8], path: &PathBuf) -> AnyError<std::path::PathBuf> {
+fn get_cache_path_from_hash(hash: &[u8], path: &Path) -> std::path::PathBuf {
     let project_dir = path;
     let hash_string = hash.iter().fold(String::new(), |mut output, b| {
         let _ = write!(output, "{b:x}");
         output
     });
 
-    let path = project_dir.join("image_cache").join(hash_string);
-
-    Ok(path)
+    project_dir.join("image_cache").join(hash_string)
 }
 
-pub fn read_data_from_cache(hash: &[u8], path: &PathBuf) -> AnyError<Option<Vec<u8>>> {
-    let path = get_cache_path_from_hash(hash, &path)?;
+pub fn read_data_from_cache(hash: &[u8], path: &Path) -> AnyError<Option<Vec<u8>>> {
+    let path = get_cache_path_from_hash(hash, path);
     info!("Reading from cache: {:?}", path);
 
     if path.exists() {
@@ -151,7 +149,7 @@ pub fn read_data_from_cache(hash: &[u8], path: &PathBuf) -> AnyError<Option<Vec<
     }
 }
 
-pub fn store_data_in_cache(hash: &[u8], data: &[u8], path: &PathBuf) -> AnyError<()> {
+pub fn store_data_in_cache(hash: &[u8], data: &[u8], path: &Path) -> AnyError<()> {
     use std::io::Write;
 
     if hash.is_empty() {
@@ -160,7 +158,7 @@ pub fn store_data_in_cache(hash: &[u8], data: &[u8], path: &PathBuf) -> AnyError
         )));
     }
 
-    let path = get_cache_path_from_hash(hash, &path)?;
+    let path = get_cache_path_from_hash(hash, path);
 
     if !path.exists() {
         std::fs::create_dir_all(

@@ -17,12 +17,14 @@ pub fn get_settings_file(file_name: &str, app: &tauri::AppHandle) -> Result<std:
         .read(true)
         .write(true)
         .create(true)
+        .truncate(true)
         .open(data_dir.join(file_name))
         .map_err(|e| format!("Error opening file: {e:?}"))?;
     Ok(settings_file)
 }
 
 #[tauri::command]
+#[allow(clippy::needless_pass_by_value)] // AppHandle can't be passed by reference
 pub fn save_server(
     description: &str,
     server_host: &str,
@@ -71,6 +73,7 @@ pub fn save_server(
 }
 
 #[tauri::command]
+#[allow(clippy::needless_pass_by_value)] // AppHandle can't be passed by reference
 pub fn get_server_list(app_handle: tauri::AppHandle) -> Result<Vec<Server>, String> {
     info!("Getting server list");
 
@@ -87,6 +90,7 @@ pub fn get_server_list(app_handle: tauri::AppHandle) -> Result<Vec<Server>, Stri
         .read(true)
         .write(true)
         .create(true)
+        .truncate(true)
         .open(data_dir.join(SERVER_SETTINS_FILE))
         .map_err(|e| format!("Error opening file: {e:?}"))?;
 
@@ -100,6 +104,7 @@ pub fn get_server_list(app_handle: tauri::AppHandle) -> Result<Vec<Server>, Stri
 }
 
 #[tauri::command]
+#[allow(clippy::needless_pass_by_value)] // AppHandle can't be passed by reference
 pub fn get_identity_certs(app_handle: tauri::AppHandle) -> Result<Vec<String>, String> {
     let data_dir = app_handle
         .path()

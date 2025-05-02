@@ -56,16 +56,19 @@ pub fn init_connection(username: &str, channel: &Sender<Vec<u8>>, package_info: 
 
     let info = os_info::get();
     let version = match info.version() {
-        os_info::Version::Unknown => "".to_string(),
+        os_info::Version::Unknown => String::new(),
         v => v.to_string(),
     };
     let bitness = match info.bitness() {
         os_info::Bitness::X32 => "32-bit",
         os_info::Bitness::X64 => "64-bit",
-        _ => std::env::consts::ARCH
-            .ends_with("64")
-            .then(|| "64-bit")
-            .unwrap_or("32-bit"),
+        _ => {
+            if std::env::consts::ARCH.ends_with("64") {
+                "64-bit"
+            } else {
+                "32-bit"
+            }
+        }
     };
 
     let os_string = format!(

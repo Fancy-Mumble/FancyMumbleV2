@@ -6,6 +6,3 @@ use crate::errors::AnyError;
 pub trait Shutdown {
     async fn shutdown(&mut self) -> AnyError<()>;
 }
-
-#[async_trait]
-pub trait HandleMessage {}

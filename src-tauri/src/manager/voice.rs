@@ -104,7 +104,7 @@ impl Manager {
                     &FrontendMessage::new("audio_info", &audio_info_clone),
                 );
             }
-        };
+        }
     }
 
     pub(crate) fn deafen(&self) -> AnyError<()> {

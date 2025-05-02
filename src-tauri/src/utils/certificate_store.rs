@@ -23,11 +23,11 @@ pub struct CertificateBuilder {
 }
 
 impl CertificateBuilder {
-    pub fn try_from(identity: &Option<String>) -> Self {
+    pub fn try_from(identity: Option<&String>) -> Self {
         Self {
             load_or_generate_new: false,
             store_to_project_dir: false,
-            identity: identity.clone(),
+            identity: identity.cloned(),
             data_dir: PathBuf::new(),
         }
     }
@@ -119,7 +119,7 @@ pub struct CertificateStore {
 }
 
 impl CertificateStore {
-    pub fn get_client_certificate(&mut self) -> AnyError<Identity> {
+    pub fn get_client_certificate(&self) -> AnyError<Identity> {
         let identity = native_tls::Identity::from_pkcs8(&self.certificate, &self.private_key)?;
 
         Ok(identity)

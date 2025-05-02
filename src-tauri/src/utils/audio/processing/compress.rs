@@ -46,7 +46,7 @@ impl Compressor {
                     *sample = sign
                         * (abs_sample - (abs_sample - gain_reduction_linear) / release_samples);
                 }
-            };
+            }
         }
     }
 

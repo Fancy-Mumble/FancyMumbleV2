@@ -371,11 +371,15 @@ pub fn close_app(app: AppHandle) {
 
 #[cfg(desktop)]
 #[tauri::command]
+#[allow(clippy::needless_pass_by_value)] // AppHandle can't be passed by reference
 pub fn dev_tools(app: AppHandle) {
-    if let Err(e) = app
-        .get_webview_window("main")
-        .map_or_else(|| Err(()), |w| Ok(w.open_devtools()))
-    {
+    if let Err(e) = app.get_webview_window("main").map_or_else(
+        || Err(()),
+        |w| {
+            w.open_devtools();
+            Ok(())
+        },
+    ) {
         error!("Failed to toggle dev tools: {:?}", e);
     }
 }

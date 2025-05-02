@@ -10,7 +10,7 @@ use super::{ConnectionThread, OutputThread, DEADMAN_INTERVAL};
 
 impl OutputThread for Connection {
     fn spawn_output_thread(&mut self) {
-        if self.threads.get(&ConnectionThread::Output).is_some() {
+        if self.threads.contains_key(&ConnectionThread::Output) {
             error!("OutputThread already running");
             return;
         }

@@ -10,14 +10,14 @@ pub struct Manager {
 }
 
 impl Manager {
-    pub fn new(send_to: Sender<String>, server_channel: Sender<Vec<u8>>) -> Self {
+    pub const fn new(send_to: Sender<String>, server_channel: Sender<Vec<u8>>) -> Self {
         Self {
             frontend_channel: send_to,
             _server_channel: server_channel,
         }
     }
 
-    pub fn notify_disconnected(&self, message: &Option<String>) {
+    pub fn notify_disconnected(&self, message: Option<&String>) {
         let msg = FrontendMessage::new("disconnected", message);
 
         send_to_frontend(&self.frontend_channel, &msg);

@@ -9,14 +9,14 @@ use crate::errors::AnyError;
 
 #[allow(clippy::module_name_repetitions)]
 pub struct AudioDeviceManager {
-    pub audio_device: Option<Device>,
+    pub _audio_device: Option<Device>,
     pub audio_device_list: HashMap<u64, Device>,
 }
 
 impl AudioDeviceManager {
     pub fn new() -> Self {
         Self {
-            audio_device: None,
+            _audio_device: None,
             audio_device_list: HashMap::new(),
         }
     }

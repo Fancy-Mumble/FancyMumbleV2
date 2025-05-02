@@ -19,7 +19,7 @@ use crate::commands::{
     },
     zip_cmd::{convert_to_base64, unzip_data_from_utf8, zip_data_to_utf8},
 };
-use commands::{web_cmd::CrawlerState, ConnectionState};
+use commands::{close_app, dev_tools, web_cmd::CrawlerState, ConnectionState};
 use std::{collections::HashMap, sync::Arc};
 use tauri::Manager;
 use tokio::sync::Mutex;
@@ -37,6 +37,7 @@ pub struct AppBuilder {
 }
 
 impl AppBuilder {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
@@ -50,6 +51,12 @@ impl AppBuilder {
         self
     }
 
+    /// Initializes the Tauri application and runs it.
+    /// # Panics
+    ///
+    /// This function will panic if:
+    /// - The `main` webview window cannot be found during setup.
+    /// - The Tauri application fails to run due to an error.
     pub fn run(self) {
         let setup = self.setup;
         tauri::Builder::default()
@@ -99,6 +106,10 @@ impl AppBuilder {
                 get_tenor_trending_results,
                 convert_url_to_base64,
                 set_audio_user_state,
+                #[cfg(desktop)]
+                close_app,
+                #[cfg(desktop)]
+                dev_tools,
             ])
             .run(tauri::generate_context!())
             .expect("error while running tauri application");

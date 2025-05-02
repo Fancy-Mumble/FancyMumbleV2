@@ -17,7 +17,7 @@ const PING_INTERVAL: Duration = Duration::from_millis(5000);
 
 impl PingThread for Connection {
     fn spawn_ping_thread(&mut self) {
-        if self.threads.get(&ConnectionThread::Ping).is_some() {
+        if self.threads.contains_key(&ConnectionThread::Ping) {
             error!("PingThread already running");
             return;
         }

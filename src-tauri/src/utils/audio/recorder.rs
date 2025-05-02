@@ -207,7 +207,7 @@ fn update_voice_activation_options<T: VoiceActivationType>(
                 T::from(va_options.voice_hysteresis_lower_threshold).unwrap_or_else(T::zero),
             );
         }
-    };
+    }
 }
 
 fn update_compressor_options(audio_settings: &AudioOptions, compressor: &mut Option<Compressor>) {
@@ -220,7 +220,7 @@ fn update_compressor_options(audio_settings: &AudioOptions, compressor: &mut Opt
             compressor.set_threshold(compressor_options.threshold);
             compressor.set_ratio(compressor_options.ratio);
         }
-    };
+    }
 }
 
 impl Drop for Recorder {

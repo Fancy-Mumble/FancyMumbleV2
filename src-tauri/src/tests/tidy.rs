@@ -33,7 +33,6 @@ fn check_code_formatting() {
     res.expect("Failed to run `cargo fmt`");
 }
 
-#[cfg(not(feature = "in-rust-tree"))]
 #[test]
 fn check_licenses() {
     let sh = &Shell::new().expect("Failed to create shell");
@@ -79,7 +78,7 @@ null"
         .read()
         .expect("Failed to run `cargo metadata`");
     let mut licenses = meta
-        .split(|c| c == ',' || c == '{' || c == '}')
+        .split(&[',', '{', '}'][..])
         .filter(|it| it.contains(r#""license""#))
         .map(str::trim)
         .map(|it| it[r#""license":"#.len()..].trim_matches('"'))

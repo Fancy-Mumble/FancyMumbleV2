@@ -20,7 +20,7 @@ impl MainThread for Connection {
         &mut self,
         stream: Option<tokio_native_tls::TlsStream<TcpStream>>,
     ) -> AnyError<()> {
-        if self.threads.get(&ConnectionThread::Main).is_some() {
+        if self.threads.contains_key(&ConnectionThread::Main) {
             return Err(Box::new(ApplicationError::new(
                 "MainThread already running",
             )));

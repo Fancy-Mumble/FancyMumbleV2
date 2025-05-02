@@ -33,7 +33,7 @@ impl MessageRouter {
         sender: MessageChannels,
         server_channel: Sender<Vec<u8>>,
         settings_channel: Receiver<GlobalSettings>,
-        app_handle: tauri::AppHandle,
+        app_handle: &tauri::AppHandle,
     ) -> AnyError<Self> {
         Ok(Self {
             user_manager: user::Manager::new(
@@ -99,7 +99,7 @@ impl MessageRouter {
             crate::utils::messages::MessageTypes::Ping => {}
             crate::utils::messages::MessageTypes::Reject => {
                 let reject = Self::handle_downcast::<mumble::proto::Reject>(message)?;
-                self.connection_manager.notify_disconnected(&reject.reason);
+                self.connection_manager.notify_disconnected(reject.reason.as_ref());
                 return Err(Box::new(ApplicationError::new(
                     format!("Received reject message: {:?}", reject.reason).as_str(),
                 )));
@@ -113,7 +113,7 @@ impl MessageRouter {
             crate::utils::messages::MessageTypes::ChannelRemove => {
                 let removed_channel =
                     Self::handle_downcast::<mumble::proto::ChannelRemove>(message)?;
-                self.channel_manager.remove_channel(&removed_channel);
+                self.channel_manager.remove_channel(removed_channel);
             }
             crate::utils::messages::MessageTypes::ChannelState => {
                 let mut changed_channel =
@@ -165,7 +165,7 @@ impl MessageRouter {
             crate::utils::messages::MessageTypes::PluginDataTransmission => {
                 info!("Received plugin data transmission");
             }
-        };
+        }
 
         Ok(())
     }

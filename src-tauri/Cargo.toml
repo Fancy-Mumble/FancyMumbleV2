@@ -81,8 +81,8 @@ inherits = "release"
 lto = true
 codegen-units = 1
 
-[rust]
-debuginfo-level = 1
+#[rust]
+#debuginfo-level = 1
 
 [lib]
 crate-type = ["staticlib", "cdylib", "rlib"]

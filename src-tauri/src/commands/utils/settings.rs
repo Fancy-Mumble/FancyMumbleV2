@@ -84,7 +84,7 @@ pub enum GlobalSettings {
     AudioInputSettings(AudioOptions),
     AudioOutputSettings(AudioOutputSettings),
     AudioPreview(AudioPreviewContainer),
-    AudioUserState(AudioUserState),
+    #[allow(dead_code)] AudioUserState(AudioUserState),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

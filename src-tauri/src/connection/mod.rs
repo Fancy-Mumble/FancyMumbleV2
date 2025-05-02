@@ -105,14 +105,14 @@ impl Connection {
     }
 
     async fn setup_connection(
-        &mut self,
+        &self,
     ) -> AnyError<Option<tokio_native_tls::TlsStream<TcpStream>>> {
         let server_uri = format!(
             "{}:{}",
             self.server_data.server_host, self.server_data.server_port
         );
 
-        let mut certificate_store = CertificateBuilder::try_from(&self.server_data.identity)
+        let certificate_store = CertificateBuilder::try_from(self.server_data.identity.as_ref())
             .cert_path(self.app_handle.path().data_dir()?)
             .load_or_generate_new(true)
             .store_to_project_dir(true)
@@ -256,7 +256,8 @@ impl Shutdown for Connection {
         self.running
             .store(false, std::sync::atomic::Ordering::Relaxed);
         trace!("Joining Threads");
-        if let Some(mut reader) = self.stream_reader.lock().await.take() {
+        let value = self.stream_reader.lock().await.take();
+        if let Some(mut reader) = value {
             reader.shutdown().await?;
         }
 
