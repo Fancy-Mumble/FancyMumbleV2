@@ -56,8 +56,8 @@ fn read_file_as_bytes(file_path: &Path) -> Result<String, Box<dyn std::error::Er
 }
 
 fn write_to_file(data: &[u8], file_path: &Path) {
-    let mut file = File::create(file_path).expect("Failed to create file");
-    file.write_all(data).expect("Failed to write file");
+    let mut file = File::create(file_path).unwrap_or_else(|_| panic!("Failed to create file {file_path:?}"));
+    file.write_all(data).unwrap_or_else(|_| panic!("Failed to write file {file_path:?}"));
 }
 
 async fn download_file(
@@ -88,6 +88,14 @@ fn main() -> io::Result<()> {
     let mumble_udp_proto = Path::new("../out/proto/MumbleUDP.proto");
     let fancy_proto = Path::new("src/proto/Fancy.proto");
     let patch_file = Path::new("src/proto/Mumble.proto.patch");
+
+    // Ensure the output directories exist
+    if let Some(parent) = mumble_proto.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    if let Some(parent) = mumble_udp_proto.parent() {
+        fs::create_dir_all(parent)?;
+    }
 
     let mumble_proto_bytes = read_file_as_bytes(mumble_proto).unwrap_or_default();
     let hash = get_data_hash_str(mumble_proto_bytes.as_bytes());
