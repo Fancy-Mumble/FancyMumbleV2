@@ -1,6 +1,6 @@
 use crate::commands::utils::settings::GlobalSettings;
-use crate::errors::application_error::ApplicationError;
 use crate::errors::AnyError;
+use crate::errors::application_error::ApplicationError;
 use crate::mumble;
 use crate::protocol::serialize::message_container::FrontendMessage;
 use crate::utils::audio;
@@ -11,7 +11,7 @@ use crate::utils::messages::message_builder;
 use crate::{connection::traits::Shutdown, errors::voice_error::VoiceError};
 use async_trait::async_trait;
 use serde::Serialize;
-use std::collections::{hash_map::Entry, HashMap};
+use std::collections::{HashMap, hash_map::Entry};
 use tokio::sync::broadcast::{Receiver, Sender};
 
 const SAMPLE_RATE: u32 = 48000;

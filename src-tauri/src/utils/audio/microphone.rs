@@ -1,18 +1,18 @@
 use std::{
-    sync::{mpsc::Sender, Arc, Mutex},
+    sync::{Arc, Mutex, mpsc::Sender},
     time::Duration,
 };
 
 use rodio::{
+    DeviceTrait,
     cpal::{
         self,
         traits::{HostTrait, StreamTrait},
     },
-    DeviceTrait,
 };
 use tracing::{error, trace};
 
-use crate::errors::{to_error, AnyError};
+use crate::errors::{AnyError, to_error};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DeviceConfig {

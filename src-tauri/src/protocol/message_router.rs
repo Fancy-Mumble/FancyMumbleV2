@@ -7,8 +7,8 @@ use tracing::{error, info, trace, warn};
 
 use crate::{
     commands::utils::settings::GlobalSettings,
-    connection::{traits::Shutdown, MessageChannels},
-    errors::{application_error::ApplicationError, AnyError},
+    connection::{MessageChannels, traits::Shutdown},
+    errors::{AnyError, application_error::ApplicationError},
     manager::{
         channel::{self},
         connection_state, text_message,
@@ -99,7 +99,8 @@ impl MessageRouter {
             crate::utils::messages::MessageTypes::Ping => {}
             crate::utils::messages::MessageTypes::Reject => {
                 let reject = Self::handle_downcast::<mumble::proto::Reject>(message)?;
-                self.connection_manager.notify_disconnected(reject.reason.as_ref());
+                self.connection_manager
+                    .notify_disconnected(reject.reason.as_ref());
                 return Err(Box::new(ApplicationError::new(
                     format!("Received reject message: {:?}", reject.reason).as_str(),
                 )));

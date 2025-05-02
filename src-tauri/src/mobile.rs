@@ -1,7 +1,7 @@
 use tracing::Level;
 use tracing_subscriber::{
-    fmt::{self, format::FmtSpan},
     EnvFilter,
+    fmt::{self, format::FmtSpan},
 };
 
 fn init_logging() {

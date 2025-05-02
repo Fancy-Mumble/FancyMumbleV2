@@ -30,8 +30,7 @@ pub async fn get_file_as_byte_vec(filename: &str) -> AnyError<Vec<u8>> {
     let mut buffer = Vec::with_capacity(metadata.len() as usize);
 
     if buffer.len() > u32::MAX as usize {
-        return Err(Box::new(std::io::Error::new(
-            std::io::ErrorKind::Other,
+        return Err(Box::new(std::io::Error::other(
             "File too large",
         )));
     }
@@ -42,8 +41,7 @@ pub async fn get_file_as_byte_vec(filename: &str) -> AnyError<Vec<u8>> {
                 debug!("Read {} bytes from {}", read, filename);
                 Ok(buffer)
             } else {
-                Err(Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
+                Err(Box::new(std::io::Error::other(
                     "Failed to read all bytes",
                 )))
             }
@@ -164,7 +162,7 @@ pub fn store_data_in_cache(hash: &[u8], data: &[u8], path: &Path) -> AnyError<()
     }
 
     let mut file = std::fs::File::create(path.clone()).map_err(|_| {
-        ApplicationError::new(format!("Unable to create cache file: {path:?}").as_str())
+        ApplicationError::new(format!("Unable to create cache file: {}", path.display()).as_str())
     })?;
 
     file.write_all(data)?;

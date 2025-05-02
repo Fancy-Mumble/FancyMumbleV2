@@ -1,9 +1,9 @@
 // special thanks to https://github.com/rust-lang/rust-analyzer/tree/master for this idea
 // from: https://github.com/rust-lang/rust-analyzer/blob/db41e6b40892b89ebb7184ceda8e94896bf8d37f/crates/rust-analyzer/tests/slow-tests/tidy.rs
-use std::path::PathBuf;
 use std::fmt::Write;
+use std::path::PathBuf;
 
-use xshell::{cmd, Shell};
+use xshell::{Shell, cmd};
 
 pub fn project_root() -> PathBuf {
     let dir = env!("CARGO_MANIFEST_DIR");

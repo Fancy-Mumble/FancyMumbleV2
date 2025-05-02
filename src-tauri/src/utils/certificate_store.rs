@@ -6,14 +6,14 @@ use openssl::{
     pkey::PKey,
     rsa::Rsa,
     x509::{
+        X509, X509NameBuilder,
         extension::{BasicConstraints, KeyUsage},
-        X509NameBuilder, X509,
     },
 };
 use tokio_native_tls::native_tls::{self, Identity};
 use tracing::trace;
 
-use crate::errors::{certificate_error::CertificateError, AnyError};
+use crate::errors::{AnyError, certificate_error::CertificateError};
 
 pub struct CertificateBuilder {
     load_or_generate_new: bool,

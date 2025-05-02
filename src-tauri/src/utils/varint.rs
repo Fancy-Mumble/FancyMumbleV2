@@ -1,7 +1,7 @@
 use num_traits::{self, Num, ToPrimitive};
 use std::error::Error;
 
-use crate::errors::{voice_error::VoiceError, AnyError};
+use crate::errors::{AnyError, voice_error::VoiceError};
 
 fn create_voice_eoi(on: &str) -> Box<dyn Error> {
     Box::new(VoiceError::new(format!("Unexpected end of input for {on}")))

@@ -1,5 +1,5 @@
 use crate::{
-    connection::{threads::MAX_PING_FAILURES, Connection, PingThread},
+    connection::{Connection, PingThread, threads::MAX_PING_FAILURES},
     mumble,
     protocol::serialize::message_container::FrontendMessage,
     utils::{frontend::send_to_frontend, messages::message_builder},

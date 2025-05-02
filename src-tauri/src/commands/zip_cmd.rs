@@ -1,6 +1,6 @@
 use std::io::Write;
 
-use base64::{engine::general_purpose, Engine};
+use base64::{Engine, engine::general_purpose};
 use mime_guess::from_path;
 use tokio::fs;
 use tracing::trace;

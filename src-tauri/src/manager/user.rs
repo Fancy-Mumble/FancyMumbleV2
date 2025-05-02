@@ -1,5 +1,8 @@
-use base64::{engine::general_purpose, Engine as _};
-use std::{collections::{hash_map::Entry, HashMap}, path::Path};
+use base64::{Engine as _, engine::general_purpose};
+use std::{
+    collections::{HashMap, hash_map::Entry},
+    path::Path,
+};
 
 use serde::{Deserialize, Serialize};
 use tracing::{debug, info, trace};
@@ -190,8 +193,7 @@ impl Manager {
         if texture_hash == cached_user_texture_hash {
             trace!(
                 "User image is up to date: {:?} vs {:?}",
-                texture_hash,
-                cached_user_texture_hash
+                texture_hash, cached_user_texture_hash
             );
             return Ok(());
         }
@@ -217,8 +219,7 @@ impl Manager {
         if comment_hash == cached_user_comment_hash {
             trace!(
                 "User comment is up to date {:?} vs {:?}",
-                comment_hash,
-                cached_user_comment_hash
+                comment_hash, cached_user_comment_hash
             );
             return Ok(());
         }

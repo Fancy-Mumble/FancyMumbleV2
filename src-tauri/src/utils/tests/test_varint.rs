@@ -426,26 +426,36 @@ mod tests {
     fn test_invalid_varint() {
         assert!(Builder::new().slice(vec![].as_slice()).build().is_err());
         assert!(Builder::new().slice(vec![0xBF].as_slice()).build().is_err());
-        assert!(Builder::new()
-            .slice(vec![0xDF, 0xFF].as_slice())
-            .build()
-            .is_err());
-        assert!(Builder::new()
-            .slice(vec![0xEF, 0xFF, 0xFF].as_slice())
-            .build()
-            .is_err());
-        assert!(Builder::new()
-            .slice(vec![0xF3, 0xFF, 0xFF, 0xFF].as_slice())
-            .build()
-            .is_err());
-        assert!(Builder::new()
-            .slice(vec![0xF7, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF].as_slice())
-            .build()
-            .is_err());
-        assert!(Builder::new()
-            .slice(vec![0xFB, 0xF7, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF].as_slice())
-            .build()
-            .is_err());
+        assert!(
+            Builder::new()
+                .slice(vec![0xDF, 0xFF].as_slice())
+                .build()
+                .is_err()
+        );
+        assert!(
+            Builder::new()
+                .slice(vec![0xEF, 0xFF, 0xFF].as_slice())
+                .build()
+                .is_err()
+        );
+        assert!(
+            Builder::new()
+                .slice(vec![0xF3, 0xFF, 0xFF, 0xFF].as_slice())
+                .build()
+                .is_err()
+        );
+        assert!(
+            Builder::new()
+                .slice(vec![0xF7, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF].as_slice())
+                .build()
+                .is_err()
+        );
+        assert!(
+            Builder::new()
+                .slice(vec![0xFB, 0xF7, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF].as_slice())
+                .build()
+                .is_err()
+        );
     }
 
     #[test]

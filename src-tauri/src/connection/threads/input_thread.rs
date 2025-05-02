@@ -6,7 +6,7 @@ use crate::protocol::stream_reader::StreamReader;
 use tokio::select;
 use tokio::time;
 
-use super::{ConnectionThread, InputThread, DEADMAN_INTERVAL};
+use super::{ConnectionThread, DEADMAN_INTERVAL, InputThread};
 
 impl InputThread for Connection {
     // reader can'T be moved further in, because otherwise message_reader Result type is causing issues

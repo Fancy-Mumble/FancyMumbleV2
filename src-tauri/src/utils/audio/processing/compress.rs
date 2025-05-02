@@ -50,19 +50,19 @@ impl Compressor {
         }
     }
 
-    pub fn set_threshold(&mut self, threshold: f32) {
+    pub const fn set_threshold(&mut self, threshold: f32) {
         self.threshold = threshold;
     }
 
-    pub fn set_ratio(&mut self, ratio: f32) {
+    pub const fn set_ratio(&mut self, ratio: f32) {
         self.ratio = ratio;
     }
 
-    pub fn set_attack(&mut self, attack: Duration) {
+    pub const fn set_attack(&mut self, attack: Duration) {
         self.attack = attack;
     }
 
-    pub fn set_release(&mut self, release: Duration) {
+    pub const fn set_release(&mut self, release: Duration) {
         self.release = release;
     }
 }

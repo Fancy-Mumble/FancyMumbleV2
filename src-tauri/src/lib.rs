@@ -19,9 +19,9 @@ use crate::commands::{
     },
     zip_cmd::{convert_to_base64, unzip_data_from_utf8, zip_data_to_utf8},
 };
+use commands::{ConnectionState, web_cmd::CrawlerState};
 #[cfg(desktop)]
 use commands::{close_app, dev_tools};
-use commands::{web_cmd::CrawlerState, ConnectionState};
 use std::{collections::HashMap, sync::Arc};
 use tauri::Manager;
 use tokio::sync::Mutex;

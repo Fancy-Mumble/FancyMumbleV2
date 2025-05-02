@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use rodio::{
-    cpal::{self, traits::HostTrait},
     Device, DeviceTrait,
+    cpal::{self, traits::HostTrait},
 };
 
 use crate::errors::AnyError;

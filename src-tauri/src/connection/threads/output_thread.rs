@@ -6,7 +6,7 @@ use tokio::time;
 use tracing::trace;
 use tracing::{debug, error};
 
-use super::{ConnectionThread, OutputThread, DEADMAN_INTERVAL};
+use super::{ConnectionThread, DEADMAN_INTERVAL, OutputThread};
 
 impl OutputThread for Connection {
     fn spawn_output_thread(&mut self) {

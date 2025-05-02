@@ -11,16 +11,16 @@ use crate::utils::certificate_store::CertificateBuilder;
 use crate::utils::file::read_image_as_thumbnail;
 use crate::utils::messages::message_builder;
 use async_trait::async_trait;
-use base64::engine::general_purpose;
 use base64::Engine;
+use base64::engine::general_purpose;
 use std::collections::HashMap;
-use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
 use tauri::{Manager, PackageInfo};
 use threads::{InputThread, MainThread, OutputThread, PingThread};
 use tokio::net::TcpStream;
-use tokio::sync::broadcast::{self, Receiver, Sender};
 use tokio::sync::Mutex;
+use tokio::sync::broadcast::{self, Receiver, Sender};
 use tokio::task::JoinHandle;
 use tokio_native_tls::native_tls::TlsConnector;
 use tracing::{info, trace};
@@ -104,9 +104,7 @@ impl Connection {
         }
     }
 
-    async fn setup_connection(
-        &self,
-    ) -> AnyError<Option<tokio_native_tls::TlsStream<TcpStream>>> {
+    async fn setup_connection(&self) -> AnyError<Option<tokio_native_tls::TlsStream<TcpStream>>> {
         let server_uri = format!(
             "{}:{}",
             self.server_data.server_host, self.server_data.server_port

@@ -74,7 +74,7 @@ impl<T: VoiceActivationType> VoiceActivation<T> {
         )
     }
 
-    pub fn set_thresholds(&mut self, upper_threshold: T, lower_threshold: T) {
+    pub const fn set_thresholds(&mut self, upper_threshold: T, lower_threshold: T) {
         self.upper_threshold = upper_threshold;
         self.lower_threshold = lower_threshold;
     }
