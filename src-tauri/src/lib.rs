@@ -19,15 +19,15 @@ use crate::commands::{
     },
     zip_cmd::{convert_to_base64, unzip_data_from_utf8, zip_data_to_utf8},
 };
-use commands::{close_app, dev_tools, web_cmd::CrawlerState, ConnectionState};
+#[cfg(desktop)]
+use commands::{close_app, dev_tools};
+use commands::{web_cmd::CrawlerState, ConnectionState};
 use std::{collections::HashMap, sync::Arc};
 use tauri::Manager;
 use tokio::sync::Mutex;
 
 #[cfg(mobile)]
 mod mobile;
-#[cfg(mobile)]
-pub use mobile::*;
 
 pub type SetupHook = Box<dyn FnOnce(&mut App) -> Result<(), Box<dyn std::error::Error>> + Send>;
 

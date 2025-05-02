@@ -1,6 +1,7 @@
 // special thanks to https://github.com/rust-lang/rust-analyzer/tree/master for this idea
 // from: https://github.com/rust-lang/rust-analyzer/blob/db41e6b40892b89ebb7184ceda8e94896bf8d37f/crates/rust-analyzer/tests/slow-tests/tidy.rs
 use std::path::PathBuf;
+use std::fmt::Write;
 
 use xshell::{cmd, Shell};
 
@@ -97,7 +98,7 @@ null"
         diff.push_str("New Licenses:\n");
         for &l in &licenses {
             if !expected.contains(&l) {
-                diff += &format!("  {l}\n");
+                writeln!(diff, "  {l}").expect("Failed to write to string");
             }
         }
 

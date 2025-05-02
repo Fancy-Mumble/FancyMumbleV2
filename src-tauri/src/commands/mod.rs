@@ -10,16 +10,16 @@ pub mod zip_cmd;
 use std::{borrow::BorrowMut, collections::HashMap, path::Path, sync::Arc};
 
 use crate::{
-    connection::{traits::Shutdown, Connection},
+    connection::{Connection, traits::Shutdown},
     errors::string_convertion::ErrorString,
     manager::user::UpdateableUserState,
     protocol::message_transmitter::MessageTransmitter,
     utils::audio::device_manager::AudioDeviceManager,
 };
-use tauri::{AppHandle, Manager, State};
+use tauri::{Manager, State};
 use tokio::sync::{
-    broadcast::{self, Receiver, Sender},
     Mutex,
+    broadcast::{self, Receiver, Sender},
 };
 use tracing::{error, info, trace};
 
@@ -28,9 +28,11 @@ use self::utils::settings::{
     GlobalSettings,
 };
 use image::{
-    imageops::{self, FilterType},
     GenericImageView,
+    imageops::{self, FilterType},
 };
+#[cfg(desktop)]
+use tauri::AppHandle;
 #[cfg(desktop)]
 use tauri_plugin_window_state::{AppHandleExt, StateFlags};
 
@@ -69,7 +71,9 @@ pub async fn connect_to_server(
     state: State<'_, ConnectionState>,
     app_handle: tauri::AppHandle,
 ) -> Result<(), String> {
-    info!("Connecting to server: {server_host}:{server_port}, username: {username}, identity: {identity:?}");
+    info!(
+        "Connecting to server: {server_host}:{server_port}, username: {username}, identity: {identity:?}"
+    );
 
     let mut guard = state.connection.lock().await;
     if let Some(guard) = guard.as_mut() {

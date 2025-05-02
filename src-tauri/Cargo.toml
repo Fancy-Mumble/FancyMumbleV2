@@ -6,8 +6,8 @@ authors = ["SetZero"]
 license = "MIT"
 repository = ""
 default-run = "fancy_mumble"
-edition = "2021"
-rust-version = "1.77"
+edition = "2024"
+rust-version = "1.86"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -15,7 +15,7 @@ rust-version = "1.77"
 tauri-build = { version = "2.2.0", features = [] }
 prost-build = "0.13.5"
 reqwest = { version = "0.12.15", features = ["cookies"] }
-sha2 = "0.10.6"
+sha2 = "0.10.9"
 tokio = { version = "1.44.2", features = ["full"] }
 patch = "0.7.0"
 

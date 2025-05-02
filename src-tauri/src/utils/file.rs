@@ -9,8 +9,8 @@ use tokio::fs::{self, File};
 use tokio::io::{AsyncReadExt, BufReader};
 use tracing::{debug, info};
 
-use crate::errors::application_error::ApplicationError;
 use crate::errors::AnyError;
+use crate::errors::application_error::ApplicationError;
 
 pub struct ImageInfo {
     pub data: Vec<u8>,
@@ -77,17 +77,12 @@ pub fn read_image_as_thumbnail(filename: &str, max_size: u32) -> AnyError<ImageI
 
         let image = image.into_bytes();
 
-        #[cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))]
-        {
-            image::codecs::jpeg::JpegEncoder::new(buf_writer).encode(
-                &image,
-                width,
-                height,
-                color_type.into(),
-            )?;
-        }
-        #[cfg(target_os = "android")]
-        drop(buf_writer);
+        image::codecs::jpeg::JpegEncoder::new(buf_writer).encode(
+            &image,
+            width,
+            height,
+            color_type.into(),
+        )?;
     }
 
     Ok(ImageInfo {
