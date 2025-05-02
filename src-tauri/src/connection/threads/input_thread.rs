@@ -26,8 +26,12 @@ impl InputThread for Connection {
                 let mut interval = time::interval(DEADMAN_INTERVAL);
                 {
                     let mut reader = reader_copy.lock().await;
-                    let message_reader =
-                        MessageRouter::new(message_channels, back_channel, settings_channel_copy, app_handle_clone);
+                    let message_reader = MessageRouter::new(
+                        message_channels,
+                        back_channel,
+                        settings_channel_copy,
+                        app_handle_clone,
+                    );
 
                     match message_reader {
                         Ok(message_reader) => {

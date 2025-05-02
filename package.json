@@ -19,8 +19,9 @@
     "@reduxjs/toolkit": "^2.7.0",
     "@rollup/rollup-linux-x64-gnu": "^4.17.0",
     "@tauri-apps/api": "^2.0.0",
-    "@tauri-apps/plugin-dialog": "^2.0.0",
+    "@tauri-apps/plugin-dialog": "~2",
     "@tauri-apps/plugin-os": "^2.0.0",
+    "@tauri-apps/plugin-store": "2.2.0",
     "@types/dompurify": "^3.0.1",
     "@types/lodash": "^4.14.202",
     "@types/marked": "^5.0.0",
@@ -50,7 +51,6 @@
     "react-router-dom": "^7.5.2",
     "socket.io": "^4.7.4",
     "socket.io-client": "^4.7.4",
-    "tauri-plugin-store-api": "https://github.com/tauri-apps/tauri-plugin-store#v2",
     "tinycolor2": "^1.6.0"
   },
   "devDependencies": {

@@ -62,7 +62,10 @@ pub fn init_connection(username: &str, channel: &Sender<Vec<u8>>, package_info: 
     let bitness = match info.bitness() {
         os_info::Bitness::X32 => "32-bit",
         os_info::Bitness::X64 => "64-bit",
-        _ => std::env::consts::ARCH.ends_with("64").then(|| "64-bit").unwrap_or("32-bit"),
+        _ => std::env::consts::ARCH
+            .ends_with("64")
+            .then(|| "64-bit")
+            .unwrap_or("32-bit"),
     };
 
     let os_string = format!(

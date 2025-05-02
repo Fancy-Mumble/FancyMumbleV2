@@ -59,9 +59,10 @@ async fn main() {
     init_logging();
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
-        .plugin(tauri_plugin_store::Builder::default().build())
         .setup(|app| {
             app.manage(ConnectionState {
                 connection: Mutex::new(None),

@@ -79,8 +79,12 @@ pub fn read_image_as_thumbnail(filename: &str, max_size: u32) -> AnyError<ImageI
 
         #[cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))]
         {
-            image::codecs::jpeg::JpegEncoder::new(buf_writer)
-                .encode(&image, width, height, color_type.into())?;
+            image::codecs::jpeg::JpegEncoder::new(buf_writer).encode(
+                &image,
+                width,
+                height,
+                color_type.into(),
+            )?;
         }
         #[cfg(target_os = "android")]
         drop(buf_writer);
@@ -128,9 +132,7 @@ fn get_cache_path_from_hash(hash: &[u8], path: &PathBuf) -> AnyError<std::path::
         output
     });
 
-    let path = project_dir
-        .join("image_cache")
-        .join(hash_string);
+    let path = project_dir.join("image_cache").join(hash_string);
 
     Ok(path)
 }

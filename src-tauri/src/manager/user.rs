@@ -4,6 +4,7 @@ use std::collections::{hash_map::Entry, HashMap};
 use serde::{Deserialize, Serialize};
 use tracing::{debug, info, trace};
 
+use super::Update;
 use crate::{
     errors::AnyError,
     mumble,
@@ -15,9 +16,8 @@ use crate::{
     },
 };
 use std::path::PathBuf;
-use super::Update;
-use tokio::sync::broadcast::Sender;
 use tauri::Manager as TauriManager;
+use tokio::sync::broadcast::Sender;
 
 #[derive(Debug, Clone, Copy, Serialize, PartialEq)]
 enum HashUserFields {
@@ -137,7 +137,11 @@ impl Manager {
 
     fn notify_user_image(&self, session: u32) -> AnyError<()> {
         if let Some(user) = self.users.get(&session) {
-            store_data_in_cache(&user.profile_picture_hash, &user.profile_picture, &self.app_handle.path().app_data_dir()?)?;
+            store_data_in_cache(
+                &user.profile_picture_hash,
+                &user.profile_picture,
+                &self.app_handle.path().app_data_dir()?,
+            )?;
 
             let base64 = format!(
                 "data:image/png;base64,{}",
@@ -163,7 +167,11 @@ impl Manager {
                 return Ok(());
             }
 
-            store_data_in_cache(&user.comment_hash, user.comment.as_bytes(), &self.app_handle.path().app_data_dir()?)?;
+            store_data_in_cache(
+                &user.comment_hash,
+                user.comment.as_bytes(),
+                &self.app_handle.path().app_data_dir()?,
+            )?;
 
             let user_image = BlobData {
                 user_id: user.id,

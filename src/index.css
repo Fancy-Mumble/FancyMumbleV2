@@ -52,11 +52,6 @@ body {
   height: calc(100%);
   align-items: center;
   justify-content: center;
-  /* fix navigate back on swipe (https://github.com/tauri-apps/tauri/discussions/5958#discussioncomment-6876215) */
-  overflow: hidden;
-  position: fixed;
-  width: 100vw;
-  height: 100vh;
 }
 
 h1 {

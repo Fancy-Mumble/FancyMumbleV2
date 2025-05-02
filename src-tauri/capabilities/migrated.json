@@ -24,6 +24,11 @@
     "os:allow-platform",
     "store:allow-set",
     "store:allow-get",
-    "store:allow-save"
+    "store:allow-save",
+    "store:default",
+    "dialog:allow-open",
+    "dialog:default",
+    "dialog:default",
+    "dialog:default"
   ]
 }

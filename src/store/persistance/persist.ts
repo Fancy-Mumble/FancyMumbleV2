@@ -1,8 +1,8 @@
-import { Store } from "tauri-plugin-store-api";
 import { FrontendSettings } from "../features/users/frontendSettings";
 import { AudioInputSettings } from "../features/users/audioSettings";
+import { LazyStore } from "@tauri-apps/plugin-store";
 
-export const persistentStorage = new Store(".settings.dat");
+export const persistentStorage = new LazyStore(".settings.dat");
 
 export async function persistFrontendSettings(frontendSettings: FrontendSettings) {
     await persistentStorage.set('frontendSettings', { ...frontendSettings });

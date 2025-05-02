@@ -41,11 +41,11 @@ webbrowser = "1.0.4"
 reqwest = "0.12"
 scraper = "0.23.1"
 tauri-plugin-window-state = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v2" , version = "2.0.0" }
-tauri-plugin-store = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v2" , version = "2.0.0" }
+tauri-plugin-store = { version = "2" }
 symphonia = "0.5.3"
 mime_guess = "2.0.5"
 uuid = "1.16.0"
-tauri-plugin-dialog = "2.2.1"
+tauri-plugin-dialog = "2"
 audiopus_sys = { git = "https://github.com/SetZero/audiopus_sys", branch = "master" }
 image = "0.25.6"
 opus =  "0.3.0"
