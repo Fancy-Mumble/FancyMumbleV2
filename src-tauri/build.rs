@@ -54,8 +54,8 @@ fn read_file_as_bytes(file_path: &Path) -> Result<String, Box<dyn std::error::Er
 }
 
 fn write_to_file(data: &[u8], file_path: &Path) {
-    let mut file =
-        File::create(file_path).unwrap_or_else(|_| panic!("Failed to create file {}", file_path.display()));
+    let mut file = File::create(file_path)
+        .unwrap_or_else(|_| panic!("Failed to create file {}", file_path.display()));
     file.write_all(data)
         .unwrap_or_else(|_| panic!("Failed to write file {}", file_path.display()));
 }

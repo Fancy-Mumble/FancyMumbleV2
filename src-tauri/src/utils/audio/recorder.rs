@@ -210,7 +210,10 @@ fn update_voice_activation_options<T: VoiceActivationType>(
     }
 }
 
-const fn update_compressor_options(audio_settings: &AudioOptions, compressor: &mut Option<Compressor>) {
+const fn update_compressor_options(
+    audio_settings: &AudioOptions,
+    compressor: &mut Option<Compressor>,
+) {
     if let Some(compressor) = compressor.as_mut() {
         if let Some(compressor_options) = &audio_settings.compressor_options {
             compressor.set_attack(Duration::from_millis(compressor_options.attack_time as u64));

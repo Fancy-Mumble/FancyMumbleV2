@@ -30,9 +30,7 @@ pub async fn get_file_as_byte_vec(filename: &str) -> AnyError<Vec<u8>> {
     let mut buffer = Vec::with_capacity(metadata.len() as usize);
 
     if buffer.len() > u32::MAX as usize {
-        return Err(Box::new(std::io::Error::other(
-            "File too large",
-        )));
+        return Err(Box::new(std::io::Error::other("File too large")));
     }
 
     match f.read_to_end(&mut buffer).await {
@@ -41,9 +39,7 @@ pub async fn get_file_as_byte_vec(filename: &str) -> AnyError<Vec<u8>> {
                 debug!("Read {} bytes from {}", read, filename);
                 Ok(buffer)
             } else {
-                Err(Box::new(std::io::Error::other(
-                    "Failed to read all bytes",
-                )))
+                Err(Box::new(std::io::Error::other("Failed to read all bytes")))
             }
         }
         Err(e) => Err(Box::new(e)),
