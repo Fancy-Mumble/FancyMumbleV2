@@ -50,7 +50,7 @@ function AddNewServer({ serverInfo, identityCerts, onSave, onConnect }: Readonly
 
         if (showAdditionalOptions) {
             return (
-                <Grid item={true} xs={12}>
+                <Grid size={12}>
                     <Box mt={2}>
                         <Autocomplete
                             value={identity}
@@ -147,27 +147,27 @@ function AddNewServer({ serverInfo, identityCerts, onSave, onConnect }: Readonly
             {serverAddInfoBoxBox}
             <Container className='login-form'>
                 <Grid container spacing={1}>
-                    <Grid item={true} xs={12}>
+                    <Grid size={12}>
                         <TextField fullWidth label={t("Description")} value={description} onChange={e => setDescription(e.target.value)} />
                     </Grid>
-                    <Grid item={true} xs={8} mt={2}>
+                    <Grid size={8} mt={2}>
                         <Box mr={2} mb={2}>
                             <TextField fullWidth label={t("Server")} value={server} onChange={e => setServer(e.target.value)} />
                         </Box>
                     </Grid>
-                    <Grid item={true} xs={4} mt={2}>
+                    <Grid size={4} mt={2}>
                         <TextField fullWidth label={t("Port")} value={port} onChange={e => setPort(e.target.value)} />
                     </Grid>
-                    <Grid item={true} xs={12}>
+                    <Grid size={12}>
                         <TextField fullWidth label={t("Username")} value={username} onChange={e => setUsername(e.target.value)} />
                     </Grid>
                     {additionalOptions}
-                    <Grid item={true} xs={6} container justifyContent="flex-start">
+                    <Grid size={6} container justifyContent="flex-start">
                         <Box mt={2}>
                             <LoadingButton loading={saving} variant="contained" onClick={saveServer}>{t('Save', { ns: "user_interaction" })}</LoadingButton >
                         </Box>
                     </Grid>
-                    <Grid item={true} xs={6} container justifyContent="flex-end">
+                    <Grid size={6} container justifyContent="flex-end">
                         <Box mt={2}>
                             <Tooltip title="More Options">
                                 <IconButton color="primary" onClick={e => setShowAdditionalOptions(!showAdditionalOptions)} >

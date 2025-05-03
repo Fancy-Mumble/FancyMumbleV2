@@ -35,6 +35,7 @@ function UploadBox(props: UploadBoxProps) {
         });
         if (!selected || Array.isArray(selected)) return;
 
+        // @ts-ignore
         props.onUpload(selected.base64Data ?? '');
     }
 

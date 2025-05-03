@@ -1,12 +1,14 @@
+
+// @ts-nocheck
 /*
 React-Quill
 https://github.com/zenoamaro/react-quill
 */
 
-import React from 'react';
+import React, { JSX } from 'react';
 import ReactDOM from 'react-dom';
 import isEqual from 'lodash/isEqual';
-
+ // @ts-ignore
 import Quill, {
     QuillOptionsStatic,
     RangeStatic,
@@ -20,8 +22,10 @@ import 'quill/dist/quill.bubble.css';
 import "./styles/Quill.css";
 const Link = Quill.import('formats/link');
 const BlockEmbed = Quill.import('blots/block/embed');
+ // @ts-ignore
 Link.PROTOCOL_WHITELIST = ['http', 'https', 'mailto', 'tel', 'radar', 'rdar', 'smb', 'sms', 'data'];
 
+ // @ts-ignore
 class VideoBlot extends BlockEmbed {
     static create(value: string) {
         const node = super.create();
@@ -37,9 +41,9 @@ class VideoBlot extends BlockEmbed {
     }
 }
 
+
 VideoBlot.blotName = 'video';
 VideoBlot.tagName = 'video';
-
 Quill.register(VideoBlot);
 
 // Merged namespace hack to export types along with default object
@@ -336,6 +340,7 @@ class QuillEditor extends React.Component<ReactQuillProps, ReactQuillState> {
 
     getEditorConfig(): QuillOptions {
         return {
+             // @ts-ignore
             bounds: this.props.bounds,
             formats: this.props.formats,
             modules: this.props.modules,
@@ -357,6 +362,7 @@ class QuillEditor extends React.Component<ReactQuillProps, ReactQuillState> {
     configuration, have its events bound,
     */
     createEditor(element: Element, config: QuillOptions) {
+         // @ts-ignore
         const editor = new Quill(element, config);
         if (config.tabIndex != null) {
             this.setEditorTabIndex(editor, config.tabIndex);
@@ -466,6 +472,7 @@ class QuillEditor extends React.Component<ReactQuillProps, ReactQuillState> {
         if (!this.editingArea) {
             throw new Error('Instantiating on missing editing area');
         }
+         // @ts-ignore
         const element = ReactDOM.findDOMNode(this.editingArea);
         if (!element) {
             throw new Error('Cannot find element for editing area');

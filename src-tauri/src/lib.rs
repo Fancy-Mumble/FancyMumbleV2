@@ -19,9 +19,11 @@ use crate::commands::{
     },
     zip_cmd::{convert_to_base64, unzip_data_from_utf8, zip_data_to_utf8},
 };
-use commands::{ConnectionState, web_cmd::CrawlerState};
 #[cfg(desktop)]
-use commands::{close_app, dev_tools};
+use commands::close_app;
+#[cfg(debug_assertions)]
+use commands::dev_tools;
+use commands::{ConnectionState, web_cmd::CrawlerState};
 use std::{collections::HashMap, sync::Arc};
 use tauri::Manager;
 use tokio::sync::Mutex;
@@ -108,7 +110,7 @@ impl AppBuilder {
                 set_audio_user_state,
                 #[cfg(desktop)]
                 close_app,
-                #[cfg(desktop)]
+                #[cfg(debug_assertions)]
                 dev_tools,
             ])
             .run(tauri::generate_context!())

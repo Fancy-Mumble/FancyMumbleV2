@@ -177,7 +177,7 @@ function Profile() {
                 <Typography variant="h4">Profile</Typography>
                 <Divider sx={{ marginBottom: 5 }} />
                 <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12, lg: 18 }} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Grid item xs={12} sm={12} md={6} lg={12} sx={{ padding: 2 }}>
+                    <Grid size={{ xs: 12, sm: 12, md: 6, lg: 12 }} sx={{ padding: 2 }}>
                         <Typography variant="h5">{t("Images")}</Typography>
                         <Box sx={{
                             display: 'flex',
@@ -210,7 +210,7 @@ function Profile() {
                             />
                         </Box>
                     </Grid>
-                    <Grid item xs={12} sm={12} md={6} lg={6} sx={{ display: 'flex', justifyContent: 'center' }}>
+                    <Grid size={{ xs: 12, sm: 12, md: 6, lg: 6 }} component="div" sx={{ display: 'flex', justifyContent: 'center' }}>
                         <UserInfo
                             userInfo={userInfo}
                             style={{ position: 'sticky', top: theme.spacing(2) }}

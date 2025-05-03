@@ -40,7 +40,7 @@ function App() {
       <Box sx={{ flex: 1, overflow: 'auto' }} ref={mainElementRef}>
         <RouterProvider router={router} />
       </Box>
-      <ContextMenu options={[copy, paste, showDeveloperTools]} element={mainElementRef} />
+      <ContextMenu options={[copy, paste, showDeveloperTools]} element={mainElementRef as React.RefObject<HTMLElement>} />
     </div>
   )
 }

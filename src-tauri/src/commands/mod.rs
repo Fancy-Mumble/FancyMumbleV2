@@ -373,7 +373,7 @@ pub fn close_app(app: AppHandle) {
     app.exit(0);
 }
 
-#[cfg(desktop)]
+#[cfg(debug_assertions)]
 #[tauri::command]
 #[allow(clippy::needless_pass_by_value)] // AppHandle can't be passed by reference
 pub fn dev_tools(app: AppHandle) {

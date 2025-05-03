@@ -23,8 +23,8 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 	const { t } = useTranslation();
 	const userList = useSelector((state: RootState) => state.reducer.userInfo);
 	const advancedSettings = useSelector((state: RootState) => state.reducer.frontendSettings.advancedSettings);
-	const chatContainer: React.RefObject<HTMLDivElement> = React.createRef();
-	const messagesEndRef: React.RefObject<HTMLDivElement> = React.createRef();
+	const chatContainer: React.RefObject<HTMLDivElement | null> = React.createRef();
+	const messagesEndRef: React.RefObject<HTMLDivElement | null> = React.createRef();
 	const [userInfoAnchor, setUserInfoAnchor] = React.useState<HTMLElement | null>(null);
 	const [currentPopoverUserId, setCurrentPopoverUserId]: any = useState(null);
 	const [processedMessages, setProcessedMessages] = React.useState<TextMessage[]>([]);
@@ -151,7 +151,7 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 		if (processedMessages.length === 0) {
 			return (
 				<Grid container sx={{ height: '100%', width: '100%', userSelect: 'none' }} justifyContent="center" alignItems="center">
-					<Grid item>
+					<Grid>
 						<Box sx={{ backgroundColor: 'transparent' }}>
 							<Typography variant="h2" sx={{ color: 'transparent', textShadow: '2px 2px 3px rgba(50,50,50,0.5)', backgroundClip: 'text', backgroundColor: '#333', textAlign: "center" }}>{t("write something")}</Typography>
 						</Box>
@@ -168,7 +168,7 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 		return (<List sx={{ width: '100%', maxWidth: '100%' }}>
 			{memoizedMessages.map((group, index) => (
 				<Grid container className="message-root" key={index} sx={{ width: '100%', flexWrap: 'nowrap' }}>
-					<Grid item >
+					<Grid>
 						<Avatar
 							sx={{ position: 'sticky', top: 10 }}
 							className="avatar"
@@ -177,7 +177,7 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 							variant="rounded"
 						/>
 					</Grid>
-					<Grid item sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+					<Grid sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
 						{group.messages}
 					</Grid>
 				</Grid>

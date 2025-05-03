@@ -26,9 +26,11 @@ use tracing_subscriber::{
     fmt::{self, format::FmtSpan},
 };
 
+#[cfg(debug_assertions)]
+use crate::commands::dev_tools;
 use crate::commands::{
-    change_user_state, close_app, connect_to_server, crop_and_store_image, dev_tools,
-    disable_audio_info, enable_audio_info, get_audio_devices, like_message, logout, send_message,
+    change_user_state, close_app, connect_to_server, crop_and_store_image, disable_audio_info,
+    enable_audio_info, get_audio_devices, like_message, logout, send_message,
     set_audio_input_setting, set_audio_output_setting, set_audio_user_state, set_user_image,
     settings_cmd::{get_identity_certs, get_server_list, save_server},
     web_cmd::{
@@ -106,6 +108,7 @@ async fn main() {
             convert_url_to_base64,
             set_audio_user_state,
             close_app,
+            #[cfg(debug_assertions)]
             dev_tools
         ])
         .run(tauri::generate_context!())

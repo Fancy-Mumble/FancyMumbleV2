@@ -96,7 +96,7 @@ function ChatInput() {
     }
 
     function handleInput(e: FormEvent<HTMLDivElement>): void {
-        const dataTransfer = e.nativeEvent.dataTransfer;
+        const dataTransfer = (e.nativeEvent as DragEvent).dataTransfer;
         if (dataTransfer && dataTransfer.files.length > 0) {
             const file = dataTransfer.files[0];
             const reader = new FileReader();
@@ -165,7 +165,7 @@ function ChatInput() {
                     </Fade>
                 )}
             </Popper>
-            <ContextMenu element={sendElementRef} options={[copy, paste, pasteAndSend]} />
+            <ContextMenu element={sendElementRef as React.RefObject<HTMLElement>} options={[copy, paste, pasteAndSend]} />
         </Box>
     )
 }

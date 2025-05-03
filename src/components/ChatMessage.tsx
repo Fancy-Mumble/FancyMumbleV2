@@ -1,4 +1,5 @@
-import { Box, Grid, IconButton, Link, Tooltip, Typography } from "@mui/material"
+import { Box, IconButton, Link, Tooltip, Typography } from "@mui/material"
+import Grid from '@mui/material/Grid';
 import dayjs from "dayjs";
 import 'dayjs/locale/en';
 import 'dayjs/plugin/isToday';
@@ -22,10 +23,10 @@ interface ChatMessageProps {
     onLoaded: () => void,
 }
 
-const parseMessage = (message: string | undefined) => {
+const parseMessage = async (message: string | undefined) => {
     if (message && message.includes('<')) {
-        let messageParser = new MessageParser(message)
-            .parseMarkdown()
+        let messageParser = (await new MessageParser(message)
+            .parseMarkdown())
             .parseDOM((dom) => dom
                 .parseForImages()
                 .parseForVideos()
@@ -121,7 +122,7 @@ const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message, messageId
         userList.users.find(e => e.id === message.sender.user_id)
         , [userList, message.sender.user_id]);
 
-    const parsedMessage = React.useMemo(() => parseUI(parseMessage(message.message), onLoaded), [message.message]);
+    const parsedMessage = React.useMemo(async () => parseUI(await parseMessage(message.message), onLoaded), [message.message]);
     const date = React.useMemo(() => generateDate(message.timestamp, locale), [message.timestamp]);
 
     const deleteMessageEvent = React.useCallback(() => {
@@ -132,22 +133,22 @@ const ChatMessage: React.FC<ChatMessageProps> = React.memo(({ message, messageId
         invoke('like_message', { messageId: messageId, reciever: userList.users.map(e => e.id) });
     }, []);
 
-    const messageElement = React.useMemo(() => {
-        if (parsedMessage.standalone) {
-            return (<Grid item className="message-container-inner">{parsedMessage.element}</Grid>);
+    const messageElement = React.useMemo(async () => {
+        if ((await parsedMessage).standalone) {
+            return (<Grid className="message-container-inner">{(await parsedMessage).element}</Grid>);
         }
 
-        return (<Grid item className="message-container-inner">
+        return (<Grid className="message-container-inner">
             <Box className={`message ${false ? "sender" : "receiver"}`}>
-                {parsedMessage.element}
+                {(await parsedMessage).element}
             </Box>
         </Grid>);
     }, [parsedMessage]);
 
     return (
-        <Grid item xs={10} className="message-container">
+        <Grid size={10} className="message-container">
             {messageElement}
-            <Grid item className="message-metadata">
+            <Grid className="message-metadata">
                 <Typography variant="subtitle2" className="metadata">
                     <Link className="user-info" href="#">{message.sender.user_name}</Link> - {date}
                 </Typography>

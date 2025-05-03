@@ -179,8 +179,8 @@ class MessageParser {
         setTimeout(() => callback(remainingStr), time);
     }
 
-    parseMarkdown() {
-        this.input = marked.parseInline(this.input);
+    async parseMarkdown() {
+        this.input = await marked.parseInline(this.input);
 
         return this;
     }
