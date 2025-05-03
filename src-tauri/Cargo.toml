@@ -23,6 +23,7 @@ patch = "0.7.0"
 serde_json = "1.0.140"
 serde = { version = "1.0.219", features = ["derive"] }
 tauri = { version = "^2.5.1", features = [] }
+tauri-plugin = "^2.2.0"
 futures = "0.3.31"
 tokio = { version = "1", features = ["full"] }
 tokio-native-tls = "0.3.1"
@@ -44,11 +45,17 @@ tauri-plugin-store = { version = "2" }
 symphonia = "0.5.3"
 mime_guess = "2.0.5"
 uuid = "1.16.0"
-tauri-plugin-dialog = "2"
-audiopus_sys = { git = "https://github.com/SetZero/audiopus_sys", branch = "master" }
+tauri-plugin-dialog = "2.2.1"
 image = "0.25.6"
 opus =  "0.3.0"
 tauri-plugin-os = "2.2.1"
+
+[patch.crates-io]
+audiopus_sys = { git = "https://github.com/SetZero/audiopus_sys", branch = "master" }
+
+[profile.dev.package.audiopus_sys]
+opt-level = 0
+debug = true
 
 [dev-dependencies]
 tempfile = "3.19.1"
@@ -57,7 +64,6 @@ tokio-test = "0.4.2"
 xshell = "0.2.7"
 
 [target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))'.dependencies]
-
 openssl = "0.10.72"
 
 [target.'cfg(target_os = "android")'.dependencies]
@@ -65,7 +71,7 @@ oboe = { version = "0.6.1", features = [ "java-interface", "shared-stdcxx" ] } #
 openssl = { version = "0.10", features = ["vendored"] }
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
-tauri-plugin-window-state = "2"
+tauri-plugin-window-state = "2.2.2"
 
 [features]
 # by default Tauri runs in production mode
@@ -82,9 +88,6 @@ debug = 1
 inherits = "release"
 lto = true
 codegen-units = 1
-
-#[rust]
-#debuginfo-level = 1
 
 [lib]
 crate-type = ["staticlib", "cdylib", "rlib"]
