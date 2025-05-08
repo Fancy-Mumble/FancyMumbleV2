@@ -21,7 +21,7 @@ use crate::commands::{
 };
 #[cfg(desktop)]
 use commands::close_app;
-#[cfg(debug_assertions)]
+#[cfg(all(desktop, debug_assertions))]
 use commands::dev_tools;
 use commands::{ConnectionState, web_cmd::CrawlerState};
 use std::{collections::HashMap, sync::Arc};
@@ -110,7 +110,7 @@ impl AppBuilder {
                 set_audio_user_state,
                 #[cfg(desktop)]
                 close_app,
-                #[cfg(debug_assertions)]
+                #[cfg(all(desktop, debug_assertions))]
                 dev_tools,
             ])
             .run(tauri::generate_context!())
