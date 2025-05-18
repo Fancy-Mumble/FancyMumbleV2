@@ -55,18 +55,35 @@ pub fn init_connection(username: &str, channel: &Sender<Vec<u8>>, package_info: 
     let mumble_version = from_components(1, 4, 0);
 
     let info = os_info::get();
+    let version = match info.version() {
+        os_info::Version::Unknown => String::new(),
+        v => v.to_string(),
+    };
+    let bitness = match info.bitness() {
+        os_info::Bitness::X32 => "32-bit",
+        os_info::Bitness::X64 => "64-bit",
+        _ => {
+            if std::env::consts::ARCH.ends_with("64") {
+                "64-bit"
+            } else {
+                "32-bit"
+            }
+        }
+    };
+
+    let os_string = format!(
+        "{} {} ({} - {})",
+        info.os_type(),
+        version,
+        info.architecture().unwrap_or(std::env::consts::ARCH),
+        bitness
+    );
 
     let version = mumble::proto::Version {
         version_v1: Some(to_legacy_version(mumble_version)),
-        os: Some(format!(
-            "{} {} ({} - {})",
-            info.os_type(),
-            info.version(),
-            info.architecture().unwrap_or("x86_64"),
-            info.bitness()
-        )),
-        os_version: Some(info.version().to_string()),
-        release: Some(package_info.package_name()),
+        os: Some(os_string),
+        os_version: Some(std::env::consts::OS.to_string()),
+        release: Some(package_info.name.to_string()),
         version_v2: Some(mumble_version),
         fancy_version: Some(fancy_version),
     };

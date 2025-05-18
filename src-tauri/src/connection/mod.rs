@@ -11,16 +11,16 @@ use crate::utils::certificate_store::CertificateBuilder;
 use crate::utils::file::read_image_as_thumbnail;
 use crate::utils::messages::message_builder;
 use async_trait::async_trait;
-use base64::engine::general_purpose;
 use base64::Engine;
+use base64::engine::general_purpose;
 use std::collections::HashMap;
-use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
-use tauri::PackageInfo;
+use std::sync::atomic::AtomicBool;
+use tauri::{Manager, PackageInfo};
 use threads::{InputThread, MainThread, OutputThread, PingThread};
 use tokio::net::TcpStream;
-use tokio::sync::broadcast::{self, Receiver, Sender};
 use tokio::sync::Mutex;
+use tokio::sync::broadcast::{self, Receiver, Sender};
 use tokio::task::JoinHandle;
 use tokio_native_tls::native_tls::TlsConnector;
 use tracing::{info, trace};
@@ -63,6 +63,8 @@ pub struct Connection {
     package_info: PackageInfo,
     stream_reader: Arc<Mutex<Option<StreamReader>>>,
     settings_channel: Receiver<GlobalSettings>,
+
+    app_handle: tauri::AppHandle,
 }
 
 impl Connection {
@@ -73,6 +75,7 @@ impl Connection {
         identity: Option<String>,
         package_info: PackageInfo,
         settings_channel: Receiver<GlobalSettings>,
+        app_handle: tauri::AppHandle,
     ) -> Self {
         let (tx_in, _): (Sender<Vec<u8>>, Receiver<Vec<u8>>) = broadcast::channel(QUEUE_SIZE);
         let (tx_out, _): (Sender<Vec<u8>>, Receiver<Vec<u8>>) = broadcast::channel(QUEUE_SIZE);
@@ -97,18 +100,18 @@ impl Connection {
             message_channels: MessageChannels { message_channel },
             stream_reader: Arc::new(Mutex::new(None)),
             settings_channel,
+            app_handle,
         }
     }
 
-    async fn setup_connection(
-        &mut self,
-    ) -> AnyError<Option<tokio_native_tls::TlsStream<TcpStream>>> {
+    async fn setup_connection(&self) -> AnyError<Option<tokio_native_tls::TlsStream<TcpStream>>> {
         let server_uri = format!(
             "{}:{}",
             self.server_data.server_host, self.server_data.server_port
         );
 
-        let mut certificate_store = CertificateBuilder::try_from(&self.server_data.identity)
+        let certificate_store = CertificateBuilder::try_from(self.server_data.identity.as_ref())
+            .cert_path(self.app_handle.path().app_data_dir()?)
             .load_or_generate_new(true)
             .store_to_project_dir(true)
             .build()?;
@@ -251,7 +254,8 @@ impl Shutdown for Connection {
         self.running
             .store(false, std::sync::atomic::Ordering::Relaxed);
         trace!("Joining Threads");
-        if let Some(mut reader) = self.stream_reader.lock().await.take() {
+        let value = self.stream_reader.lock().await.take();
+        if let Some(mut reader) = value {
             reader.shutdown().await?;
         }
 

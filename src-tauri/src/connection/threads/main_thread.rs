@@ -1,10 +1,10 @@
 use async_trait::async_trait;
 
-use crate::connection::{Connection, BUFFER_SIZE};
-use crate::errors::application_error::ApplicationError;
+use crate::connection::{BUFFER_SIZE, Connection};
 use crate::errors::AnyError;
+use crate::errors::application_error::ApplicationError;
 
-use super::{ConnectionThread, MainThread, DEADMAN_INTERVAL};
+use super::{ConnectionThread, DEADMAN_INTERVAL, MainThread};
 use std::cmp;
 use std::sync::atomic::Ordering;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader};
@@ -20,7 +20,7 @@ impl MainThread for Connection {
         &mut self,
         stream: Option<tokio_native_tls::TlsStream<TcpStream>>,
     ) -> AnyError<()> {
-        if self.threads.get(&ConnectionThread::Main).is_some() {
+        if self.threads.contains_key(&ConnectionThread::Main) {
             return Err(Box::new(ApplicationError::new(
                 "MainThread already running",
             )));

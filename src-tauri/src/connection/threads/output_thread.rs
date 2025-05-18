@@ -6,11 +6,11 @@ use tokio::time;
 use tracing::trace;
 use tracing::{debug, error};
 
-use super::{ConnectionThread, OutputThread, DEADMAN_INTERVAL};
+use super::{ConnectionThread, DEADMAN_INTERVAL, OutputThread};
 
 impl OutputThread for Connection {
     fn spawn_output_thread(&mut self) {
-        if self.threads.get(&ConnectionThread::Output).is_some() {
+        if self.threads.contains_key(&ConnectionThread::Output) {
             error!("OutputThread already running");
             return;
         }

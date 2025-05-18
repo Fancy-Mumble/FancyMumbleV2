@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import { open } from '@tauri-apps/api/dialog';
+import { open } from '@tauri-apps/plugin-dialog';
 import { listen } from '@tauri-apps/api/event';
 import './styles/UploadBox.css'
 import { useEffect, useState } from "react";
@@ -35,7 +35,8 @@ function UploadBox(props: UploadBoxProps) {
         });
         if (!selected || Array.isArray(selected)) return;
 
-        props.onUpload(selected);
+        // @ts-ignore
+        props.onUpload(selected.base64Data ?? '');
     }
 
     async function handleDropUpload() {

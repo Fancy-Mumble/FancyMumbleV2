@@ -1,9 +1,10 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { Middleware, MiddlewareAPI, Dispatch, AnyAction, createSlice } from '@reduxjs/toolkit';
 import { UserInfoState, UsersState, deleteUser, updateUser } from "./userSlice";
 import dayjs from "dayjs";
 import { ChannelState } from "./channelSlice";
 import { useTranslation } from "react-i18next";
 import i18next from "i18next";
+import { RootState } from '../../store';
 
 interface EventLogState {
     timestamp: number
@@ -74,11 +75,11 @@ function handleUpdateUser(action: { payload: UsersState }, storeAPI: any) {
     const userId = action.payload.id;
     const userInfo = getUserInfo(userState, userId);
 
-    checks.every(({condition, message, stopAfter}) => {
-        if(condition(userInfo, action.payload)) {
+    checks.every(({ condition, message, stopAfter }) => {
+        if (condition(userInfo, action.payload)) {
             storeAPI.dispatch(eventLogSlice.actions.dispatchEventLog({ message: message(userInfo, action.payload, storeAPI) }));
         }
-        if(stopAfter && stopAfter(userInfo)) return false;
+        if (stopAfter && stopAfter(userInfo)) return false;
         return true;
     });
 }
@@ -118,16 +119,26 @@ const actionHandlers = {
     [deleteUser.type]: handleDeleteUser,
 };
 
-export const checkStatusChangedMiddleware =
-    (storeAPI: any) =>
-        (next: (arg0: any) => any) =>
-            (action: { type: string; payload: any }) => {
-                // Call the correct handler based on action type
-                const handler = actionHandlers[action.type];
-                if (handler) handler(action, storeAPI);
+type StatusChangeAction = {
+    type: string;
+    payload: UsersState;
+  };
 
-                return next(action);
-            };
+export const checkStatusChangedMiddleware: any =
+  (storeAPI: MiddlewareAPI<Dispatch<AnyAction>, RootState>) =>
+    (next: Dispatch<AnyAction>) =>
+      (action: AnyAction) => {
+        const handler = actionHandlers[action.type];
+        
+        if (handler) {
+          // Add a runtime type guard if payload is critical
+          if ('payload' in action) {
+            handler(action as StatusChangeAction, storeAPI);
+          }
+        }
+
+        return next(action);
+      };
 
 const initialState: EventLogState[] = [];
 

@@ -4,7 +4,7 @@ use tracing::error;
 
 use crate::{
     errors::AnyError,
-    utils::messages::{get_message, MessageInfo, MessageTypes},
+    utils::messages::{MessageInfo, MessageTypes, get_message},
 };
 
 use super::message_router::MessageRouter;

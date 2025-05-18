@@ -20,7 +20,7 @@ jobs:
 
   #     - uses: awalsh128/cache-apt-pkgs-action@latest
   #       with:
-  #         packages: libgtk-3-dev libwebkit2gtk-4.0-dev libayatana-appindicator3-dev librsvg2-dev libasound2-dev
+  #         packages: libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libasound2-dev
   #         version: 1.0
 
   #     - name: Install Protoc
@@ -41,7 +41,7 @@ jobs:
 
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libgtk-3-dev libwebkit2gtk-4.0-dev libayatana-appindicator3-dev librsvg2-dev libasound2-dev
+          packages: libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libasound2-dev libsoup-3.0-dev libjavascriptcoregtk-4.1-dev
           version: 1.0
 
       - name: Rust setup
@@ -74,7 +74,7 @@ jobs:
 
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: libgtk-3-dev libwebkit2gtk-4.0-dev libayatana-appindicator3-dev librsvg2-dev libasound2-dev
+          packages: libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libasound2-dev libsoup-3.0-dev libjavascriptcoregtk-4.1-dev
           version: 1.0
 
       - name: Rust setup
@@ -102,7 +102,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-20.04, windows-latest] # macos-latest is currently not working
+        platform: [ubuntu-24.04, windows-latest] # macos-latest is currently not working
     runs-on: ${{ matrix.platform }}
 
     steps:
@@ -110,11 +110,11 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install dependencies (ubuntu only)
-        if: matrix.platform == 'ubuntu-20.04'
+        if: matrix.platform == 'ubuntu-24.04'
         # You can remove libayatana-appindicator3-dev if you don't use the system tray feature.
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libayatana-appindicator3-dev librsvg2-dev libasound2-dev
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libasound2-dev libsoup-3.0-dev libjavascriptcoregtk-4.1-dev libopus-dev
 
       - name: Install vcpkg (windows only)
         if: matrix.platform == 'windows-latest'

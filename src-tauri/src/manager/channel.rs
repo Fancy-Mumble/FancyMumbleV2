@@ -1,5 +1,5 @@
 use std::{
-    collections::{hash_map::Entry, HashMap},
+    collections::{HashMap, hash_map::Entry},
     mem,
 };
 
@@ -161,7 +161,7 @@ impl Manager {
                 channel.update_from(channel_info);
                 v.insert(channel);
             }
-        };
+        }
 
         if let Some(channel) = self.channels.get(&channel_id) {
             debug!("Updating channel description: {}", channel_id);
@@ -177,7 +177,7 @@ impl Manager {
         Ok(())
     }
 
-    pub fn remove_channel(&mut self, user_info: &mumble::proto::ChannelRemove) {
+    pub fn remove_channel(&mut self, user_info: mumble::proto::ChannelRemove) {
         let session = user_info.channel_id;
 
         self.channels.remove(&session);

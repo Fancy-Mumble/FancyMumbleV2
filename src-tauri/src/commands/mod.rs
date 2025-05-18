@@ -10,17 +10,16 @@ pub mod zip_cmd;
 use std::{borrow::BorrowMut, collections::HashMap, path::Path, sync::Arc};
 
 use crate::{
-    connection::{traits::Shutdown, Connection},
+    connection::{Connection, traits::Shutdown},
     errors::string_convertion::ErrorString,
     manager::user::UpdateableUserState,
     protocol::message_transmitter::MessageTransmitter,
-    utils::{audio::device_manager::AudioDeviceManager, constants::get_project_dirs},
+    utils::audio::device_manager::AudioDeviceManager,
 };
-use tauri::{AppHandle, State};
-use tauri_plugin_window_state::{AppHandleExt, StateFlags};
+use tauri::{Manager, State};
 use tokio::sync::{
-    broadcast::{self, Receiver, Sender},
     Mutex,
+    broadcast::{self, Receiver, Sender},
 };
 use tracing::{error, info, trace};
 
@@ -29,13 +28,17 @@ use self::utils::settings::{
     GlobalSettings,
 };
 use image::{
-    imageops::{self, FilterType},
     GenericImageView,
+    imageops::{self, FilterType},
 };
+#[cfg(desktop)]
+use tauri::AppHandle;
+#[cfg(desktop)]
+use tauri_plugin_window_state::{AppHandleExt, StateFlags};
 
 pub struct ConnectionState {
     pub connection: Mutex<Option<Connection>>,
-    pub window: Arc<Mutex<tauri::Window>>,
+    pub window: Arc<Mutex<tauri::WebviewWindow>>,
     pub package_info: Mutex<tauri::PackageInfo>,
     pub message_handler: Mutex<HashMap<String, Box<dyn Shutdown + Send>>>,
     pub device_manager: Mutex<Option<AudioDeviceManager>>,
@@ -66,8 +69,11 @@ pub async fn connect_to_server(
     username: String,
     identity: Option<String>,
     state: State<'_, ConnectionState>,
+    app_handle: tauri::AppHandle,
 ) -> Result<(), String> {
-    info!("Connecting to server: {server_host}:{server_port}, username: {username}, identity: {identity:?}");
+    info!(
+        "Connecting to server: {server_host}:{server_port}, username: {username}, identity: {identity:?}"
+    );
 
     let mut guard = state.connection.lock().await;
     if let Some(guard) = guard.as_mut() {
@@ -87,6 +93,7 @@ pub async fn connect_to_server(
         identity,
         app_info,
         settings_channel,
+        app_handle,
     ));
     if let Err(e) = connection.connect().await {
         return Err(format!("{e:?}"));
@@ -205,10 +212,12 @@ pub async fn crop_and_store_image(
     zoom: f32,
     crop: Coordinates,
     rotation: i32,
+    app_handle: tauri::AppHandle,
 ) -> Result<String, String> {
-    let project_dirs = get_project_dirs().ok_or("Unable to load project dir")?;
-
-    let data_dir = project_dirs.cache_dir();
+    let data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| format!("{e:?}"))?;
     let path = Path::new(path);
     let img = image::open(path).map_err(|e| e.to_string())?;
 
@@ -354,6 +363,7 @@ pub async fn enable_audio_info(state: State<'_, ConnectionState>) -> Result<(), 
     Ok(())
 }
 
+#[cfg(desktop)]
 #[allow(clippy::needless_pass_by_value)] // tauri command
 #[tauri::command]
 pub fn close_app(app: AppHandle) {
@@ -361,4 +371,19 @@ pub fn close_app(app: AppHandle) {
         error!("Failed to save window state: {:?}", e);
     }
     app.exit(0);
+}
+
+#[cfg(all(desktop, debug_assertions))]
+#[tauri::command]
+#[allow(clippy::needless_pass_by_value)] // AppHandle can't be passed by reference
+pub fn dev_tools(app: AppHandle) {
+    if let Err(e) = app.get_webview_window("main").map_or_else(
+        || Err(()),
+        |w| {
+            w.open_devtools();
+            Ok(())
+        },
+    ) {
+        error!("Failed to toggle dev tools: {:?}", e);
+    }
 }

@@ -1,6 +1,7 @@
 use std::fmt::Display;
 use std::fmt::Write;
 use std::io::Read;
+use std::path::Path;
 
 use image::codecs::gif::GifDecoder;
 use image::{AnimationDecoder, GenericImageView};
@@ -8,10 +9,8 @@ use tokio::fs::{self, File};
 use tokio::io::{AsyncReadExt, BufReader};
 use tracing::{debug, info};
 
-use crate::errors::application_error::ApplicationError;
 use crate::errors::AnyError;
-
-use super::constants::get_project_dirs;
+use crate::errors::application_error::ApplicationError;
 
 pub struct ImageInfo {
     pub data: Vec<u8>,
@@ -31,10 +30,7 @@ pub async fn get_file_as_byte_vec(filename: &str) -> AnyError<Vec<u8>> {
     let mut buffer = Vec::with_capacity(metadata.len() as usize);
 
     if buffer.len() > u32::MAX as usize {
-        return Err(Box::new(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            "File too large",
-        )));
+        return Err(Box::new(std::io::Error::other("File too large")));
     }
 
     match f.read_to_end(&mut buffer).await {
@@ -43,10 +39,7 @@ pub async fn get_file_as_byte_vec(filename: &str) -> AnyError<Vec<u8>> {
                 debug!("Read {} bytes from {}", read, filename);
                 Ok(buffer)
             } else {
-                Err(Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    "Failed to read all bytes",
-                )))
+                Err(Box::new(std::io::Error::other("Failed to read all bytes")))
             }
         }
         Err(e) => Err(Box::new(e)),
@@ -78,8 +71,12 @@ pub fn read_image_as_thumbnail(filename: &str, max_size: u32) -> AnyError<ImageI
 
         let image = image.into_bytes();
 
-        image::codecs::jpeg::JpegEncoder::new(buf_writer)
-            .encode(&image, width, height, color_type)?;
+        image::codecs::jpeg::JpegEncoder::new(buf_writer).encode(
+            &image,
+            width,
+            height,
+            color_type.into(),
+        )?;
     }
 
     Ok(ImageInfo {
@@ -117,24 +114,18 @@ impl From<image::ImageFormat> for ImageFormat {
     }
 }
 
-fn get_cache_path_from_hash(hash: &[u8]) -> AnyError<std::path::PathBuf> {
-    let project_dir =
-        get_project_dirs().ok_or_else(|| ApplicationError::new("Unable to obtain project dir"))?;
+fn get_cache_path_from_hash(hash: &[u8], path: &Path) -> std::path::PathBuf {
+    let project_dir = path;
     let hash_string = hash.iter().fold(String::new(), |mut output, b| {
         let _ = write!(output, "{b:x}");
         output
     });
 
-    let path = project_dir
-        .cache_dir()
-        .join("image_cache")
-        .join(hash_string);
-
-    Ok(path)
+    project_dir.join("image_cache").join(hash_string)
 }
 
-pub fn read_data_from_cache(hash: &[u8]) -> AnyError<Option<Vec<u8>>> {
-    let path = get_cache_path_from_hash(hash)?;
+pub fn read_data_from_cache(hash: &[u8], path: &Path) -> AnyError<Option<Vec<u8>>> {
+    let path = get_cache_path_from_hash(hash, path);
     info!("Reading from cache: {:?}", path);
 
     if path.exists() {
@@ -147,7 +138,7 @@ pub fn read_data_from_cache(hash: &[u8]) -> AnyError<Option<Vec<u8>>> {
     }
 }
 
-pub fn store_data_in_cache(hash: &[u8], data: &[u8]) -> AnyError<()> {
+pub fn store_data_in_cache(hash: &[u8], data: &[u8], path: &Path) -> AnyError<()> {
     use std::io::Write;
 
     if hash.is_empty() {
@@ -156,7 +147,7 @@ pub fn store_data_in_cache(hash: &[u8], data: &[u8]) -> AnyError<()> {
         )));
     }
 
-    let path = get_cache_path_from_hash(hash)?;
+    let path = get_cache_path_from_hash(hash, path);
 
     if !path.exists() {
         std::fs::create_dir_all(
@@ -167,7 +158,7 @@ pub fn store_data_in_cache(hash: &[u8], data: &[u8]) -> AnyError<()> {
     }
 
     let mut file = std::fs::File::create(path.clone()).map_err(|_| {
-        ApplicationError::new(format!("Unable to create cache file: {path:?}").as_str())
+        ApplicationError::new(format!("Unable to create cache file: {}", path.display()).as_str())
     })?;
 
     file.write_all(data)?;

@@ -2,14 +2,17 @@ import { Box, Button, Divider, Fade, IconButton, InputBase, Paper, Popper, Toolt
 import SendIcon from '@mui/icons-material/Send';
 import DeleteIcon from '@mui/icons-material/Delete';
 import GifIcon from '@mui/icons-material/Gif';
-import { useCallback, useMemo, useState } from "react";
+import { FormEvent, useCallback, useMemo, useRef, useState } from "react";
 import { ChatMessageHandler } from "../helper/ChatMessage";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../store/store";
 import { formatBytes } from "../helper/Fomat";
 import GifSearch, { GifResult } from "./GifSearch";
 import { useTranslation } from "react-i18next";
-import { invoke } from "@tauri-apps/api";
+import { invoke } from "@tauri-apps/api/core";
+import ContextMenu from "./contextMenus/ContextMenu";
+import { copy, paste } from "./contextMenus/ContextMenuOptions";
+
 
 function ChatInput() {
     const dispatch = useDispatch();
@@ -25,8 +28,22 @@ function ChatInput() {
     const currentUser = useSelector((state: RootState) => state.reducer.userInfo?.currentUser);
     const channelInfo = useSelector((state: RootState) => state.reducer.channel);
 
+    const sendElementRef = useRef<HTMLButtonElement>(null);
+
     const currentChannel = useMemo(() => channelInfo.find(e => e.channel_id === currentUser?.channel_id)?.name, [channelInfo, currentUser]);
     const chatMessageHandler = useMemo(() => new ChatMessageHandler(dispatch, setChatMessage), [dispatch]);
+
+    const pasteAndSend = {
+        icon: <SendIcon />,
+        label: t('Paste and Send', { ns: 'user_interaction' }),
+        shortcut: 'Ctrl+Shift+V',
+        handler: (event: React.MouseEvent<HTMLElement>) => {
+            event.preventDefault();
+            navigator.clipboard.readText().then(clipText => {
+                chatMessageHandler.sendChatMessage(clipText, currentUser);
+            });
+        }
+    };
 
     const deleteMessages = useCallback(() => {
         chatMessageHandler.deleteMessages();
@@ -78,6 +95,26 @@ function ChatInput() {
         });
     }
 
+    function handleInput(e: FormEvent<HTMLDivElement>): void {
+        const dataTransfer = (e.nativeEvent as DragEvent).dataTransfer;
+        if (dataTransfer && dataTransfer.files.length > 0) {
+            const file = dataTransfer.files[0];
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function () {
+                if (reader.result && (reader.result as string).length > 0x7fffff) {
+                    chatMessageHandler.sendCustomChatMessage(t("Image too large", { size: formatBytes((reader.result as string).length), maximum: formatBytes(0x7fffff) }), currentUser);
+                    return;
+                }
+                const legacyImageSize = 600; // Adapt image size for legacy clients
+                let img = `<img src="${reader.result}" width="${legacyImageSize}" />`;
+                chatMessageHandler.sendCustomChatMessage(img, currentUser);
+            };
+        }
+    }
+
+    const placeholderText = currentChannel?.length ?? 0 > 100 ? `${currentChannel?.slice(0, 97) ?? ""}...` : currentChannel;
+
     return (
         <Box m={2} sx={{ display: 'flex' }}>
             <Paper
@@ -91,10 +128,11 @@ function ChatInput() {
                 </Tooltip>
                 <InputBase
                     sx={{ ml: 1, flex: 1 }}
-                    placeholder={t("Send Message to Channel", { ns: "user_interaction", channel: currentChannel })}
+                    placeholder={t("Send Message to Channel", { ns: "user_interaction", channel: placeholderText })}
                     inputProps={{ 'aria-label': 'Send Message to ' + currentChannel }}
                     onChange={e => setChatMessage(e.target.value)}
                     onKeyDown={keyDownHandler}
+                    onInput={(e) => handleInput(e)}
                     value={chatMessage}
                     onPaste={pasteEvent}
                     multiline
@@ -103,7 +141,7 @@ function ChatInput() {
                     <GifIcon />
                 </IconButton>
                 <Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />
-                <IconButton sx={{ p: '10px' }} aria-label="Send Message" onClick={() => chatMessageHandler.sendChatMessage(chatMessage, currentUser)}>
+                <IconButton ref={sendElementRef} sx={{ p: '10px' }} aria-label="Send Message" onClick={() => chatMessageHandler.sendChatMessage(chatMessage, currentUser)}>
                     <SendIcon />
                 </IconButton>
             </Paper>
@@ -127,6 +165,7 @@ function ChatInput() {
                     </Fade>
                 )}
             </Popper>
+            <ContextMenu element={sendElementRef as React.RefObject<HTMLElement>} options={[copy, paste, pasteAndSend]} />
         </Box>
     )
 }

@@ -11,10 +11,9 @@ import { updateUIState } from '../store/features/users/frontendSettings';
 import { persistFrontendSettings } from '../store/persistance/persist';
 
 interface ChatInfoBarProps {
-    onShowLog: (showLog: boolean) => void;
 }
 
-const ChatInfoBar: React.FC<ChatInfoBarProps> = React.memo(({ onShowLog }) => {
+const ChatInfoBar: React.FC<ChatInfoBarProps> = React.memo(({ }) => {
     const dispatch = useDispatch();
     const frontendSettings = useSelector((state: RootState) => state.reducer.frontendSettings);
     const showSidebar = frontendSettings.ui_state.show_sidebar;
@@ -28,9 +27,6 @@ const ChatInfoBar: React.FC<ChatInfoBarProps> = React.memo(({ onShowLog }) => {
         return (<KeyboardDoubleArrowRightIcon sx={{ fontSize: 20 }} />);
     }, [showSidebar]);
 
-    useEffect(() => {
-        onShowLog(showSidebar);
-    }, [showSidebar, onShowLog]);
 
     function toggleSidebar(): void {
         console.log("old front end: ", frontendSettings)
@@ -42,9 +38,9 @@ const ChatInfoBar: React.FC<ChatInfoBarProps> = React.memo(({ onShowLog }) => {
     }
 
     return (
-        <Box sx={{ flexShrink: 1 }}>
-            <Paper elevation={0} sx={{ backgroundImage: `url(${channelInfo?.channelImage})`, backgroundSize: 'contain' }}>
-                <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', backdropFilter: 'blur(20px)', textShadow: '1px 1px #000' }}>
+        <Box sx={{ flexShrink: 1, background: '#000b1c' }}>
+            <Paper elevation={0} sx={{ borderRadius: 0, padding: 1, background: '#000b1c' }}>
+                <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center',textShadow: '1px 1px #000' }}>
                     <Box sx={{ flexGrow: 1, paddingLeft: 1 }}>
                         {channelInfo?.name}
                     </Box>

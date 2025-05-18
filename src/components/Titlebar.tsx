@@ -1,14 +1,15 @@
-import { appWindow } from "@tauri-apps/api/window";
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import CloseIcon from '@mui/icons-material/Close';
 import MinimizeIcon from '@mui/icons-material/Minimize';
 import FilterNoneIcon from '@mui/icons-material/FilterNone';
 import { IconButton, Paper } from "@mui/material";
-import { invoke } from "@tauri-apps/api";
+import { invoke } from "@tauri-apps/api/core";
 import './styles/Titlebar.css';
 function Titlebar() {
     const closeApp = () => {
         invoke('close_app');
     }
+    const appWindow = getCurrentWindow();
 
     return (
         <Paper data-tauri-drag-region sx={{
@@ -17,6 +18,7 @@ function Titlebar() {
             justifyContent: 'end',
             zIndex: 9999,
             userSelect: 'none',
+            background: '#000b1c'
         }}>
             <IconButton size="small" onClick={(e) => appWindow.minimize()} className="titlebar-button" >
                 <MinimizeIcon sx={{ fontSize: 18 }} />

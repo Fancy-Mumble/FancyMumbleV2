@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import type { PayloadAction } from '@reduxjs/toolkit'
 import { parseUserCommentForData } from '../../../helper/ProfileDataHelper'
+// @ts-ignore
 import { AsyncThunkFulfilledActionCreator } from '@reduxjs/toolkit/dist/createAsyncThunk';
 
 type DataUpdateAction<T> = AsyncThunkFulfilledActionCreator<T, void, any>;

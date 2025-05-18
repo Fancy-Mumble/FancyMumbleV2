@@ -68,7 +68,7 @@ pub struct AudioOutputSettings {
 #[derive(Clone, Debug)]
 pub struct AudioPreviewContainer {
     pub enabled: bool,
-    pub window: Arc<Mutex<tauri::Window>>,
+    pub window: Arc<Mutex<tauri::WebviewWindow>>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -84,6 +84,7 @@ pub enum GlobalSettings {
     AudioInputSettings(AudioOptions),
     AudioOutputSettings(AudioOutputSettings),
     AudioPreview(AudioPreviewContainer),
+    #[allow(dead_code)]
     AudioUserState(AudioUserState),
 }
 

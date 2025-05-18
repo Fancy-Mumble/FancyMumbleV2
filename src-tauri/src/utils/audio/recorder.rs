@@ -1,12 +1,13 @@
 use std::{
     sync::{
+        Arc,
         atomic::{AtomicBool, Ordering},
         mpsc::{self},
-        Arc,
     },
     thread,
     time::Duration,
 };
+use tauri::Emitter;
 
 use tokio::sync::broadcast::{self, Receiver};
 use tracing::{error, info, trace, warn};
@@ -123,7 +124,8 @@ impl Recorder {
 
                 if let Some(audio_preview) = audio_preview.as_mut() {
                     let _ = audio_preview.window.try_lock().map(|window| {
-                        let _ = window.emit("audio_preview", max_amplitude);
+                        let emit = window.emit("audio_preview", max_amplitude);
+                        let _ = emit;
                     });
                 }
 
@@ -205,10 +207,13 @@ fn update_voice_activation_options<T: VoiceActivationType>(
                 T::from(va_options.voice_hysteresis_lower_threshold).unwrap_or_else(T::zero),
             );
         }
-    };
+    }
 }
 
-fn update_compressor_options(audio_settings: &AudioOptions, compressor: &mut Option<Compressor>) {
+const fn update_compressor_options(
+    audio_settings: &AudioOptions,
+    compressor: &mut Option<Compressor>,
+) {
     if let Some(compressor) = compressor.as_mut() {
         if let Some(compressor_options) = &audio_settings.compressor_options {
             compressor.set_attack(Duration::from_millis(compressor_options.attack_time as u64));
@@ -218,7 +223,7 @@ fn update_compressor_options(audio_settings: &AudioOptions, compressor: &mut Opt
             compressor.set_threshold(compressor_options.threshold);
             compressor.set_ratio(compressor_options.ratio);
         }
-    };
+    }
 }
 
 impl Drop for Recorder {

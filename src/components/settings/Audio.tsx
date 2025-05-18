@@ -1,5 +1,5 @@
 import { Box, Button, Collapse, Container, FormControl, FormControlLabel, Grid, IconButton, InputLabel, LinearProgress, MenuItem, Select, Slider, Switch, Typography, RadioGroup, Radio, Paper, InputBase, Divider } from "@mui/material";
-import { invoke } from "@tauri-apps/api";
+import { invoke } from "@tauri-apps/api/core";
 import LoopIcon from '@mui/icons-material/Loop';
 import { useEffect, useState } from "react";
 import KeyboardIcon from '@mui/icons-material/Keyboard';
@@ -153,7 +153,7 @@ function AudioSettings() {
                     <FormControlLabel label={t("Feature Not Implemented", { feature: t("Automatically detect Microphone sensitivity", { ns: "audio" }) })} control={<Switch disabled checked={!advancedOptions} onChange={() => showAdvanceOptions(!advancedOptions)} />} />
                     <Collapse in={advancedOptions}>
                         <Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12, lg: 18 }} sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
-                            <Grid item xs={4} sm={8} md={12} lg={12}>
+                            <Grid size={{ xs: 4, sm: 8, md: 12, lg: 12 }}>
                                 <Typography id="non-linear-slider" gutterBottom>
                                     {t("Hold Activation for", { ns: "audio", duration: valueLabelFormat(audioSettings.voice_activation_options.voice_hold) })}
                                 </Typography>
@@ -170,7 +170,7 @@ function AudioSettings() {
                                     aria-labelledby="non-linear-slider"
                                 />
                             </Grid>
-                            <Grid item xs={4} sm={8} md={12} lg={12}>
+                            <Grid size={{ xs: 4, sm: 8, md: 12, lg: 12 }}>
                                 <Typography id="non-linear-slider" gutterBottom>
                                     {t("Fade-out Audio after activation for", { ns: "audio", duration: valueLabelFormat(audioSettings.voice_activation_options.fade_out_duration) })}
                                 </Typography>
@@ -187,7 +187,7 @@ function AudioSettings() {
                                     aria-labelledby="non-linear-slider"
                                 />
                             </Grid>
-                            <Grid item xs={4} sm={8} md={12} lg={12}>
+                            <Grid size={{ xs: 4, sm: 8, md: 12, lg: 12 }}>
                                 <Typography id="non-linear-slider" gutterBottom>
                                     {t("Audio activation at", { ns: "audio", threshold: audioSettings.voice_activation_options.voice_hysteresis_upper_threshold })} | {t("Audio deactivation at", { ns: "audio", threshold: audioSettings.voice_activation_options.voice_hysteresis_lower_threshold })}
                                 </Typography>
@@ -238,7 +238,7 @@ function AudioSettings() {
             </Box>
             <Divider sx={{ my: 4 }} />
             <Box>
-                <Grid item xs={4} sm={8} md={12} lg={12}>
+                <Grid size={{ xs: 4, sm: 8, md: 12, lg: 12 }}>
                     <Typography id="non-linear-slider" gutterBottom>
                         {t("Amplification dB", { ns: "audio", amplification: audioSettings.amplification })}
                     </Typography>
@@ -255,7 +255,7 @@ function AudioSettings() {
             </Box>
             <Divider sx={{ my: 4 }} />
             <Box>
-                <Grid item xs={4} sm={8} md={12} lg={12}>
+                <Grid size={{ xs: 4, sm: 8, md: 12, lg: 12 }}>
                     <Typography id="non-linear-slider" gutterBottom>
                         {t("Compressor Threshold", { ns: "audio", threshold: audioSettings.compressor_options.threshold })}
                     </Typography>
@@ -269,7 +269,7 @@ function AudioSettings() {
                         aria-labelledby="non-linear-slider"
                     />
                 </Grid>
-                <Grid item xs={4} sm={8} md={12} lg={12}>
+                <Grid size={{ xs: 4, sm: 8, md: 12, lg: 12 }}>
                     <Typography id="non-linear-slider" gutterBottom>
                         {t("Compressor Ratio", { ns: "audio", ratio: audioSettings.compressor_options.ratio })}
                     </Typography>
@@ -283,7 +283,7 @@ function AudioSettings() {
                         aria-labelledby="non-linear-slider"
                     />
                 </Grid>
-                <Grid item xs={4} sm={8} md={12} lg={12}>
+                <Grid size={{ xs: 4, sm: 8, md: 12, lg: 12 }}>
                     <Typography id="non-linear-slider" gutterBottom>
                         {t("Attack Time", { ns: "audio", duration: valueLabelFormat(audioSettings.compressor_options.attack_time) })}
                     </Typography>
@@ -300,7 +300,7 @@ function AudioSettings() {
                         aria-labelledby="non-linear-slider"
                     />
                 </Grid>
-                <Grid item xs={4} sm={8} md={12} lg={12}>
+                <Grid size={{ xs: 4, sm: 8, md: 12, lg: 12 }}>
                     <Typography id="non-linear-slider" gutterBottom>
                         {t("Release Time", { ns: "audio", duration: valueLabelFormat(audioSettings.compressor_options.release_time) })}
                     </Typography>

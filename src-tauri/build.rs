@@ -7,14 +7,12 @@ use std::path::Path;
 use std::str;
 use tokio::runtime::Runtime;
 
-const DOWNLOAD_MUMBLE_PROTO_DIR: &str =
-    "https://raw.githubusercontent.com/mumble-voip/mumble/82bcd1eb3d53aa9bfc1f6ff539961b0c29336266/src/Mumble.proto";
+const DOWNLOAD_MUMBLE_PROTO_DIR: &str = "https://raw.githubusercontent.com/mumble-voip/mumble/82bcd1eb3d53aa9bfc1f6ff539961b0c29336266/src/Mumble.proto";
 const MUMBLE_PROTO_SHA256: &str =
     "0f86d85938ff2268e3eb05ce0120805fb049ad0d062f4d01c6657b048dcc9245";
 const PATCHED_MUMBLE_PROTO_HASH: &str =
     "ebadea7bcb720da05149076b1b0ec7a9ff1107a5107a4137b75e8e45fb52f68d";
-const DOWNLOAD_MUMBLE_UDP_PROTO_DIR: &str =
-    "https://raw.githubusercontent.com/mumble-voip/mumble/6a48c0478477054b4e7356b0bd7dc9da24cf0880/src/MumbleUDP.proto";
+const DOWNLOAD_MUMBLE_UDP_PROTO_DIR: &str = "https://raw.githubusercontent.com/mumble-voip/mumble/6a48c0478477054b4e7356b0bd7dc9da24cf0880/src/MumbleUDP.proto";
 const MUMBLE_UDP_PROTO_SHA256: &str =
     "8087983b0d9a12e11380cad99870a0ef3cee7550b13a114a733aa835acd3d040";
 
@@ -56,8 +54,10 @@ fn read_file_as_bytes(file_path: &Path) -> Result<String, Box<dyn std::error::Er
 }
 
 fn write_to_file(data: &[u8], file_path: &Path) {
-    let mut file = File::create(file_path).expect("Failed to create file");
-    file.write_all(data).expect("Failed to write file");
+    let mut file = File::create(file_path)
+        .unwrap_or_else(|_| panic!("Failed to create file {}", file_path.display()));
+    file.write_all(data)
+        .unwrap_or_else(|_| panic!("Failed to write file {}", file_path.display()));
 }
 
 async fn download_file(
@@ -84,9 +84,18 @@ async fn download_file(
 }
 
 fn main() -> io::Result<()> {
-    let mumble_proto = Path::new("src/proto/Mumble.proto");
-    let mumble_udp_proto = Path::new("src/proto/MumbleUDP.proto");
+    let mumble_proto = Path::new("../out/proto/Mumble.proto");
+    let mumble_udp_proto = Path::new("../out/proto/MumbleUDP.proto");
+    let fancy_proto = Path::new("src/proto/Fancy.proto");
     let patch_file = Path::new("src/proto/Mumble.proto.patch");
+
+    // Ensure the output directories exist
+    if let Some(parent) = mumble_proto.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    if let Some(parent) = mumble_udp_proto.parent() {
+        fs::create_dir_all(parent)?;
+    }
 
     let mumble_proto_bytes = read_file_as_bytes(mumble_proto).unwrap_or_default();
     let hash = get_data_hash_str(mumble_proto_bytes.as_bytes());
@@ -116,9 +125,19 @@ fn main() -> io::Result<()> {
         });
     }
 
-    prost_build::compile_protos(&["src/proto/Mumble.proto"], &["src/"])?;
-    prost_build::compile_protos(&["src/proto/MumbleUDP.proto"], &["src/"])?;
-    prost_build::compile_protos(&["src/proto/Fancy.proto"], &["src/"])?;
+    let mumble_proto_str = mumble_proto
+        .to_str()
+        .expect("Failed to convert path to string");
+    let mumble_udp_proto_str = mumble_udp_proto
+        .to_str()
+        .expect("Failed to convert path to string");
+    let fancy_proto_str = fancy_proto
+        .to_str()
+        .expect("Failed to convert path to string");
+
+    prost_build::compile_protos(&[mumble_proto_str], &["../out"])?;
+    prost_build::compile_protos(&[mumble_udp_proto_str], &["../out"])?;
+    prost_build::compile_protos(&[fancy_proto_str], &["src/"])?;
     tauri_build::build();
 
     Ok(())

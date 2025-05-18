@@ -1,9 +1,9 @@
 use std::{
-    collections::{btree_map::Entry, BTreeMap},
+    collections::{BTreeMap, btree_map::Entry},
     sync::{
+        Arc,
         atomic::{AtomicBool, Ordering},
         mpsc::{self, Receiver, SyncSender},
-        Arc,
     },
     thread,
     time::Duration,
@@ -86,7 +86,7 @@ impl Player {
         Ok(())
     }
 
-    pub fn add_to_queue(&mut self, data: DecodedMessage) -> AnyError<()> {
+    pub fn add_to_queue(&self, data: DecodedMessage) -> AnyError<()> {
         if self.playing.load(Ordering::Relaxed) {
             //todo add user id to audio data
             self.queue_tx.try_send(data)?;
@@ -124,7 +124,7 @@ impl Player {
     #[allow(clippy::cast_possible_truncation)]
     #[allow(clippy::cast_lossless)]
     fn adjust_volume_vec(audio_data: &mut [i16], volume_adjustment: f32) {
-        if (volume_adjustment - 1.0).abs() < std::f32::EPSILON {
+        if (volume_adjustment - 1.0).abs() < f32::EPSILON {
             return;
         }
 
@@ -152,7 +152,7 @@ struct UserAudioInfoMap {
 }
 
 impl UserAudioInfoMap {
-    fn new(handle: OutputStreamHandle) -> Self {
+    const fn new(handle: OutputStreamHandle) -> Self {
         Self {
             handle,
             sink_map: BTreeMap::new(),

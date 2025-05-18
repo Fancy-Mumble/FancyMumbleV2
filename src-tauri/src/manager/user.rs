@@ -1,9 +1,13 @@
-use base64::{engine::general_purpose, Engine as _};
-use std::collections::{hash_map::Entry, HashMap};
+use base64::{Engine as _, engine::general_purpose};
+use std::{
+    collections::{HashMap, hash_map::Entry},
+    path::Path,
+};
 
 use serde::{Deserialize, Serialize};
 use tracing::{debug, info, trace};
 
+use super::Update;
 use crate::{
     errors::AnyError,
     mumble,
@@ -14,8 +18,7 @@ use crate::{
         messages::message_builder,
     },
 };
-
-use super::Update;
+use tauri::Manager as TauriManager;
 use tokio::sync::broadcast::Sender;
 
 #[derive(Debug, Clone, Copy, Serialize, PartialEq)]
@@ -103,14 +106,20 @@ pub struct Manager {
     users: HashMap<u32, User>,
     frontend_channel: Sender<String>,
     server_channel: Sender<Vec<u8>>,
+    app_handle: tauri::AppHandle,
 }
 
 impl Manager {
-    pub fn new(send_to: Sender<String>, server_channel: Sender<Vec<u8>>) -> Self {
+    pub fn new(
+        send_to: Sender<String>,
+        server_channel: Sender<Vec<u8>>,
+        app_handle: tauri::AppHandle,
+    ) -> Self {
         Self {
             users: HashMap::new(),
             frontend_channel: send_to,
             server_channel,
+            app_handle,
         }
     }
 
@@ -130,7 +139,11 @@ impl Manager {
 
     fn notify_user_image(&self, session: u32) -> AnyError<()> {
         if let Some(user) = self.users.get(&session) {
-            store_data_in_cache(&user.profile_picture_hash, &user.profile_picture)?;
+            store_data_in_cache(
+                &user.profile_picture_hash,
+                &user.profile_picture,
+                &self.app_handle.path().app_data_dir()?,
+            )?;
 
             let base64 = format!(
                 "data:image/png;base64,{}",
@@ -156,7 +169,11 @@ impl Manager {
                 return Ok(());
             }
 
-            store_data_in_cache(&user.comment_hash, user.comment.as_bytes())?;
+            store_data_in_cache(
+                &user.comment_hash,
+                user.comment.as_bytes(),
+                self.app_handle.path().app_data_dir()?.as_path(),
+            )?;
 
             let user_image = BlobData {
                 user_id: user.id,
@@ -176,8 +193,7 @@ impl Manager {
         if texture_hash == cached_user_texture_hash {
             trace!(
                 "User image is up to date: {:?} vs {:?}",
-                texture_hash,
-                cached_user_texture_hash
+                texture_hash, cached_user_texture_hash
             );
             return Ok(());
         }
@@ -203,8 +219,7 @@ impl Manager {
         if comment_hash == cached_user_comment_hash {
             trace!(
                 "User comment is up to date {:?} vs {:?}",
-                comment_hash,
-                cached_user_comment_hash
+                comment_hash, cached_user_comment_hash
             );
             return Ok(());
         }
@@ -228,8 +243,12 @@ impl Manager {
         let comment_hash = user_info.comment_hash.clone().unwrap_or_default();
         let session = user_info.session();
 
-        let updated_from_cache =
-            update_user_comment_and_pfp_from_cache(&comment_hash, &texture_hash, user_info);
+        let updated_from_cache = update_user_comment_and_pfp_from_cache(
+            &comment_hash,
+            &texture_hash,
+            user_info,
+            &self.app_handle.path().app_cache_dir()?,
+        );
 
         let has_texture = has_texture(user_info)?;
         let has_comment = has_comment(user_info)?;
@@ -273,7 +292,7 @@ impl Manager {
     }
 
     fn request_user_comment_and_pfp(
-        &mut self,
+        &self,
         session: u32,
         updated_from_cache: &[HashUserFields],
         comment_hash: &Vec<u8>,
@@ -304,7 +323,7 @@ impl Manager {
                 user.update_from(user_info);
                 v.insert(user);
             }
-        };
+        }
     }
 
     pub fn remove_user(&mut self, user_info: &mumble::proto::UserRemove) {
@@ -318,7 +337,7 @@ impl Manager {
         self.users.get(&id)
     }
 
-    pub fn notify_current_user(&mut self, sync_info: &mumble::proto::ServerSync) {
+    pub fn notify_current_user(&self, sync_info: &mumble::proto::ServerSync) {
         let sync_info = SyncInfo {
             session: sync_info.session,
             max_bandwidth: sync_info.max_bandwidth,
@@ -334,6 +353,7 @@ fn update_user_comment_and_pfp_from_cache(
     comment_hash: &Vec<u8>,
     texture_hash: &Vec<u8>,
     user_info: &mut mumble::proto::UserState,
+    path: &Path,
 ) -> Vec<HashUserFields> {
     [
         (HashUserFields::Comment, comment_hash),
@@ -341,7 +361,7 @@ fn update_user_comment_and_pfp_from_cache(
     ]
     .iter()
     .filter(|(_, hash)| !hash.is_empty())
-    .map(|(field, hash)| (field, read_data_from_cache(hash)))
+    .map(|(field, hash)| (field, read_data_from_cache(hash, path)))
     .filter_map(|(field, hash)| hash.ok().map(|d| (field, d)))
     .map(|(field, hash)| match field {
         HashUserFields::Comment => {

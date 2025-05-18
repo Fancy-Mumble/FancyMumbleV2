@@ -1,5 +1,5 @@
 use crate::{
-    connection::{threads::MAX_PING_FAILURES, Connection, PingThread},
+    connection::{Connection, PingThread, threads::MAX_PING_FAILURES},
     mumble,
     protocol::serialize::message_container::FrontendMessage,
     utils::{frontend::send_to_frontend, messages::message_builder},
@@ -17,7 +17,7 @@ const PING_INTERVAL: Duration = Duration::from_millis(5000);
 
 impl PingThread for Connection {
     fn spawn_ping_thread(&mut self) {
-        if self.threads.get(&ConnectionThread::Ping).is_some() {
+        if self.threads.contains_key(&ConnectionThread::Ping) {
             error!("PingThread already running");
             return;
         }

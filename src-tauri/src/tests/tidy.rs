@@ -1,8 +1,9 @@
 // special thanks to https://github.com/rust-lang/rust-analyzer/tree/master for this idea
 // from: https://github.com/rust-lang/rust-analyzer/blob/db41e6b40892b89ebb7184ceda8e94896bf8d37f/crates/rust-analyzer/tests/slow-tests/tidy.rs
+use std::fmt::Write;
 use std::path::PathBuf;
 
-use xshell::{cmd, Shell};
+use xshell::{Shell, cmd};
 
 pub fn project_root() -> PathBuf {
     let dir = env!("CARGO_MANIFEST_DIR");
@@ -33,16 +34,19 @@ fn check_code_formatting() {
     res.expect("Failed to run `cargo fmt`");
 }
 
-#[cfg(not(feature = "in-rust-tree"))]
 #[test]
 fn check_licenses() {
     let sh = &Shell::new().expect("Failed to create shell");
 
     let mut expected = "
+(MIT OR Apache-2.0) AND NCSA
+(MIT OR Apache-2.0) AND Unicode-3.0
 (MIT OR Apache-2.0) AND Unicode-DFS-2016
 (Apache-2.0 OR MIT) AND BSD-3-Clause
 0BSD OR MIT OR Apache-2.0
 Apache-2.0
+Apache-2.0 AND ISC
+Apache-2.0 AND MIT
 Apache-2.0 OR BSL-1.0
 Apache-2.0 OR ISC OR MIT
 Apache-2.0 OR MIT
@@ -51,20 +55,25 @@ Apache-2.0 WITH LLVM-exception
 Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT
 Apache-2.0/MIT
 BSD-3-Clause
+BSD-2-Clause
 BSD-2-Clause OR Apache-2.0 OR MIT
 BSD-2-Clause OR MIT OR Apache-2.0
 BSD-3-Clause OR MIT OR Apache-2.0
 BSD-3-Clause/MIT
+BSD-3-Clause AND MIT
+CC0-1.0 OR Apache-2.0
 CC0-1.0 OR MIT-0
 CC0-1.0 OR MIT-0 OR Apache-2.0
 ISC
 MIT
 MIT / Apache-2.0
 MIT OR Apache-2.0
+MIT OR Apache-2.0 OR LGPL-2.1-or-later
 MIT OR Apache-2.0 OR Zlib
 MIT OR Zlib OR Apache-2.0
 MIT/Apache-2.0
 MPL-2.0
+Unicode-3.0
 Unlicense OR MIT
 Unlicense/MIT
 Zlib OR Apache-2.0 OR MIT
@@ -79,7 +88,7 @@ null"
         .read()
         .expect("Failed to run `cargo metadata`");
     let mut licenses = meta
-        .split(|c| c == ',' || c == '{' || c == '}')
+        .split(&[',', '{', '}'][..])
         .filter(|it| it.contains(r#""license""#))
         .map(str::trim)
         .map(|it| it[r#""license":"#.len()..].trim_matches('"'))
@@ -98,7 +107,7 @@ null"
         diff.push_str("New Licenses:\n");
         for &l in &licenses {
             if !expected.contains(&l) {
-                diff += &format!("  {l}\n");
+                writeln!(diff, "  {l}").expect("Failed to write to string");
             }
         }
 

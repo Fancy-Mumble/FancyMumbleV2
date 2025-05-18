@@ -11,6 +11,7 @@ interface LinkReplacement {
 }
 
 class DOMMessageParser {
+    static sanitizingHookRegistered = false;
     private document: Document;
     private replacementUrl: LinkReplacement[] = [
         { regex: /https:\/\/store\.steampowered\.com\/app\/([0-9]+)\/?.*/, replacement: 'steam://advertise/$1', inline: false },
@@ -27,7 +28,12 @@ class DOMMessageParser {
         const parser = new DOMParser();
         this.document = parser.parseFromString(input, "text/html");
 
+        if (DOMMessageParser.sanitizingHookRegistered) {
+            return;
+        }
+
         DOMPurify.addHook('afterSanitizeAttributes', function (node) {
+            DOMMessageParser.sanitizingHookRegistered = true;
             console.log("Sanitizing attributes");
             DOMPurify.addHook('afterSanitizeAttributes', function (node) {
                 if (node.tagName && node.tagName === 'IMG' && node.hasAttribute('src')) {
@@ -75,7 +81,7 @@ class DOMMessageParser {
                         e.setAttribute('href', replaced);
                     } else {
                         const b = createEmbeddedIFrame(replaced);
-                        e.parentElement?.replaceChild(b, e);
+                        e.parentElement?.appendChild(e);
                     }
                     return false;
                 }
@@ -96,7 +102,7 @@ class MessageParser {
     private input: string;
 
     constructor(input: string) {
-        this.input = DOMPurify.sanitize(input);
+        this.input = input;
     }
 
     parseDOM(dom: (value: DOMMessageParser) => DOMMessageParser) {
@@ -173,19 +179,18 @@ class MessageParser {
         setTimeout(() => callback(remainingStr), time);
     }
 
-    parseMarkdown() {
-        this.input = marked.parseInline(this.input);
-        this.input = DOMPurify.sanitize(this.input);
+    async parseMarkdown() {
+        this.input = await marked.parseInline(this.input);
 
         return this;
     }
 
     public build() {
-        return (<Box dangerouslySetInnerHTML={{ __html: this.input }}></Box>);
+        return (<Box dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(this.input) }}></Box>);
     }
 
     public buildString() {
-        return this.input;
+        return DOMPurify.sanitize(this.input);
     }
 }
 

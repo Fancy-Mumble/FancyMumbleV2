@@ -6,30 +6,35 @@ use openssl::{
     pkey::PKey,
     rsa::Rsa,
     x509::{
+        X509, X509NameBuilder,
         extension::{BasicConstraints, KeyUsage},
-        X509NameBuilder, X509,
     },
 };
 use tokio_native_tls::native_tls::{self, Identity};
-use tracing::trace;
+use tracing::{info, trace};
 
-use crate::errors::{certificate_error::CertificateError, AnyError};
-
-use super::constants::get_project_dirs;
+use crate::errors::{AnyError, certificate_error::CertificateError};
 
 pub struct CertificateBuilder {
     load_or_generate_new: bool,
     store_to_project_dir: bool,
     identity: Option<String>,
+    data_dir: PathBuf,
 }
 
 impl CertificateBuilder {
-    pub fn try_from(identity: &Option<String>) -> Self {
+    pub fn try_from(identity: Option<&String>) -> Self {
         Self {
             load_or_generate_new: false,
             store_to_project_dir: false,
-            identity: identity.clone(),
+            identity: identity.cloned(),
+            data_dir: PathBuf::new(),
         }
+    }
+
+    pub fn cert_path(mut self, path: PathBuf) -> Self {
+        self.data_dir = path;
+        self
     }
 
     pub const fn load_or_generate_new(mut self, load_or_generate_new: bool) -> Self {
@@ -43,20 +48,16 @@ impl CertificateBuilder {
     }
 
     pub fn build(self) -> AnyError<CertificateStore> {
-        let project_dirs = get_project_dirs()
-            .ok_or_else(|| CertificateError::new("Unable to load project dir"))?;
-        let data_dir = project_dirs.data_dir();
-
-        if !data_dir.exists() {
-            std::fs::create_dir_all(data_dir)?;
+        if !self.data_dir.exists() {
+            std::fs::create_dir_all(&self.data_dir)?;
         }
 
-        let certificate_path = data_dir.join(
+        let certificate_path = self.data_dir.join(
             self.identity
                 .as_ref()
                 .map_or("certificate.pem".to_string(), |v| format!("cert_{v}.pem")),
         );
-        let private_key_path = data_dir.join(
+        let private_key_path = self.data_dir.join(
             self.identity
                 .as_ref()
                 .map_or("private_key.pem".to_string(), |v| {
@@ -70,7 +71,7 @@ impl CertificateBuilder {
             if let Some(certificate_store) =
                 Self::read_certificates(&certificate_path, &private_key_path)
             {
-                trace!("Certificate loaded from project dir: {data_dir:?}");
+                info!("Certificate loaded from project dir: {:?}", self.data_dir);
                 return Ok(certificate_store);
             }
 
@@ -81,6 +82,7 @@ impl CertificateBuilder {
                 let certificate = certificate_store.certificate.clone();
                 let private_key = certificate_store.private_key.clone();
 
+                info!("Certificate stored to project dir: {:?}", private_key_path);
                 std::fs::write(certificate_path, certificate)?;
                 std::fs::write(private_key_path, private_key)?;
             }
@@ -118,7 +120,7 @@ pub struct CertificateStore {
 }
 
 impl CertificateStore {
-    pub fn get_client_certificate(&mut self) -> AnyError<Identity> {
+    pub fn get_client_certificate(&self) -> AnyError<Identity> {
         let identity = native_tls::Identity::from_pkcs8(&self.certificate, &self.private_key)?;
 
         Ok(identity)

@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api";
+import { invoke } from "@tauri-apps/api/core";
 import { TextMessage, addChatMessage, deleteAllMessages } from "../store/features/users/chatMessageSlice";
 import { UsersState } from "../store/features/users/userSlice";
 import MessageParser from "./MessageParser";
@@ -40,10 +40,11 @@ export class ChatMessageHandler {
         this.setChatMessage("");
     }
 
-    public sendChatMessage(chatMessage: string, userInfo: UsersState | undefined) {
+    public async sendChatMessage(chatMessage: string, userInfo: UsersState | undefined) {
         if (chatMessage.length === 0) return;
+        console.log("sending message", chatMessage);
 
-        let message = new MessageParser(chatMessage)
+        let message = (await new MessageParser(chatMessage)
             .parseLinks()
             .parseCommands(userInfo, (chatMessage: string, userInfo: UsersState | undefined) => {
                 this.sendCustomChatMessage(chatMessage, userInfo);
@@ -51,7 +52,7 @@ export class ChatMessageHandler {
             .parseDOM((dom) => dom
                 .parseForVideos()
             )
-            .parseMarkdown()
+            .parseMarkdown())
             .buildString();
         this.sendCustomChatMessage(message, userInfo);
     }

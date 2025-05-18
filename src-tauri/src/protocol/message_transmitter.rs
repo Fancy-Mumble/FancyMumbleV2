@@ -1,10 +1,10 @@
 use std::sync::{Arc, RwLock};
 
 use crate::connection::threads::DEADMAN_INTERVAL;
-use crate::connection::traits::{HandleMessage, Shutdown};
+use crate::connection::traits::Shutdown;
 use crate::errors::AnyError;
 use async_trait::async_trait;
-use tauri::Manager;
+use tauri::Emitter;
 use tokio::task::JoinHandle;
 use tokio::time;
 use tokio::{select, sync::broadcast::Receiver};
@@ -12,13 +12,13 @@ use tracing::{debug, trace};
 
 pub struct MessageTransmitter {
     recv_channel: Receiver<String>,
-    window: tauri::Window,
+    window: tauri::WebviewWindow,
     transmitter_thread: Option<JoinHandle<()>>,
     running: Arc<RwLock<bool>>,
 }
 
 impl MessageTransmitter {
-    pub fn new(recv_channel: Receiver<String>, window: tauri::Window) -> Self {
+    pub fn new(recv_channel: Receiver<String>, window: tauri::WebviewWindow) -> Self {
         Self {
             recv_channel,
             window,
@@ -47,7 +47,7 @@ impl MessageTransmitter {
                 select! {
                     Ok(result) = channel.recv() => {
                         trace!("backend_update received");
-                        _ = window_clone.emit_all("backend_update", result);
+                        _ = window_clone.emit("backend_update", result);
                     }
                     _ = interval.tick() => {}
                 }
@@ -72,6 +72,3 @@ impl Shutdown for MessageTransmitter {
         Ok(())
     }
 }
-
-#[async_trait]
-impl HandleMessage for MessageTransmitter {}

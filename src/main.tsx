@@ -37,9 +37,7 @@ marked.use(markedHighlight({
 }));
 
 marked.use({
-  breaks: true,
-  mangle: false,
-  headerIds: false
+  breaks: true
 })
 
 dayjs.extend(isToday);

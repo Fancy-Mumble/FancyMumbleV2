@@ -6,7 +6,7 @@ use crate::protocol::stream_reader::StreamReader;
 use tokio::select;
 use tokio::time;
 
-use super::{ConnectionThread, InputThread, DEADMAN_INTERVAL};
+use super::{ConnectionThread, DEADMAN_INTERVAL, InputThread};
 
 impl InputThread for Connection {
     // reader can'T be moved further in, because otherwise message_reader Result type is causing issues
@@ -18,6 +18,7 @@ impl InputThread for Connection {
         let back_channel = self.tx_out.clone();
 
         let reader_copy = self.stream_reader.clone();
+        let app_handle_clone = self.app_handle.clone();
         let settings_channel_copy = self.settings_channel.resubscribe();
         self.threads.insert(
             ConnectionThread::Input,
@@ -25,8 +26,12 @@ impl InputThread for Connection {
                 let mut interval = time::interval(DEADMAN_INTERVAL);
                 {
                     let mut reader = reader_copy.lock().await;
-                    let message_reader =
-                        MessageRouter::new(message_channels, back_channel, settings_channel_copy);
+                    let message_reader = MessageRouter::new(
+                        message_channels,
+                        back_channel,
+                        settings_channel_copy,
+                        &app_handle_clone,
+                    );
 
                     match message_reader {
                         Ok(message_reader) => {

@@ -16,16 +16,18 @@ mod tests;
 
 use std::{collections::HashMap, sync::Arc};
 
-use commands::{web_cmd::CrawlerState, ConnectionState};
+use commands::{ConnectionState, web_cmd::CrawlerState};
 use tokio::sync::Mutex;
 
 use tauri::Manager;
 use tracing::Level;
 use tracing_subscriber::{
-    fmt::{self, format::FmtSpan},
     EnvFilter,
+    fmt::{self, format::FmtSpan},
 };
 
+#[cfg(debug_assertions)]
+use crate::commands::dev_tools;
 use crate::commands::{
     change_user_state, close_app, connect_to_server, crop_and_store_image, disable_audio_info,
     enable_audio_info, get_audio_devices, like_message, logout, send_message,
@@ -59,13 +61,15 @@ async fn main() {
     init_logging();
 
     tauri::Builder::default()
-        .plugin(tauri_plugin_window_state::Builder::default().build())
-        .plugin(tauri_plugin_store::Builder::default().build())
+        .plugin(tauri_plugin_window_state::Builder::new().build())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_store::Builder::new().build())
+        .plugin(tauri_plugin_os::init())
         .setup(|app| {
             app.manage(ConnectionState {
                 connection: Mutex::new(None),
                 window: Arc::new(Mutex::new(
-                    app.get_window("main").expect("window not found"),
+                    app.get_webview_window("main").expect("window not found"),
                 )),
                 package_info: Mutex::new(app.package_info().clone()),
                 message_handler: Mutex::new(HashMap::new()),
@@ -103,7 +107,9 @@ async fn main() {
             get_tenor_trending_results,
             convert_url_to_base64,
             set_audio_user_state,
-            close_app
+            close_app,
+            #[cfg(debug_assertions)]
+            dev_tools
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

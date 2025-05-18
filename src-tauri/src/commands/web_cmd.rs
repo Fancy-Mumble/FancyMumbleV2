@@ -1,4 +1,4 @@
-use base64::{engine::general_purpose, Engine};
+use base64::{Engine, engine::general_purpose};
 use serde_json::json;
 use tauri::State;
 use tokio::sync::Mutex;

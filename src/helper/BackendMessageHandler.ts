@@ -5,7 +5,7 @@ import { addChatMessage } from '../store/features/users/chatMessageSlice';
 import { Dispatch } from 'react';
 import { AnyAction } from '@reduxjs/toolkit';
 import { ServerSync, updateServerInfo } from '../store/features/server/serverSlice';
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 import { useNavigate } from 'react-router-dom';
 
 enum MessageTypes {
@@ -33,7 +33,7 @@ interface BackendMessage {
 
 export function handleBackendMessage<T>(event: Event<T>, dispatch: Dispatch<AnyAction>) {
     let message: BackendMessage = JSON.parse(event.payload as any);
-    console.log("msg: ", message);
+    console.log("msg: ", event.payload);
 
     switch (message.message_type) {
         case MessageTypes.Connected: {

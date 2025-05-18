@@ -28,7 +28,7 @@ pub struct Manager {
 }
 
 impl Manager {
-    pub fn new(send_to: Sender<String>) -> Self {
+    pub const fn new(send_to: Sender<String>) -> Self {
         Self {
             message_log: Vec::new(),
             frontend_channel: send_to,
