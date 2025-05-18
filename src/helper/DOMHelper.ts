@@ -19,8 +19,6 @@ export function createEmbeddedIFrame(url: string): Node {
 
     iframe.onload = (el) => {
         console.log("iframe loaded", el);
-        //iframe.contentWindow?.postMessage({ element: el.target, query: "height" },
-        //    "https://twitframe.com");
     }
 
 

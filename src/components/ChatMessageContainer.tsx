@@ -1,5 +1,5 @@
 import { Avatar, Box, Grid, List, Typography } from "@mui/material";
-import React, { ReactElement, useEffect, useMemo, useState } from "react";
+import React, { ReactElement, Suspense, useEffect, useMemo, useState } from "react";
 import { MemoChatMessage } from "./ChatMessage";
 import { useSelector } from "react-redux";
 import { RootState } from "../store/store";
@@ -18,7 +18,6 @@ interface GroupedMessages {
 	messages: Array<ReactElement>
 }
 
-
 const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 	const { t } = useTranslation();
 	const userList = useSelector((state: RootState) => state.reducer.userInfo);
@@ -35,7 +34,7 @@ const ChatMessageContainer = (props: ChatMessageContainerProps) => {
 		}
 		new Promise(r => setTimeout(r, 100)).then(() => {
 			console.log("End Ref", messagesEndRef.current);
-			if(messagesEndRef.current) {
+			if (messagesEndRef.current) {
 				messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
 			} else {
 				// workaround for when the ref is not set yet

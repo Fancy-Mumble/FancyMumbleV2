@@ -18,6 +18,7 @@ function Titlebar() {
             justifyContent: 'end',
             zIndex: 9999,
             userSelect: 'none',
+            background: '#000b1c'
         }}>
             <IconButton size="small" onClick={(e) => appWindow.minimize()} className="titlebar-button" >
                 <MinimizeIcon sx={{ fontSize: 18 }} />

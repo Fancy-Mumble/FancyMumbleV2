@@ -17,7 +17,7 @@ pub fn get_settings_file(file_name: &str, app: &tauri::AppHandle) -> Result<std:
         .read(true)
         .write(true)
         .create(true)
-        .truncate(true)
+        .truncate(false)
         .open(data_dir.join(file_name))
         .map_err(|e| format!("Error opening file: {e:?}"))?;
     Ok(settings_file)
@@ -33,8 +33,8 @@ pub fn save_server(
     identity: Option<String>,
     app_handle: tauri::AppHandle,
 ) -> Result<(), String> {
-    info!("Saving server: {server_host}:{server_port}");
     let mut server_file = get_settings_file(SERVER_SETTINS_FILE, &app_handle)?;
+    info!("Saving server: {server_host}:{server_port} to {server_file:?}");
 
     // read the json content using serde and append the new server
     let mut server_list =
@@ -90,7 +90,7 @@ pub fn get_server_list(app_handle: tauri::AppHandle) -> Result<Vec<Server>, Stri
         .read(true)
         .write(true)
         .create(true)
-        .truncate(true)
+        .truncate(false)
         .open(data_dir.join(SERVER_SETTINS_FILE))
         .map_err(|e| format!("Error opening file: {e:?}"))?;
 

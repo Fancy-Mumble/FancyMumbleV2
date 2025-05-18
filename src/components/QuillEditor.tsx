@@ -6,7 +6,8 @@ https://github.com/zenoamaro/react-quill
 */
 
 import React, { JSX } from 'react';
-import ReactDOM from 'react-dom';
+import ReactDOM from 'react-dom/client';
+import {findDOMNode} from 'react-dom';
 import isEqual from 'lodash/isEqual';
  // @ts-ignore
 import Quill, {

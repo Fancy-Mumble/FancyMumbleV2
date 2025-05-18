@@ -11,7 +11,7 @@ use openssl::{
     },
 };
 use tokio_native_tls::native_tls::{self, Identity};
-use tracing::trace;
+use tracing::{info, trace};
 
 use crate::errors::{AnyError, certificate_error::CertificateError};
 
@@ -71,7 +71,7 @@ impl CertificateBuilder {
             if let Some(certificate_store) =
                 Self::read_certificates(&certificate_path, &private_key_path)
             {
-                trace!("Certificate loaded from project dir: {:?}", self.data_dir);
+                info!("Certificate loaded from project dir: {:?}", self.data_dir);
                 return Ok(certificate_store);
             }
 
@@ -82,6 +82,7 @@ impl CertificateBuilder {
                 let certificate = certificate_store.certificate.clone();
                 let private_key = certificate_store.private_key.clone();
 
+                info!("Certificate stored to project dir: {:?}", private_key_path);
                 std::fs::write(certificate_path, certificate)?;
                 std::fs::write(private_key_path, private_key)?;
             }

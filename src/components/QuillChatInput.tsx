@@ -2,7 +2,6 @@ import { useCallback, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { ChatMessageHandler } from "../helper/ChatMessage";
 import { RootState } from "../store/store";
-import QuillEditor from "./QuillEditor";
 import { Box, Button, Divider, Fade, IconButton, Paper, Popper, Tooltip } from "@mui/material";
 import SendIcon from '@mui/icons-material/Send';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -64,14 +63,14 @@ function QuillChatInput() {
                         <DeleteIcon />
                     </IconButton>
                 </Tooltip>
-                <QuillEditor
+                {/*<QuillEditor
                     style={{ flexGrow: 1, maxHeight: 200 }}
                     onKeyDown={(e: KeyboardEvent) => keyDownHandler(e)}
                     onChange={(content: string) => updateContent(content)}
                     value={chatMessage}
                     theme="bubble"
                     placeholder={t("Send Message to Channel", { ns: "user_interaction", channel: currentChannel })}
-                />
+                />*/}
                 <IconButton onClick={showGifPreview}>
                     <GifIcon />
                 </IconButton>

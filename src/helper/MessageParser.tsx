@@ -81,7 +81,7 @@ class DOMMessageParser {
                         e.setAttribute('href', replaced);
                     } else {
                         const b = createEmbeddedIFrame(replaced);
-                        e.parentElement?.replaceChild(b, e);
+                        e.parentElement?.appendChild(e);
                     }
                     return false;
                 }

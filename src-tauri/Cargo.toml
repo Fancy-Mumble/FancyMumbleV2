@@ -47,11 +47,8 @@ mime_guess = "2.0.5"
 uuid = "1.16.0"
 tauri-plugin-dialog = "2.2.1"
 image = "0.25.6"
-opus =  "0.3.0"
+opus =  { git = "https://github.com/Avi-D-coder/opus-rs.git", branch = "master" }
 tauri-plugin-os = "2.2.1"
-
-[patch.crates-io]
-audiopus_sys = { git = "https://github.com/SetZero/audiopus_sys", branch = "master" }
 
 [profile.dev.package.audiopus_sys]
 opt-level = 0

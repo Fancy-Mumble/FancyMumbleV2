@@ -204,7 +204,7 @@ function GifSearch(props: Readonly<GifSearchProps>) {
   const [search, setSearch] = useState("");
   const [position, setPosition] = useState(0);
   const [itemData, setItemData] = useState<GifResultContainer | ErrorElement | EmptyResult[]>([]);
-  let tenorApiKeyAvailable = tenorApiKey && tenorApiKey.length > 0;
+  let tenorApiKeyAvailable = tenorApiKey !== undefined && tenorApiKey.length > 0;
 
   useEffect(() => {
     setPosition(0);
@@ -288,8 +288,7 @@ function GifSearch(props: Readonly<GifSearchProps>) {
   const loadingElement = useMemo(() => {
     return (
       <Box>
-        <LinearProgress />
-        {tenorApiKeyAvailable ? null : <Box>{t("Tenor API Key not set")}</Box>}
+        {tenorApiKeyAvailable ? <LinearProgress /> : <Box>{t("Tenor API Key not set")}: {tenorApiKey}</Box>}
       </Box>
     );
   }, []);
@@ -304,8 +303,10 @@ function GifSearch(props: Readonly<GifSearchProps>) {
                 autoFocus
                 fullWidth
                 label={t("Search Tenor")}
-                InputProps={{
-                  endAdornment: <SearchIcon />,
+                slotProps={{
+                  input: {
+                    endAdornment: <SearchIcon />,
+                  },
                 }}
                 size='small'
                 value={search}

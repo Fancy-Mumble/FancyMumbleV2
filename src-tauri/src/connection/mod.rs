@@ -111,7 +111,7 @@ impl Connection {
         );
 
         let certificate_store = CertificateBuilder::try_from(self.server_data.identity.as_ref())
-            .cert_path(self.app_handle.path().data_dir()?)
+            .cert_path(self.app_handle.path().app_data_dir()?)
             .load_or_generate_new(true)
             .store_to_project_dir(true)
             .build()?;
